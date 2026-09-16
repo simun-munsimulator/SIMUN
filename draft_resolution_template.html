@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="design.css">
+  <title>SIMUN - Draft Resolution Template</title>
+  <link rel="icon" type="image/png" href="logo2.png">
+  <style>
+    /* Page-specific layout adaptations for shorter content */
+    .drPage .pageRow {
+      align-items: flex-start;
+      gap: 2rem;
+      min-height: calc(100vh - 140px);
+    }
+
+    .drPage .imageContainer {
+      flex: 0 0 380px;
+      flex-direction: column;
+      align-items: flex-start !important;
+      justify-content: flex-start;
+      gap: 1.2rem;
+      padding-top: 0;
+      top: 110px !important;
+      height: auto !important;
+      position: sticky;
+    }
+
+    .ropPanel {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.6rem 1.8rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .ropPanel h1 {
+      font-size: clamp(1.5rem, 2vw + 1rem, 2.1rem) !important;
+      margin-bottom: 0.6rem !important;
+      color: var(--un-blue-dark);
+    }
+
+    .ropPanel p {
+      font-size: clamp(0.9rem, 0.4vw + 0.75rem, 1rem) !important;
+      color: var(--note);
+      margin-top: 0;
+      line-height: 1.5;
+    }
+
+    .ropDownloads {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 1.2rem;
+    }
+
+    .ropDownloads a,
+    .ropDownloads button {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 0.95rem;
+      padding: 0.7em 1em;
+      border-radius: 6px;
+      border: 1px solid var(--un-blue-dark);
+      background: var(--un-blue-dark);
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+      transition: opacity 0.2s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .ropDownloads a.secondary,
+    .ropDownloads button.secondary {
+      background: #fff;
+      color: var(--un-blue-dark);
+    }
+
+    .ropDownloads a:hover,
+    .ropDownloads button:hover {
+      opacity: 0.85;
+    }
+
+    .guidelinesBox h2 {
+      font-size: 1.15rem !important;
+      color: var(--un-blue-dark);
+      margin-top: 0;
+      margin-bottom: 0.6rem;
+    }
+
+    .guidelinesList {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: var(--ink);
+      font-size: 0.9rem;
+    }
+
+    .guidelinesList li {
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem !important;
+      line-height: 1.4;
+    }
+
+    /* Resolution Document Preview Styling */
+    .drContentArea {
+      flex: 1;
+      min-width: 0;
+      padding-top: 0 !important;
+    }
+
+    .resolutionDoc {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3rem 3.5rem;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+      margin-bottom: 3rem;
+    }
+
+    .resHeader {
+      border-bottom: 2px solid var(--un-blue);
+      padding-bottom: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    .resMetaGrid {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      row-gap: 0.6rem;
+      column-gap: 1rem;
+      font-size: 1.05rem;
+    }
+
+    .resMetaLabel {
+      font-weight: bold;
+      color: var(--un-blue-dark);
+    }
+
+    .resMetaValue {
+      color: var(--ink);
+    }
+
+    .placeholder {
+      background-color: #eaf6ff;
+      color: #005691;
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-style: italic;
+      border: 1px dashed #b1d9fc;
+    }
+
+    .resCommitteeIntro {
+      font-weight: bold;
+      font-size: 1.15rem;
+      margin-top: 1.8rem;
+      margin-bottom: 1.2rem;
+      color: var(--ink);
+    }
+
+    .preambulatorySection p {
+      margin-bottom: 0.9rem;
+      line-height: 1.6;
+      font-size: 1.05rem !important;
+    }
+
+    .preambulatorySection em {
+      font-weight: bold;
+      font-style: italic;
+      color: var(--un-blue-dark);
+    }
+
+    .operativeSection {
+      margin-top: 1.5rem;
+    }
+
+    .operativeOl {
+      padding-left: 1.5rem;
+      margin: 0;
+    }
+
+    .operativeOl li {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+      font-size: 1.05rem !important;
+      padding-left: 0.5rem;
+    }
+
+    .operativeOl li::marker {
+      font-weight: bold;
+      color: var(--un-blue-dark);
+    }
+
+    .operativeOl u {
+      font-weight: bold;
+      text-decoration: underline;
+      color: var(--un-blue-dark);
+    }
+
+    @media (max-width: 900px) {
+      .drPage .pageRow {
+        flex-direction: column;
+      }
+      .drPage .imageContainer {
+        width: 100%;
+        flex: none;
+        position: static;
+      }
+      .resolutionDoc {
+        padding: 1.8rem 1.5rem;
+      }
+      .resMetaGrid {
+        grid-template-columns: 100px 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="drPage">
+  <div id="header">
+    <span><a href="index.html"><img src="logo2.png"></a></span>
+    <span><a href="index.html" class="nameHomepageLink"><p class="title">SI<span style="color:var(--un-blue-dark)">M</span>UN</p></a></span>
+    <span class="dropdown">
+      <button class="menu">Resource Material</button>
+      <span class="dropdown-content">
+        <a href="rules_of_procedure.html">Rules Of Procedure</a>
+        <a href="sample_position_paper.html">Sample Position Paper</a>
+        <a href="draft_resolution_template.html">Draft Resolution Template</a>
+        <a href="sample_speeches.html">Sample Speeches</a>
+      </span>
+    </span>
+    <span><a class="menu" href="how-it-works.html">How it Works</a></span>
+    <span><a class="menu" href="what-is-mun.html">What is MUN?</a></span>
+    <span><a class="menu" href="faq.html">FAQ</a></span>
+    <span><a class="menu" href="contact.html">Contact</a></span>
+    <span><button><a href="simulation.html" class="newSession">Start a Session</a></button></span>
+  </div>
+
+  <div class="pageRow" style="padding-top: 2rem;">
+    <!-- Compact Side Column for Info & Downloads -->
+    <div class="imageContainer">
+      <div class="ropPanel">
+        <h1>Draft Resolution Template</h1>
+        <p>Standard UN resolution format containing header metadata, preambulatory clauses, and numbered operative clauses.</p>
+        <div class="ropDownloads">
+          <a id="downloadDocLink" href="Draft_Resolution_Template.docx" download="Draft_Resolution_Template.docx">⬇ Download Word Template (.doc)</a>
+          <button id="copyTextBtn" class="secondary">📋 Copy Template to Clipboard</button>
+        </div>
+      </div>
+
+      <div class="ropPanel guidelinesBox">
+        <h2>Formatting Rules</h2>
+        <ul class="guidelinesList">
+          <li><b>Preambulatory Clauses:</b> Start with an italicized participle/adjective and end with a comma (<code>,</code>).</li>
+          <li><b>Operative Clauses:</b> Numbered sequentially, start with an underlined action verb, and end with a semicolon (<code>;</code>).</li>
+          <li><b>Final Clause:</b> The last operative clause concludes with a full stop (<code>.</code>).</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main Content Area: Styled Resolution Sheet -->
+    <div class="pageContent drContentArea">
+      <div class="resolutionDoc" id="resolutionDocContent">
+        <div class="resHeader">
+          <div class="resMetaGrid">
+            <div class="resMetaLabel">Title:</div>
+            <div class="resMetaValue"><span class="placeholder">[Anything, usually agenda related]</span></div>
+
+            <div class="resMetaLabel">Committee:</div>
+            <div class="resMetaValue"><span class="placeholder">[Committee Name]</span></div>
+
+            <div class="resMetaLabel">Agenda:</div>
+            <div class="resMetaValue"><span class="placeholder">[Full agenda as specified before the start of committee]</span></div>
+
+            <div class="resMetaLabel">Author(s):</div>
+            <div class="resMetaValue"><span class="placeholder">[Full official name(s) of authoring countries — minimum 1, maximum 2–3]</span></div>
+
+            <div class="resMetaLabel">Signatories:</div>
+            <div class="resMetaValue"><span class="placeholder">[Full official names of all countries showing support for the draft resolution]</span></div>
+          </div>
+        </div>
+
+        <div class="resCommitteeIntro">
+          The <span class="placeholder">[Committee Name]</span>,
+        </div>
+
+        <div class="preambulatorySection">
+          <p><em>Recalling</em> <span class="placeholder">[state background, justification, or context for this clause]</span>,</p>
+          <p><em>Noting with concern</em> <span class="placeholder">[state background, justification, or context for this clause]</span>,</p>
+          <p><em>Emphasizing</em> <span class="placeholder">[state background, justification, or context for this clause]</span>,</p>
+          <p><em>Bearing in mind</em> <span class="placeholder">[state background, justification, or context for this clause]</span>,</p>
+          <p><em>Deeply concerned</em> <span class="placeholder">[state background, justification, or context for this clause]</span>,</p>
+        </div>
+
+        <div class="operativeSection">
+          <ol class="operativeOl">
+            <li><u>Calls upon</u> <span class="placeholder">[state specific action, actor responsible, funding source, and timeline]</span>;</li>
+            <li><u>Urges</u> <span class="placeholder">[state specific action, actor responsible, funding source, and timeline]</span>;</li>
+            <li><u>Requests</u> <span class="placeholder">[state specific action, actor responsible, funding source, and timeline]</span>;</li>
+            <li><u>Further recommends</u> <span class="placeholder">[state specific action, actor responsible, funding source, and timeline]</span>;</li>
+            <li><u>Decides</u> <span class="placeholder">[state specific action, actor responsible, funding source, and timeline]</span>.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p class="credit">&#169; Copyright Kinara Goyal 2026 <img src="downward_arrow.png" class="scrollArrow" id="scrollArrow" alt="Scroll down"></p>
+  </div>
+
+  <script>
+    // Pure Data URI Generation
+    const rawContent = `Title:\n[Anything, usually agenda related]\n\nCommittee:\n[Committee Name]\n\nAgenda:\n[Full agenda as specified before the start of committee]\n\nAuthor(s):\n[Full official name(s) of authoring countries — minimum 1, maximum 2–3]\n\nSignatories:\n[Full official names of all countries showing support for the draft resolution]\n\nThe [Committee Name],\n\nRecalling [state background, justification, or context for this clause],\nNoting with concern [state background, justification, or context for this clause],\nEmphasizing [state background, justification, or context for this clause],\nBearing in mind [state background, justification, or context for this clause],\nDeeply concerned [state background, justification, or context for this clause],\n\n1. Calls upon [state specific action, actor responsible, funding source, and timeline];\n2. Urges [state specific action, actor responsible, funding source, and timeline];\n3. Requests [state specific action, actor responsible, funding source, and timeline];\n4. Further recommends [state specific action, actor responsible, funding source, and timeline];\n5. Decides [state specific action, actor responsible, funding source, and timeline].`;
+
+    const htmlDoc = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>Draft Resolution Template</title></head>
+      <body style="font-family: Georgia, serif; line-height: 1.5; padding: 20px;">
+        <p><b>Title:</b> [Anything, usually agenda related]</p>
+        <p><b>Committee:</b> [Committee Name]</p>
+        <p><b>Agenda:</b> [Full agenda as specified before the start of committee]</p>
+        <p><b>Author(s):</b> [Full official name(s) of authoring countries — minimum 1, maximum 2–3]</p>
+        <p><b>Signatories:</b> [Full official names of all countries showing support for the draft resolution]</p>
+        <br>
+        <p><b>The [Committee Name],</b></p>
+        <p><i>Recalling</i> [state background, justification, or context for this clause],</p>
+        <p><i>Noting with concern</i> [state background, justification, or context for this clause],</p>
+        <p><i>Emphasizing</i> [state background, justification, or context for this clause],</p>
+        <p><i>Bearing in mind</i> [state background, justification, or context for this clause],</p>
+        <p><i>Deeply concerned</i> [state background, justification, or context for this clause],</p>
+        <br>
+        <ol>
+          <li><u>Calls upon</u> [state specific action, actor responsible, funding source, and timeline];</li>
+          <li><u>Urges</u> [state specific action, actor responsible, funding source, and timeline];</li>
+          <li><u>Requests</u> [state specific action, actor responsible, funding source, and timeline];</li>
+          <li><u>Further recommends</u> [state specific action, actor responsible, funding source, and timeline];</li>
+          <li><u>Decides</u> [state specific action, actor responsible, funding source, and timeline].</li>
+        </ol>
+      </body>
+      </html>
+    `;
+
+    // Direct Data-URI assignment on the download link
+    const downloadLink = document.getElementById('downloadDocLink');
+    downloadLink.href = 'data:application/msword;charset=utf-8,' + encodeURIComponent(htmlDoc);
+
+    // Clipboard Backup Option
+    const copyBtn = document.getElementById('copyTextBtn');
+    copyBtn.addEventListener('click', function () {
+      navigator.clipboard.writeText(rawContent).then(() => {
+        const origText = copyBtn.innerText;
+        copyBtn.innerText = '✅ Copied to Clipboard!';
+        setTimeout(() => copyBtn.innerText = origText, 2000);
+      }).catch(err => {
+        alert('Copy failed: ' + err);
+      });
+    });
+
+    const scrollArrow = document.getElementById('scrollArrow');
+    function updateScrollArrow() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      if (scrollable - scrolled <= 2) {
+        scrollArrow.style.visibility = 'hidden';
+      } else {
+        scrollArrow.style.visibility = 'visible';
+      }
+    }
+    window.addEventListener('scroll', updateScrollArrow);
+    window.addEventListener('resize', updateScrollArrow);
+    window.addEventListener('load', updateScrollArrow);
+  </script>
+</body>
+</html>

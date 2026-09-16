@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="design.css">
+    <title>SIMUN - Homepage</title>
+    <!-- Favicon Icon -->
+  <link rel="icon" type="image/png" href="logo2.png">
+</head>
+<body>
+  <div id="header">
+    <span><a href="index.html"><img src="logo2.png"></a></span>
+    <span><a href="index.html" class="nameHomepageLink"><p class="title">SI<span style="color:var(--un-blue-dark)">M</span>UN</p></a></span>
+    <span class="dropdown">
+      <button class="menu">Resource Material</button>
+      <span class="dropdown-content">
+        <a href="rules_of_procedure.html">Rules Of Procedure</a>
+        <a href="sample_position_paper.html">Sample Position Paper</a>
+        <a href="draft_resolution_template.html">Draft Resolution Template</a>
+        <a href="sample_speeches.html">Sample Speeches</a>
+      </span>
+    </span>
+    <span><a class="menu" href="how-it-works.html">How it Works</a></span>
+    <span><a class="menu" href="what-is-mun.html">What is MUN?</a></span>
+    <span><a class="menu" href="faq.html">FAQ</a></span>
+    <span><a class="menu" href="contact.html">Contact</a></span>
+    <span><button><a href="simulation.html" class="newSession">Start a Session</a></button></span>
+  </div>
+  <div class="pageRow">
+    <span class="imageContainer">
+      <img src="kinu.jpeg">
+    </span>
+    <span class="pageContent">
+      <h1>About Me</h1>
+      <span class="contentBlock">
+        <p>Hi! I'm Kinara, a fourteen-year-old passionate MUNner from Mumbai and creator of this website. I enjoy studying international relations, law history and ethics. On my blog, <a href="https://kids-bouquet.home.blog/">Kid's Bouquet</a>, I write about various social and scientific concepts.</p>
+        <p>Please feel free to reach out to me about any questions related to this simulator or about MUN in general. I will get back to you as soon as I can. Here is my email adress: <a href="mailto:mun.simulator@gmail.com">mun.simulator@gmail.com</a></p>
+      </span>
+  </div>
+  <div class="footer">
+    <p class="credit">&#169; Copyright Kinara Goyal 2026 <img src="downward_arrow.png" class="scrollArrow" id="scrollArrow" alt="Scroll down"></p>
+  </div>
+  <script>
+    const scrollArrow = document.getElementById('scrollArrow');
+    function updateScrollArrow() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      if (scrollable - scrolled <= 2) {
+        scrollArrow.style.visibility = 'hidden';
+      } else {
+        scrollArrow.style.visibility = 'visible';
+      }
+    }
+    window.addEventListener('scroll', updateScrollArrow);
+    window.addEventListener('resize', updateScrollArrow);
+    window.addEventListener('load', updateScrollArrow);
+  </script>
+</body>
+</html>

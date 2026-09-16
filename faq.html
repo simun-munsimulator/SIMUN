@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="design.css">
+    <title>SIMUN - FAQ</title>
+    <!-- Favicon Icon -->
+  <link rel="icon" type="image/png" href="logo2.png">
+</head>
+<body class="stepsPage">
+  <div id="header">
+    <span><a href="index.html"><img src="logo2.png"></a></span>
+    <span><a href="index.html" class="nameHomepageLink"><p class="title">SI<span style="color:var(--un-blue-dark)">M</span>UN</p></a></span>
+    <span class="dropdown">
+      <button class="menu">Resource Material</button>
+      <span class="dropdown-content">
+        <a href="rules_of_procedure.html">Rules Of Procedure</a>
+        <a href="sample_position_paper.html">Sample Position Paper</a>
+        <a href="draft_resolution_template.html">Draft Resolution Template</a>
+        <a href="sample_speeches.html">Sample Speeches</a>
+      </span>
+    </span>
+    <span><a class="menu" href="how-it-works.html">How it Works</a></span>
+    <span><a class="menu" href="what-is-mun.html">What is MUN?</a></span>
+    <span><a class="menu" href="faq.html">FAQ</a></span>
+    <span><a class="menu" href="contact.html">Contact</a></span>
+    <span><button><a href="simulation.html" class="newSession">Start a Session</a></button></span>
+  </div>
+  <!--Insert page body here-->
+  <div class="faqSection">
+    <h2>FAQ - General</h2>
+
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">How long does one session take?</button>
+      <div class="faqAnswer">
+        <p>One session will take around 2-3 days of playing, assuming you play for around 1 hour a day and are on a free tier API key.</p>
+      </div>
+    </div>
+
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">How many players can play a game?</button>
+      <div class="faqAnswer">
+        <p>We only support single player games - you against the computer delegates.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Do I need prior MUN experience to play?</button>
+      <div class="faqAnswer">
+        <p>No, you do not need prior MUN experience to play.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Which ROP does this simulator follow?</button>
+      <div class="faqAnswer">
+        <p>This simulator follows the UNA-USA Rules of Procedure. However, we have made some minor changes to make the interface easier to manage.</p>
+      </div>
+    </div>
+  <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Which AIs does this website support?</button>
+      <div class="faqAnswer">
+        <p>This simulator uses Gemini 3.6 flash. You need a Google AI Studios API key to use it.</p>
+      </div>
+    </div>
+  <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Is my progress saved?</button>
+      <div class="faqAnswer">
+        <p>Yes, your progress is saved in local storage. However, you can run only one simulation at a time.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="faqSection">
+    <h2>Gameplay</h2>
+
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Do I get to choose which country I represent?</button>
+      <div class="faqAnswer">
+        <p>Yes. When you set up a session, you'll choose a committee and then select your portfolio (the country you want to represent) from that committee's member list.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Can I raise points and motions during committee?</button>
+      <div class="faqAnswer">
+        <p>Yes. Whenever the floor is open, you'll be given the chance to raise a point or motion, just like in a real committee session.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Do I get to vote on procedural motions and resolutions?</button>
+      <div class="faqAnswer">
+        <p>Yes. You'll be polled on every procedural motion (like entering a caucus or setting the agenda) as well as on any draft resolutions introduced during committee.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">What if I don't know a rule of procedure?</button>
+      <div class="faqAnswer">
+        <p>Don't worry - you don't need to memorize the Rules of Procedure. Whenever you need to make a choice, the simulator will present you with the available options directly, so you can pick from what's allowed rather than needing to know it beforehand.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Do I have to write my own draft resolution?</button>
+      <div class="faqAnswer">
+        <p>You can contribute as much or as little as you like. You can help shape the resolution during unmoderated caucus lobbying, or let the AI delegates take the lead - the choice is yours.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Can I end a session early?</button>
+      <div class="faqAnswer">
+        <p>Yes, you're free to stop at any point. Since your progress is saved automatically, you can also simply close the tab and pick up where you left off later.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="faqSection">
+    <h2>Setup &amp; Technical</h2>
+
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Do I need a Google account to use this?</button>
+      <div class="faqAnswer">
+        <p>Yes. You'll need a Google account to create a free Gemini API key through Google AI Studio, which powers the AI delegates and Chair.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Is the API key free to get?</button>
+      <div class="faqAnswer">
+        <p>Yes, Google AI Studio offers a free tier that's enough to play a full session, though it comes with daily usage limits. See the How it Works page for step-by-step instructions on getting your key.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">What happens if I hit my API quota mid-session?</button>
+      <div class="faqAnswer">
+        <p>If you run out of free-tier quota, you'll need to wait for it to reset (usually the next day) before continuing. Your session progress is saved, so you won't lose anything in the meantime.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Which browser should I use?</button>
+      <div class="faqAnswer">
+        <p>Any modern browser (Chrome, Firefox, Edge, Safari) should work fine, since the simulator relies on standard, widely-supported web features.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="faqSection">
+    <h2>Scoring</h2>
+
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">How is my performance scored?</button>
+      <div class="faqAnswer">
+        <p>The Chair scores every delegate, including you, on research and knowledge, speech writing and delivery, lobbying and bloc formation, Rules of Procedure knowledge, and resolution writing.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Can I see how I compared to the AI delegates?</button>
+      <div class="faqAnswer">
+        <p>Yes. At the end of the session, a full scorecard is revealed showing every delegate's score side by side, so you can see exactly how you ranked.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Does my score affect anything besides bragging rights?</button>
+      <div class="faqAnswer">
+        <p>No - there's nothing riding on it besides your own satisfaction. It's meant purely as a fun way to track and improve your MUN skills over multiple sessions.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="faqSection">
+    <h2>Data &amp; Privacy</h2>
+
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Is my API key sent anywhere besides Google?</button>
+      <div class="faqAnswer">
+        <p>No. Your API key is stored locally in your browser and used only to talk directly to Google's Gemini API - it isn't sent to or stored on our servers.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Can anyone else see my simulation?</button>
+      <div class="faqAnswer">
+        <p>No. Since this is a single-player experience saved to your own device's local storage, your sessions are private to you and aren't shared or visible to anyone else.</p>
+      </div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton" onclick="toggleFAQ(this)">Can I save or export my transcript?</button>
+      <div class="faqAnswer">
+        <p>Yes. You can export a full transcript of your committee session, including the closing scorecard, as an HTML file you can keep or share.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleFAQ(button) {
+      const answer = button.nextElementSibling;
+      const isOpen = answer.style.maxHeight;
+      button.classList.toggle('active');
+      answer.style.maxHeight = isOpen ? null : answer.scrollHeight + "px";
+    }
+  </script>
+  <div class="footer"> <!--Footer-->
+    <p class="credit">&#169; Copyright Kinara Goyal 2026 <img src="downward_arrow.png" class="scrollArrow" id="scrollArrow" alt="Scroll down"></p>
+  </div>
+  <script>
+    const scrollArrow = document.getElementById('scrollArrow');
+    function updateScrollArrow() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      if (scrollable - scrolled <= 2) {
+        scrollArrow.style.visibility = 'hidden';
+      } else {
+        scrollArrow.style.visibility = 'visible';
+      }
+    }
+    window.addEventListener('scroll', updateScrollArrow);
+    window.addEventListener('resize', updateScrollArrow);
+    window.addEventListener('load', updateScrollArrow);
+  </script>
+</body>
+</html>

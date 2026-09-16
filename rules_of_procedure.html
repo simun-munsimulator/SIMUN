@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="design.css">
+  <title>SIMUN - Rules of Procedure</title>
+  <link rel="icon" type="image/png" href="logo2.png">
+  <style>
+    /* Page-specific tweaks that don't belong in the shared stylesheet */
+    .ropPage .imageContainer {
+      flex-direction: column;
+      align-items: flex-start !important;
+      justify-content: flex-start;
+      gap: 1.2rem;
+      padding-top: 0;
+      top: 110px !important;
+      height: calc(100vh - 100px) !important;
+    }
+    .ropPanel {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.6rem 1.8rem;
+    }
+    .ropPanel h1 {
+      font-size: clamp(1.5rem, 2vw + 1rem, 2.2rem) !important;
+      margin-bottom: 0.6rem !important;
+    }
+    .ropPanel p {
+      font-size: clamp(0.9rem, 0.4vw + 0.75rem, 1.05rem) !important;
+      color: var(--note);
+      margin-top: 0;
+    }
+    .ropDownloads {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+    .ropDownloads a {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1rem;
+      padding: 0.7em 1em;
+      border-radius: 6px;
+      border: 1px solid var(--un-blue-dark);
+      background: var(--un-blue-dark);
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+    }
+    .ropDownloads a.secondary {
+      background: #fff;
+      color: var(--un-blue-dark);
+    }
+    .ropDownloads a:hover {
+      opacity: 0.85;
+    }
+    .ropNav {
+      width: 100%;
+      max-height: 75vh;
+      overflow-y: auto;
+      font-size: 0.95rem;
+    }
+    .ropNav > a,
+    .ropNav .tocGroup summary {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 0.35rem 0;
+      border-bottom: 1px dotted var(--border);
+      cursor: pointer;
+    }
+    .ropNav > a:hover,
+    .ropNav .tocGroup summary:hover { color: var(--un-blue-dark); text-decoration: underline; }
+    .ropNav .tocGroup {
+      border-bottom: 1px dotted var(--border);
+    }
+    .ropNav .tocGroup summary {
+      border-bottom: none;
+      list-style: none;
+      position: relative;
+      padding-right: 1.2rem;
+    }
+    .ropNav .tocGroup summary::-webkit-details-marker { display: none; }
+    .ropNav .tocGroup summary::after {
+      content: '▸';
+      position: absolute;
+      right: 0.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      color: var(--note);
+      transition: transform 0.15s ease;
+    }
+    .ropNav .tocGroup[open] summary::after {
+      transform: translateY(-50%) rotate(90deg);
+    }
+    .ropNav .tocGroup summary a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .ropNav .tocSub {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0.4rem 0.9rem;
+    }
+    .ropNav .tocSub li {
+      border-bottom: none;
+    }
+    .ropNav .tocSub a {
+      display: block;
+      padding: 0.2rem 0;
+      color: var(--note);
+      text-decoration: none;
+      font-size: 0.88rem;
+    }
+    .ropNav .tocSub a:hover {
+      color: var(--un-blue-dark);
+      text-decoration: underline;
+    }
+
+    .ropContent h1 {
+      border-bottom: 2px solid var(--un-blue);
+      padding-bottom: 0.3rem;
+      margin-top: 3rem;
+    }
+    .ropContent h2 {
+      font-size: clamp(1.3rem, 1.5vw + 0.9rem, 1.8rem) !important;
+      color: var(--un-blue-dark);
+      margin-top: 2.2rem;
+    }
+    .ropContent h3 {
+      font-size: clamp(1.05rem, 1vw + 0.7rem, 1.3rem) !important;
+      color: var(--ink);
+      font-style: italic;
+      margin-top: 1.4rem;
+      margin-bottom: 0.4rem;
+    }
+    .ropContent p, .ropContent li {
+      font-size: clamp(0.95rem, 0.4vw + 0.85rem, 1.15rem) !important;
+      line-height: 1.55;
+    }
+    .ropContent .script {
+      font-style: italic;
+      border-left: 3px solid var(--border);
+      padding-left: 1rem;
+      margin: 0.8rem 0 1.2rem 0;
+      color: #444;
+    }
+    .ropContent table {
+      margin: 1rem 0 2rem 0;
+      font-size: 0.95rem;
+    }
+    .ropContent .note {
+      color: var(--note);
+      font-style: italic;
+    }
+    /* Cover intro row keeps normal (non-sticky-video) look since we have no image here */
+    @media (orientation: portrait) {
+      .ropPage .pageRow { flex-direction: column; }
+    }
+  </style>
+</head>
+<body class="ropPage">
+  <div id="header">
+    <span><a href="index.html"><img src="logo2.png"></a></span>
+    <span><a href="index.html" class="nameHomepageLink"><p class="title">SI<span style="color:var(--un-blue-dark)">M</span>UN</p></a></span>
+    <span class="dropdown">
+      <button class="menu">Resource Material</button>
+      <span class="dropdown-content">
+        <a href="rules-of-procedure.html">Rules Of Procedure</a>
+        <a href="">Sample Position Paper</a>
+        <a href="">Draft Resolution Template</a>
+        <a href="">Sample Speeches</a>
+      </span>
+    </span>
+    <span><a class="menu" href="how-it-works.html">How it Works</a></span>
+    <span><a class="menu" href="what-is-mun.html">What is MUN?</a></span>
+    <span><a class="menu" href="faq.html">FAQ</a></span>
+    <span><a class="menu" href="contact.html">Contact</a></span>
+    <span><button><a href="simulation.html" class="newSession">Start a Session</a></button></span>
+  </div>
+
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="ropPanel">
+        <h1>Rules of Procedure</h1>
+        <p>UNA-USA Regular Committee — the full reference for delegates and the dais.</p>
+        <div class="ropDownloads">
+          <a id="downloadPdf" href="Rules_Of_Procedure_Regular_Committee.pdf" target="_blank" rel="noopener">↗ Open PDF</a>
+          <a id="downloadDocx" class="secondary" href="Rules_Of_Procedure_Regular_Committee.docx" download="Rules_Of_Procedure_Regular_Committee.docx">⬇ Download as Word (.docx)</a>
+        </div>
+      </div>
+      <div class="ropPanel ropNav">
+        <h2>Table of Contents</h2>
+        <details class="tocGroup">
+          <summary><a href="#overview">1. Overview</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-1-1">1.1 Roles</a></li>
+            <li><a href="#sec-1-2">1.2 Committee Structure</a></li>
+          </ul>
+        </details>
+        <details class="tocGroup">
+          <summary><a href="#flow">2. Flow of Debate</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-2-1">2.1 Opening the Committee</a></li>
+            <li><a href="#sec-2-2">2.2 The Debate Cycle</a></li>
+            <li><a href="#sec-2-3">2.3 Resolution Phase</a></li>
+            <li><a href="#sec-2-4">2.4 Voting and Closing</a></li>
+          </ul>
+        </details>
+        <a class="tocTop" href="#rollcall">3. Roll Call &amp; Voting Status</a>
+        <details class="tocGroup">
+          <summary><a href="#points">4. Points</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-4-1">4.1 Types of Points</a></li>
+            <li><a href="#sec-4-2">4.2 When Points May Be Raised</a></li>
+          </ul>
+        </details>
+        <details class="tocGroup">
+          <summary><a href="#motions">5. Motions</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-5-1">5.1 A Note on Table Debate</a></li>
+          </ul>
+        </details>
+        <details class="tocGroup">
+          <summary><a href="#gsl">6. General Speaker's List</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-6-1">6.1 Adding Yourself to the GSL</a></li>
+            <li><a href="#sec-6-2">6.2 Speaking Time</a></li>
+            <li><a href="#sec-6-3">6.3 Delivering a Speech</a></li>
+            <li><a href="#sec-6-4">6.4 Points of Information After a GSL Speech</a></li>
+            <li><a href="#sec-6-5">6.5 Removing Yourself from the GSL</a></li>
+            <li><a href="#sec-6-6">6.6 Keeping Participation Broad</a></li>
+          </ul>
+        </details>
+        <details class="tocGroup">
+          <summary><a href="#modcaucus">7. Moderated Caucuses</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-7-1">7.1 Motioning</a></li>
+            <li><a href="#sec-7-2">7.2 Adoption and Building the Speaker's List</a></li>
+            <li><a href="#sec-7-3">7.3 Speaking During the Caucus</a></li>
+            <li><a href="#sec-7-4">7.4 Points of Information</a></li>
+            <li><a href="#sec-7-5">7.5 How Many, and How Disruptive</a></li>
+          </ul>
+        </details>
+        <details class="tocGroup">
+          <summary><a href="#yielding">8. Yielding</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-8-1">8.1 Yield to Questions</a></li>
+            <li><a href="#sec-8-2">8.2 Yield to Comments</a></li>
+            <li><a href="#sec-8-3">8.3 Yield to Another Delegate</a></li>
+            <li><a href="#sec-8-4">8.4 Yield to the Chair</a></li>
+          </ul>
+        </details>
+        <details class="tocGroup">
+          <summary><a href="#unmodcaucus">9. Unmoderated Caucuses</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-9-1">9.1 Motioning</a></li>
+            <li><a href="#sec-9-2">9.2 Short vs. Long Caucuses</a></li>
+            <li><a href="#sec-9-3">9.3 What Happens During the Caucus</a></li>
+            <li><a href="#sec-9-4">9.4 Ending the Caucus and Degree of Disruption</a></li>
+          </ul>
+        </details>
+        <details class="tocGroup">
+          <summary><a href="#documentation">10. Documentation</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-10-1">10.1 Position Paper</a></li>
+            <li><a href="#sec-10-2">10.2 References</a></li>
+            <li><a href="#sec-10-3">10.3 Working Paper</a></li>
+            <li><a href="#sec-10-4">10.4 Draft Resolution (DR) and Resolution</a></li>
+            <li><a href="#sec-10-5">10.5 Amendments</a></li>
+            <li><a href="#sec-10-6">10.6 Press Release</a></li>
+            <li><a href="#sec-10-7">10.7 Chits</a></li>
+            <li><a href="#sec-10-8">10.8 Substantive Chit</a></li>
+            <li><a href="#sec-10-9">10.9 How Documents Are Scored</a></li>
+          </ul>
+        </details>
+        <details class="tocGroup">
+          <summary><a href="#voting">11. Voting Procedures</a></summary>
+          <ul class="tocSub">
+            <li><a href="#sec-11-1">11.1 How a Vote Is Conducted</a></li>
+            <li><a href="#sec-11-2">11.2 Choosing Present vs. Present and Voting</a></li>
+            <li><a href="#sec-11-3">11.3 Voting on Draft Resolutions</a></li>
+            <li><a href="#sec-11-4">11.4 Rights of Explanation ("With Rights")</a></li>
+            <li><a href="#sec-11-5">11.5 Majority Requirements</a></li>
+            <li><a href="#sec-11-6">11.6 Voting on Amendments</a></li>
+            <li><a href="#sec-11-7">11.7 Majority Reference Table</a></li>
+            <li><a href="#sec-11-8">11.8 After Voting</a></li>
+          </ul>
+        </details>
+        <a class="tocTop" href="#glossary">12. Glossary</a>
+      </div>
+    </div>
+
+    <div class="pageContent ropContent">
+
+      <h1 id="overview">1. Overview</h1>
+      <p>This document sets out the Rules of Procedure (ROP) governing a UNA-USA-style Regular Committee. It is organized to be read start to finish by delegates new to committee, and used as a quick lookup by everyone else: each concept is defined once, in the section devoted to it, and later sections cross-reference rather than repeat those definitions.</p>
+
+      <h2 id="sec-1-1">1.1 Roles</h2>
+      <p><b>The Chair (Executive Board / "the dais")</b> — Moderates debate: recognizes speakers, rules on points and motions, calls and conducts votes, enforces time limits, and ensures proceedings follow the ROP. "Executive Board" (EB) refers to the Chair and any co-chairs or staff running the committee together.</p>
+      <p><b>Delegates (Committee Members)</b> — Represent an assigned nation (their portfolio) and are scored across five skill areas — speech delivery, research, Rules of Procedure knowledge, lobbying, and resolution writing — demonstrated through speeches, documents, voting, and lobbying.</p>
+      <p><b>Portfolio</b> — The nation a delegate represents for the duration of committee.</p>
+
+      <h2 id="sec-1-2">1.2 Committee Structure</h2>
+      <p><b>Committee</b> — The UN organ or subsidiary body serving as the framework for debate. Each committee may adopt specialized rules and has its own powers and expected outputs (e.g., resolutions, press releases).</p>
+      <p><b>Agenda</b> — The problem the committee addresses. It is fixed before committee begins but only becomes official once "set" by motion (see § 4.1 / Flow of Debate).</p>
+      <p><b>Quorum</b> — The minimum attendance needed for the committee to act — typically one-third of registered delegates, rounded up. Quorum must be met before the committee can move to enter formal debate.</p>
+      <p><b>Formal Debate (Formal Session)</b> — The default, structured mode of committee: delegates speak in the order set by the Speaker's List and all procedural actions go through the Chair.</p>
+
+      <h1 id="flow">2. Flow of Debate</h1>
+      <p>This section is the roadmap for a committee session; later sections explain each stage in full detail.</p>
+
+      <h2 id="sec-2-1">2.1 Opening the Committee</h2>
+      <p>Once <b>quorum</b> is met, the sequence below brings committee into formal debate:</p>
+      <ul>
+        <li>Chair calls for points or motions on the floor.</li>
+        <li>A delegate moves to enter formal debate; the motion is voted on (simple majority).</li>
+        <li>Upon passing, the Chair conducts a roll call in alphabetical order of official portfolio names; each delegate responds "Present" or "Present and Voting" (see § 3 for what this choice means).</li>
+        <li>Chair again calls for points or motions; a delegate moves to set the agenda, which is voted on (simple majority).</li>
+        <li>Chair opens the General Speaker's List (GSL), calling alphabetically for delegates who wish to be added (see § 6).</li>
+      </ul>
+      <p class="note">A delegate's portfolio may appear on any Speaker's List only once at a time; once they have spoken, they may add themselves again.</p>
+
+      <h2 id="sec-2-2">2.2 The Debate Cycle</h2>
+      <p>After roughly 3–4 GSL speeches (Chair's discretion), the Chair calls for motions, opening a cycle that alternates between moderated caucuses (focused, Chair-supervised discussion of subtopics — § 7) and unmoderated caucuses (free discussion without the Chair — § 9). Committees typically run about 3–4 of each before moving to resolution writing. These counts are guidelines only; the Chair adjusts them for time and debate quality.</p>
+
+      <h2 id="sec-2-3">2.3 Resolution Phase</h2>
+      <p>A long unmoderated caucus is allocated for drafting Draft Resolutions (DRs). Once blocs submit DRs, the Chair typically accepts 2–3 for presentation. Each is introduced, presented by its authors, and opened to delegate questions, followed by any friendly or unfriendly amendments (§ 10.5).</p>
+
+      <h2 id="sec-2-4">2.4 Voting and Closing</h2>
+      <p>Each accepted resolution is voted on individually, in presentation order, through up to three rounds (§ 11.3). As soon as one resolution passes by simple majority, voting stops and the remaining resolutions are not voted on. Whether or not any resolution passes, formal debate is then suspended and the committee is adjourned.</p>
+
+      <h1 id="rollcall">3. Roll Call and Voting Status</h1>
+      <p>Roll call happens once, immediately after the motion to enter formal debate passes (§ 2.1). At this stage each delegate chooses a voting status that governs their options for the rest of committee.</p>
+      <table>
+        <tr><th>Status</th><th>Meaning</th><th>Can Abstain on Documents?</th></tr>
+        <tr><td>Present</td><td>Retains full flexibility on future votes</td><td>Yes — may vote Yes, No, or Abstain</td></tr>
+        <tr><td>Present and Voting</td><td>Commits to taking a position on every vote</td><td>No — must vote Yes or No</td></tr>
+      </table>
+      <p>Choosing <b>Present</b> gives a delegate more freedom later; choosing <b>Present and Voting</b> signals confidence in the portfolio's stance to the Chair. Once selected, a delegate's status generally holds for the rest of committee.</p>
+
+      <h1 id="points">4. Points</h1>
+      <p>A point is a formal question, clarification, personal request, or concern about ROP implementation or a factual inaccuracy, raised by a delegate to the Chair.</p>
+      <p class="script">"The Delegate of [portfolio] would like to raise a point of [point type] regarding [concern]."</p>
+
+      <h2 id="sec-4-1">4.1 Types of Points</h2>
+      <p><b>Point of Personal Privilege</b> — A personal request to the Chair — e.g., asking to be moved on the Speaker's List due to technical difficulties, or asking the Chair to speak up. May be raised even during another delegate's speech, if it concerns audibility or comfort.</p>
+      <p><b>Point of Order</b> — Raised when the ROP is not being followed: motions taken out of order, a procedural or factual error by the Chair or a delegate, use of personal pronouns, etc. Must wait until the end of the delegate's speech in question.</p>
+      <p><b>Point of Parliamentary Inquiry</b> — A question to the dais about how the ROP works — order of motions, what a term means, or any other procedural question.</p>
+      <p><b>Point of Information</b> — A question posed to another delegate about the content of their speech. By default only usable after GSL speeches, not after moderated caucus speeches, unless the ROP has been amended to allow it (see § 7.4).</p>
+
+      <h2 id="sec-4-2">4.2 When Points May Be Raised</h2>
+      <ul>
+        <li>Point of Personal Privilege — any time, including mid-speech.</li>
+        <li>Point of Order — only at the end of the relevant speech.</li>
+        <li>Point of Parliamentary Inquiry and Point of Information — only when the Chair asks, "Are there any points or motions on the floor?"</li>
+      </ul>
+
+      <h1 id="motions">5. Motions</h1>
+      <p>A motion is a formal request to the Chair about the flow of debate. Unless noted otherwise, all motions are raised when the Chair asks, "Are there any points or motions on the floor?" The list below covers the motions delegates use most; a delegate may bring any other substantive or procedural request to the Chair in the same way.</p>
+
+      <h3>1. Enter Formal Debate</h3>
+      <p class="script">"The Delegate of [portfolio] moves to enter formal debate."</p>
+      <p><b>Purpose:</b> Transitions the committee into structured debate governed by a Speaker's List.<br><b>Vote required:</b> Simple majority</p>
+
+      <h3>2. Set the Agenda</h3>
+      <p class="script">"The Delegate of [portfolio] moves to set the agenda to [topic]."</p>
+      <p><b>Purpose:</b> Officially names the agenda for deliberation.<br><b>Vote required:</b> Simple majority</p>
+
+      <h3>3. Suspend Debate for an Unmoderated Caucus</h3>
+      <p class="script">"The Delegate of [portfolio] moves to suspend formal debate and enter an unmoderated caucus of [time] minutes for the purpose of [reason]."</p>
+      <p><b>Purpose:</b> Lets delegates confer freely without the Chair present; no points are awarded during this time.<br><b>Vote required:</b> Simple majority</p>
+
+      <h3>4. Enter a Moderated Caucus</h3>
+      <p class="script">"The Delegate of [portfolio] moves to enter a moderated caucus for [total time] minutes with [number] speakers, each speaking for [time] seconds, on the topic of [subtopic]."</p>
+      <p><b>Purpose:</b> Opens focused, optional discussion of a subtopic with a fixed Speaker's List.<br><b>Vote required:</b> Simple majority</p>
+
+      <h3>5. Introduce a Draft Resolution</h3>
+      <p class="script">"The Delegate of [portfolio] moves to introduce Draft Resolution [number/letter]."</p>
+      <p><b>Purpose:</b> Presents a completed DR to committee for questions, amendments, and voting.<br><b>Vote required:</b> Simple majority (to accept for presentation, at Chair's discretion)</p>
+
+      <h3>6. Amend the Rules of Procedure</h3>
+      <p class="script">"The Delegate of [portfolio] moves to amend the Rules of Procedure to [change]."</p>
+      <p><b>Purpose:</b> Proposes a change to the standing ROP.<br><b>Vote required:</b> Simple majority</p>
+
+      <h3>7. Introduce a Friendly Amendment</h3>
+      <p class="script">"...moves to introduce a friendly amendment to Draft Resolution [number], [describe change]."</p>
+      <p><b>Purpose:</b> Proposes a minor change to a DR that all authors accept.<br><b>Vote required:</b> None — implemented on unanimous author approval</p>
+
+      <h3>8. Introduce an Unfriendly Amendment</h3>
+      <p class="script">"...moves to introduce an unfriendly amendment to Draft Resolution [number], [describe change]."</p>
+      <p><b>Purpose:</b> Proposes a clause addition or change the authors do not approve.<br><b>Vote required:</b> Simple majority</p>
+
+      <h3>9. Close Debate (Move to Previous Question)</h3>
+      <p class="script">"The Delegate of [portfolio] moves to close debate and move to voting procedure."</p>
+      <p><b>Purpose:</b> Ends debate and proceeds directly to voting.<br><b>Vote required:</b> Special majority (2/3)</p>
+
+      <h3>10. Adjourn the Session</h3>
+      <p class="script">"The Delegate of [portfolio] moves to adjourn the session."</p>
+      <p><b>Purpose:</b> Permanently ends the committee session.<br><b>Vote required:</b> Special majority (2/3)</p>
+
+      <h3>11. Recess</h3>
+      <p class="script">"The Delegate of [portfolio] moves to recess for [duration / until HH:MM]."</p>
+      <p><b>Purpose:</b> Temporarily suspends the formal session.<br><b>Vote required:</b> Simple majority</p>
+
+      <h3>12. Reconsider</h3>
+      <p class="script">"The Delegate of [portfolio] moves to reconsider [prior motion or resolution]."</p>
+      <p><b>Purpose:</b> Reopens a matter already decided for a new vote.<br><b>Vote required:</b> Special majority (2/3)</p>
+
+      <h3>13. Extend Speaking Time</h3>
+      <p class="script">"...moves to amend the Rules of Procedure and extend the maximum speaking time for [speech type] to [new time]."</p>
+      <p><b>Purpose:</b> Adjusts a standard speaking-time limit (GSL or moderated caucus cap).<br><b>Vote required:</b> Simple majority</p>
+
+      <h2 id="sec-5-1">5.1 A Note on Table Debate</h2>
+      <p>Some committees also recognize a motion to Table Debate, which pauses discussion of the current agenda item to take up something else, without ending committee. It is treated as moderately disruptive (§ 9.4) and, like other non-listed motions, may be raised at the Chair's discretion under committee-specific rules.</p>
+
+      <h1 id="gsl">6. The General Speaker's List (GSL)</h1>
+      <p>The GSL is the committee's primary and continuous speaking forum, giving every delegate an equal chance to address the committee on the agenda. It opens automatically upon entering formal debate and remains open — refilled as needed — for the rest of committee. At least one GSL speech must occur between any two caucuses (moderated or unmoderated).</p>
+
+      <h2 id="sec-6-1">6.1 Adding Yourself to the GSL</h2>
+      <p>The Chair opens the list by calling alphabetically through portfolios:</p>
+      <p class="script">"Are there any delegates who wish to be added to the General Speaker's List? We will proceed in alphabetical order."</p>
+      <p>Delegates respond in turn with:</p>
+      <ul>
+        <li>"The Delegate of [portfolio] would like to be added to the General Speaker's List," or</li>
+        <li>"The Delegate of [portfolio] would not like to be added to the General Speaker's List."</li>
+      </ul>
+      <p>After the initial call, a delegate may add themselves at any later point when the Chair asks, "Are there any points or motions on the floor?", using the same script. Requests are processed in the order received. A portfolio may appear only once on the GSL at a time, but there is no limit on how many times a delegate may speak over the course of committee — once their name has passed, they may re-add themselves.</p>
+
+      <h2 id="sec-6-2">6.2 Speaking Time</h2>
+      <p>GSL speeches have a 90-second upper limit by default, changeable only by a motion to amend the ROP (§ 5, Motion 13). A delegate may yield before using the full time if they finish early.</p>
+
+      <h2 id="sec-6-3">6.3 Delivering a Speech</h2>
+      <p>When a delegate's name comes up, the Chair recognizes them:</p>
+      <p class="script">"The Delegate of [portfolio], you have been recognized. You have 90 seconds."</p>
+      <p>A typical speech: opens by addressing the committee (e.g., "Honorable Chair, fellow delegates"), states the portfolio's position on the agenda, proposes solutions consistent with national policy, and closes by yielding remaining time (§ 8).</p>
+
+      <h2 id="sec-6-4">6.4 Points of Information After a GSL Speech</h2>
+      <p>Once a speaker yields to questions, the Chair asks whether there are any points of information. Delegates raise a point of information to be recognized; the speaker answers each in turn until time runs out or the Chair moves on. Questions should relate directly to the speech's content, time used for Q&amp;A comes out of the speaker's remaining time, and the speaker may decline to answer if time has expired.</p>
+
+      <h2 id="sec-6-5">6.5 Removing Yourself from the GSL</h2>
+      <p>A delegate may withdraw before speaking, when the Chair calls for points or motions:</p>
+      <p class="script">"The Delegate of [portfolio] would like to be removed from the General Speaker's List."</p>
+      <p>The Chair may deny removal if the delegate is already next on the list.</p>
+
+      <h2 id="sec-6-6">6.6 Keeping Participation Broad</h2>
+      <p>If the same few delegates dominate the GSL while others stay silent, the Chair may encourage non-participants to add themselves, cap how often one delegation speaks per cycle, or move the committee into a moderated caucus to widen participation.</p>
+
+      <h1 id="modcaucus">7. Moderated Caucuses</h1>
+      <p>A moderated caucus is a focused, Chair-supervised discussion of a specific agenda subtopic, run on its own temporary Speaker's List. Participation is optional and the list has a fixed number of speaker slots.</p>
+
+      <h2 id="sec-7-1">7.1 Motioning</h2>
+      <p class="script">"The Delegate of [portfolio] moves to enter a moderated caucus for [total time] minutes with [number] speakers, each speaking for [time per speaker] seconds, on the topic of [subtopic]."</p>
+      <table>
+        <tr><th>Element</th><th>Description</th><th>Example</th></tr>
+        <tr><td>Total time</td><td>Overall duration of the caucus</td><td>12 minutes</td></tr>
+        <tr><td>Number of speakers</td><td>Total delegates who will speak</td><td>18 speakers</td></tr>
+        <tr><td>Time per speaker</td><td>Total time ÷ number of speakers (60-second cap by default)</td><td>40 seconds</td></tr>
+        <tr><td>Topic</td><td>The specific subtopic under discussion</td><td>"Renewable energy infrastructure in developing nations"</td></tr>
+      </table>
+      <p>Example: <i>"The Delegate of France moves to enter a moderated caucus for 12 minutes with 18 speakers, each speaking for 40 seconds, on the topic of renewable energy infrastructure in developing nations."</i></p>
+
+      <h2 id="sec-7-2">7.2 Adoption and Building the Speaker's List</h2>
+      <p>The motion is voted on (simple majority). If it passes, the Chair announces the terms and opens a dedicated Speaker's List:</p>
+      <p class="script">"We will now take requests to be added to the moderated caucus Speaker's List. We will call out your country name in alphabetical order. Specify if you wish to speak."</p>
+      <p>The Chair calls alphabetically; delegates respond, "The Delegate of [portfolio] would like to be added to the Speaker's List," or decline. The list closes once the requested number of speakers is reached or no one else volunteers; if fewer delegates volunteer than requested, the caucus proceeds with the speakers it has. A portfolio may appear only once on a given moderated caucus's list, and there is no penalty for choosing not to speak.</p>
+
+      <h2 id="sec-7-3">7.3 Speaking During the Caucus</h2>
+      <p class="script">"The Delegate of [portfolio], you have been recognized. You have [X] seconds to address the topic of [subtopic]."</p>
+      <p>Speeches must stay on the assigned subtopic and the time limit is strictly enforced; standard time warnings apply. Because speaking times are short, there is typically no time left to yield to questions or comments — yielding to the Chair is standard unless time remains. If a delegate strays significantly off-topic, the Chair may warn them or interrupt.</p>
+
+      <h2 id="sec-7-4">7.4 Points of Information</h2>
+      <p>By default, points of information are not permitted after moderated caucus speeches, since short speaking times make Q&amp;A impractical. A motion to amend the ROP can change this for the rest of committee (§ 5, Motion 6).</p>
+
+      <h2 id="sec-7-5">7.5 How Many, and How Disruptive</h2>
+      <p>Committees typically run about 3–4 moderated caucuses over the course of debate (a guideline, not a rule). Compared to unmoderated caucuses, adjournment, or recess, moderated caucuses are less disruptive: they run for shorter, fixed periods, keep a structured Speaker's List, and stay under the Chair's direct oversight (see the full disruption hierarchy in § 9.4).</p>
+
+      <h1 id="yielding">8. Yielding</h1>
+      <p>Every speech ends with a yield. At the end of a delegate's speech, the Chair asks how they would like to yield; if fewer than ten seconds remain, no yield is available and the Chair voids the remaining time.</p>
+
+      <h2 id="sec-8-1">8.1 Yield to Questions</h2>
+      <p class="script">"The Delegate of [portfolio] yields to questions."</p>
+      <p>Opens the floor to points of information from other delegates. Each question-and-answer exchange is deducted from the speaker's remaining time; the Chair decides how many questions fit. Only available after GSL speeches by default (§ 4.1, § 6.4), unless the ROP has been amended to extend it to moderated caucuses.</p>
+
+      <h2 id="sec-8-2">8.2 Yield to Comments</h2>
+      <p class="script">"The Delegate of [portfolio] yields to comments."</p>
+      <p>Lets other delegates make brief remarks on the speech; the original speaker does not respond. The Chair decides how many comments to take.</p>
+
+      <h2 id="sec-8-3">8.3 Yield to Another Delegate</h2>
+      <p class="script">"The Delegate of [portfolio] yields to the Delegate of [recipient's portfolio]."</p>
+      <p>Transfers the remaining time to a named delegate, who must accept it and use it immediately. At least thirty seconds must remain for this yield to be available, and a delegate may not yield to someone already on the current Speaker's List.</p>
+
+      <h2 id="sec-8-4">8.4 Yield to the Chair</h2>
+      <p class="script">"The Delegate of [portfolio] yields to the Chair."</p>
+      <p>Leaves the remaining time to the Chair's discretion — the default choice when little time remains or no other yield fits.</p>
+
+      <h1 id="unmodcaucus">9. Unmoderated Caucuses</h1>
+      <p>An unmoderated caucus suspends formal debate so delegates can talk freely, negotiate, build alliances, and work on documents without the Chair present. No points or motions can be raised and no points are scored during this time.</p>
+
+      <h2 id="sec-9-1">9.1 Motioning</h2>
+      <p class="script">"The Delegate of [portfolio] moves to suspend formal debate and enter an unmoderated caucus of [total time] minutes for the purpose of [reason]."</p>
+      <p>Examples:</p>
+      <ul>
+        <li><i>Short, for discussion:</i> "The Delegate of Brazil moves to suspend formal debate for an unmoderated caucus of 10 minutes for the purpose of discussing potential subtopics for the next moderated caucus."</li>
+        <li><i>Long, for writing:</i> "The Delegate of Japan moves to suspend formal debate for an unmoderated caucus of 30 minutes for the purpose of writing draft resolutions."</li>
+      </ul>
+      <p>The motion is voted on (simple majority). Once it passes, the Chair announces the time and purpose, the timer begins, and the Chair steps back while delegates disperse.</p>
+
+      <h2 id="sec-9-2">9.2 Short vs. Long Caucuses</h2>
+      <table>
+        <tr><th></th><th>Short Caucus</th><th>Long Caucus (Drafting Session)</th></tr>
+        <tr><td>Duration</td><td>5–15 minutes</td><td>20–45+ minutes, or as needed</td></tr>
+        <tr><td>Typical timing</td><td>Between moderated caucuses, early-to-mid committee</td><td>After sufficient debate (roughly 3–4 mod./unmod. cycles)</td></tr>
+        <tr><td>Purpose</td><td>Discuss upcoming topics, form initial blocs, share ideas informally</td><td>Write Draft Resolutions, finalize working papers, solidify blocs</td></tr>
+        <tr><td>Outcome</td><td>Delegates return better prepared for the next caucus or GSL</td><td>Completed Draft Resolutions submitted to the Chair</td></tr>
+      </table>
+
+      <h2 id="sec-9-3">9.3 What Happens During the Caucus</h2>
+      <p><b>Permitted:</b> speaking freely with any delegate, forming or joining blocs, lobbying, writing or editing working papers and DR clauses, exchanging contact information, sending informal chits, and discussing bloc strategy.</p>
+      <p><b>Not permitted / not scored:</b> formal speeches or structured debate, raising points or motions (the Chair is not present to receive them), and submitting substantive chits (the Chair is unavailable). No points are awarded for any activity during the caucus itself — see § 10.9 for how lobbying and blocking are actually scored, through formal chits.</p>
+
+      <h2 id="sec-9-4">9.4 Ending the Caucus and Degree of Disruption</h2>
+      <p>When time expires, the Chair returns and calls the committee back to order:</p>
+      <p class="script">"The unmoderated caucus has concluded. We will now return to formal debate."</p>
+      <p>Delegates take their seats, and the Chair calls for points or motions; a GSL speech is required before the next caucus motion can be entertained (§ 6).</p>
+      <p>Because they remove the Chair's oversight entirely, can run long, and halt the Speaker's List, unmoderated caucuses rank among the most disruptive actions available to committee. The table below gives the full disruption hierarchy referenced throughout this document: more disruptive motions are generally addressed before less disruptive ones when several are on the floor, and disruptiveness rises with duration.</p>
+      <table>
+        <tr><th>Disruption Level</th><th>Motions</th></tr>
+        <tr><td>Most disruptive</td><td>Adjournment, Recess, Unmoderated Caucus</td></tr>
+        <tr><td>Moderately disruptive</td><td>Close Debate, Table Debate</td></tr>
+        <tr><td>Less disruptive</td><td>Moderated Caucus, Introduce Draft Resolution</td></tr>
+        <tr><td>Least disruptive</td><td>Set Agenda, Extend Speaking Time, Amendments</td></tr>
+      </table>
+
+      <h1 id="documentation">10. Documentation</h1>
+      <p>Every document a delegate submits demonstrates some mix of research, writing, and procedural skill, and is scored accordingly (§ 10.9).</p>
+
+      <h2 id="sec-10-1">10.1 Position Paper</h2>
+      <p>A pre-committee submission, required from every delegate, laying out the portfolio's stance on the agenda.</p>
+      <ul>
+        <li>Contents: the portfolio's stance on the agenda; past national actions on the issue; past international actions (treaties signed, resolutions supported, etc.); proposed solutions consistent with national policy.</li>
+        <li>Format: typically two pages; parenthetical in-text citations; a full reference list at the end, in MLA 8th edition format.</li>
+        <li>Due before the formal session begins.</li>
+        <li>Evaluated on research depth, policy alignment, clarity, and correct citation.</li>
+      </ul>
+
+      <h2 id="sec-10-2">10.2 References</h2>
+      <p>A record of every source consulted while preparing position papers, speeches, and other documents.</p>
+      <table>
+        <tr><th>Document Type</th><th>Citation Requirement</th></tr>
+        <tr><td>Position Paper</td><td>Parenthetical citations plus a full MLA 8th-edition reference list</td></tr>
+        <tr><td>Speech</td><td>Verbal attribution; full references available on request</td></tr>
+        <tr><td>Press Release</td><td>All sources named in text</td></tr>
+        <tr><td>Draft Resolution / Working Paper</td><td>All sources named in text</td></tr>
+      </table>
+
+      <h2 id="sec-10-3">10.3 Working Paper</h2>
+      <p>An informal, unfinished draft used to float ideas, gather feedback, or record research before a Draft Resolution is written. It follows no strict format — typically just proposed solutions grouped by theme, sometimes with rough preambulatory or operative language — and goes through no formal vote. It may be shared within a bloc or openly, and can later be developed into a Draft Resolution.</p>
+
+      <h2 id="sec-10-4">10.4 Draft Resolution (DR) and Resolution</h2>
+      <p>A <b>Draft Resolution</b> is a proposed resolution written by delegates and awaiting introduction and a vote. A <b>Resolution</b> is a Draft Resolution that has passed by simple majority and become the committee's official position — once any single resolution passes, the remaining DRs are not voted on.</p>
+      <p><b>Authors</b> actively wrote the resolution (minimum 1, typically max 2–3). <b>Signatories</b> support putting it to a vote and consideration, whether or not they agree with every clause.</p>
+
+      <h3>Heading Format</h3>
+      <ul>
+        <li>Title: [free text, usually agenda-related]</li>
+        <li>Committee: [Committee Name]</li>
+        <li>Agenda: [full agenda as set at the start of committee]</li>
+        <li>Author(s): [full official country names]</li>
+        <li>Signatories: [full official country names of all supporting delegations]</li>
+      </ul>
+      <p><i>The [Committee Name],</i></p>
+
+      <h3>Preambulatory Clauses</h3>
+      <p>Set out context, background, and justification for action. Each begins with an italicized preambulatory phrase and ends in a comma.</p>
+      <p><i>Common phrases:</i> Affirming, Aware of, Bearing in mind, Believing, Contemplating, Deeply concerned, Emphasizing, Expecting, Fully alarmed, Guided by, Having adopted, Keeping in mind, Noting with regret, Observing, Reaffirming, Realizing, Recalling, Recognizing, Referring to, Seeking, Taking into account, Viewing with appreciation.</p>
+
+      <h3>Operative Clauses</h3>
+      <p>The actionable body of the resolution — numbered sequentially, each beginning with a bolded/underlined operative phrase, and ending in a semicolon except the final clause, which ends in a period.</p>
+      <p><i>Common phrases:</i> Accepts, Adopts, Affirms, Approves, Authorizes, Calls upon, Condemns, Confirms, Considers, Declares, Deplores, Designates, Directs, Encourages, Endorses, Expresses its appreciation, Further recommends, Invites, Notes, Proclaims, Recommends, Regrets, Reminds, Requests, Resolves, Seeks, Supports, Suggests, Takes note of, Urges.</p>
+
+      <h3>Content Requirements</h3>
+      <p>To be accepted for presentation, a DR must offer clear, tangible, real-world solutions to the agenda, including: an enforcement mechanism (how it will be carried out), a funding source (how it will be paid for), and specific actions (exactly what will be done, by whom, and when).</p>
+
+      <h3>Submission and Review</h3>
+      <p>DRs are submitted to the Chair after the drafting period. The Chair reviews each for formatting and substantive completeness and typically accepts 2–3 for presentation to the committee.</p>
+
+      <h2 id="sec-10-5">10.5 Amendments</h2>
+      <p>Amendments propose changes to a DR after it has been introduced.</p>
+      <h3>Friendly Amendment</h3>
+      <p>A minor change — grammar or spelling fixes, wording within a sub-clause, or a clarification that does not alter intent — that all authors agree to.</p>
+      <ul>
+        <li>Process: proposed to the authors; if all authors consent, it is implemented into the DR immediately. No committee vote is needed.</li>
+      </ul>
+      <p class="script">"The Delegate of [portfolio] moves to introduce a friendly amendment to Draft Resolution [number], [describe change]."</p>
+      <h3>Unfriendly Amendment</h3>
+      <p>A new clause, or a change to an existing clause, that the authors do not approve.</p>
+      <ul>
+        <li>Process: introduced to committee; put to a roll call vote; passes on a simple majority. If it fails, the original text stands.</li>
+      </ul>
+      <p class="script">"The Delegate of [portfolio] moves to introduce an unfriendly amendment to Draft Resolution [number], [describe addition or change]."</p>
+
+      <h2 id="sec-10-6">10.6 Press Release</h2>
+      <p>A public statement summarizing the committee's deliberations, decisions, or stance — issued at the close of committee (alongside or instead of a resolution) or as directed by committee-specific rules. It covers what was discussed, key positions or agreements reached, and outcomes, and is written in an accessible, journalistic style that may quote delegates. All sources used must be named in the text.</p>
+
+      <h2 id="sec-10-7">10.7 Chits</h2>
+      <p>A chit is a written, one-on-one message passed during formal session.</p>
+      <p><b>Formal Chit</b> — Addressed to the Executive Board — a point of information or relevant blocking detail for the Chair's review. Must be marked "via EB"; the Chair considers all formal chits when allotting points.</p>
+      <p><b>Informal Chit</b> — A personal or lobbying message to another delegate. Not reviewed by the EB and not scored.</p>
+
+      <h2 id="sec-10-8">10.8 Substantive Chit</h2>
+      <p>A brief, informal document submitted directly to the Chair — distinct from a chit between delegates — when a delegate has more to contribute than their speaking time allowed.</p>
+      <ul>
+        <li>Use it: after a speech where time ran short; during a moderated caucus when not selected to speak; any time a delegate feels their position wasn't fully represented.</li>
+        <li>Content: the portfolio's stance, urgent points not otherwise raised, or a contribution to a moderated caucus topic.</li>
+        <li>The Chair scores it on content quality, relevance, and demonstrated knowledge.</li>
+      </ul>
+
+      <h2 id="sec-10-9">10.9 How Documents Are Scored</h2>
+      <table>
+        <tr><th>Document</th><th>Skill Category</th></tr>
+        <tr><td>Position Paper</td><td>Research, Knowledge</td></tr>
+        <tr><td>References</td><td>Research</td></tr>
+        <tr><td>Substantive Chit</td><td>Knowledge, Delivery</td></tr>
+        <tr><td>Draft Resolution (authoring)</td><td>Resolution Writing</td></tr>
+        <tr><td>Working Paper</td><td>Resolution Writing</td></tr>
+        <tr><td>Formal Chits (blocking)</td><td>Lobbying</td></tr>
+      </table>
+
+      <h1 id="voting">11. Voting Procedures</h1>
+      <p>Voting is how the committee decides motions, amendments, Draft Resolutions, and other procedural matters. Every delegation's vote carries equal weight — except that the five permanent members can veto resolutions in the UN Security Council — and every threshold in this section is measured against delegates who are present and voting, not total committee membership.</p>
+
+      <h2 id="sec-11-1">11.1 How a Vote Is Conducted</h2>
+      <p>Most substantive votes are taken by roll call: the Chair calls each portfolio alphabetically and each delegate responds verbally, creating an official record of how every delegation voted. Roll call is used for all three DR voting rounds, unfriendly amendments, and motions to close debate, adjourn, or reconsider.</p>
+      <p class="script">"Delegate of [Portfolio 1]?" — "[Yes / No / Abstain / Yes with Rights / No with Rights]"<br>"Delegate of [Portfolio 2]?" — "[...]"</p>
+      <p>Simpler procedural motions (entering formal debate, setting the agenda, entering a caucus, etc.) are typically decided by a show of placards rather than a full roll call, at the Chair's discretion.</p>
+
+      <h2 id="sec-11-2">11.2 Choosing Present vs. Present and Voting</h2>
+      <table>
+        <tr><th>Choose "Present" if…</th><th>Choose "Present and Voting" if…</th></tr>
+        <tr><td>You are undecided on the issues</td><td>You are confident in your portfolio's stance</td></tr>
+        <tr><td>You may want to abstain on controversial matters</td><td>You want to demonstrate strong commitment</td></tr>
+        <tr><td>Your nation traditionally avoids firm positions</td><td>Your nation has a clear, consistent policy</td></tr>
+        <tr><td>You want maximum flexibility during voting</td><td>You want to show leadership and decisiveness</td></tr>
+      </table>
+
+      <h2 id="sec-11-3">11.3 Voting on Draft Resolutions</h2>
+      <p>DRs are voted on individually, in presentation order, through up to three rounds. Voting stops the moment any resolution passes — the rest are not voted on.</p>
+      <h3>Round 1 — Full Rights</h3>
+      <table>
+        <tr><th>Order</th><th>Response</th><th>Meaning</th></tr>
+        <tr><td>1st</td><td>Yes with Rights</td><td>In favor; wishes to explain the vote afterward</td></tr>
+        <tr><td>2nd</td><td>No with Rights</td><td>Opposed; wishes to explain the vote afterward</td></tr>
+        <tr><td>3rd</td><td>Yes</td><td>In favor, no explanation</td></tr>
+        <tr><td>4th</td><td>No</td><td>Opposed, no explanation</td></tr>
+        <tr><td>5th</td><td>Abstain</td><td>Neither for nor against (only available to "Present" delegations)</td></tr>
+      </table>
+      <h3>Round 2 — Second Rights</h3>
+      <p>Identical structure to Round 1, giving delegations one more chance to explain or persuade before the final round.</p>
+      <h3>Round 3 — Final Round (No Rights)</h3>
+      <p>A simplified Yes / No / Abstain vote with no explanations and no speeches. If the resolution passes, it is adopted and the committee is successful; if it fails, the next accepted resolution (if any) goes through the same three rounds. If every presented resolution fails, the committee is unsuccessful.</p>
+
+      <h2 id="sec-11-4">11.4 Rights of Explanation ("With Rights")</h2>
+      <p>Delegates who voted "Yes with Rights" or "No with Rights" in Round 1 or 2 get to explain their vote after everyone has voted. The Chair announces the preliminary result, then calls on No-with-Rights speakers first, followed by Yes-with-Rights speakers, each given a brief, fixed amount of time (30 seconds by default, extendable by motion). Rights are not available in Round 3.</p>
+      <table>
+        <tr><th>Do</th><th>Don't</th></tr>
+        <tr><td>Explain your portfolio's reasoning</td><td>Attack other delegates personally</td></tr>
+        <tr><td>Reference national policy</td><td>Introduce entirely new arguments</td></tr>
+        <tr><td>Clarify your position on specific clauses</td><td>Exceed your allotted time</td></tr>
+        <tr><td>Acknowledge complexities of the issue</td><td>Re-deliver your full GSL speech</td></tr>
+      </table>
+
+      <h2 id="sec-11-5">11.5 Majority Requirements</h2>
+      <h3>Simple Majority (more than 50% of those present and voting)</h3>
+      <table>
+        <tr><th>Decision Type</th><th>Examples</th></tr>
+        <tr><td>Procedural matters</td><td>Entering formal debate, setting the agenda, caucuses, amending the Speaker's List, extending speaking time</td></tr>
+        <tr><td>Draft Resolutions</td><td>Adopting a resolution, any round</td></tr>
+        <tr><td>Unfriendly amendments</td><td>Adding or changing a clause against the authors' wishes</td></tr>
+        <tr><td>ROP amendments</td><td>Changing a standing rule of procedure</td></tr>
+      </table>
+      <p><i>Example:</i> of 20 delegates present and voting — 11 Yes, 8 No, 1 Abstain → passes (11 of 19 non-abstaining votes is a majority).</p>
+      <h3>Special Majority (two-thirds or more)</h3>
+      <table>
+        <tr><th>Decision Type</th><th>Examples</th></tr>
+        <tr><td>Close debate</td><td>Moving directly to voting procedure</td></tr>
+        <tr><td>Adjourn</td><td>Ending the session permanently</td></tr>
+        <tr><td>Reconsider</td><td>Revoting on a previously decided matter</td></tr>
+      </table>
+      <p><i>Example:</i> of 18 delegates present and voting, at least 12 Yes votes are needed (12/18 = 66.7%); 11 Yes, 7 No fails (61.1%, below two-thirds).</p>
+
+      <h2 id="sec-11-6">11.6 Voting on Amendments</h2>
+      <p><b>Friendly:</b> no committee vote — submitted to the authors, and implemented immediately if all consent.</p>
+      <p><b>Unfriendly:</b> a roll call vote, requiring a simple majority; if it fails, the DR's original text stands unchanged.</p>
+
+      <h2 id="sec-11-7">11.7 Majority Reference Table</h2>
+      <table>
+        <tr><th>Motion / Action</th><th>Majority Required</th></tr>
+        <tr><td>Enter Formal Debate</td><td>Simple</td></tr>
+        <tr><td>Set Agenda</td><td>Simple</td></tr>
+        <tr><td>Suspend Debate (Unmoderated Caucus)</td><td>Simple</td></tr>
+        <tr><td>Enter Moderated Caucus</td><td>Simple</td></tr>
+        <tr><td>Introduce Draft Resolution</td><td>Simple</td></tr>
+        <tr><td>Amend Rules of Procedure</td><td>Simple</td></tr>
+        <tr><td>Extend Speaking Time</td><td>Simple</td></tr>
+        <tr><td>Friendly Amendment</td><td>None (author approval only)</td></tr>
+        <tr><td>Unfriendly Amendment</td><td>Simple</td></tr>
+        <tr><td>Close Debate</td><td>Special (2/3)</td></tr>
+        <tr><td>Adjourn Session</td><td>Special (2/3)</td></tr>
+        <tr><td>Reconsider</td><td>Special (2/3)</td></tr>
+      </table>
+
+      <h2 id="sec-11-8">11.8 After Voting</h2>
+      <p><b>If a resolution passes:</b> the Chair announces success, remaining DRs are not voted on, formal debate is suspended, and the committee is adjourned — brief closing remarks may follow at the Chair's discretion.</p>
+      <p><b>If all resolutions fail:</b> the Chair announces that the committee has been unsuccessful; formal debate is suspended and the committee is adjourned all the same.</p>
+      <p><b>After any other vote:</b> the Chair announces the count in favor, opposed, and abstaining, then resumes normal debate by asking, "Are there any points or motions on the floor?"</p>
+
+      <h1 id="glossary">12. Glossary</h1>
+      <p>Quick-reference definitions. For full procedure and scripts, see the section indicated.</p>
+      <table>
+        <tr><th>Term</th><th>Quick Definition</th></tr>
+        <tr><td>Adjournment</td><td>Permanent end of the committee session. § 5, § 11.8</td></tr>
+        <tr><td>Agenda</td><td>The problem the committee addresses, official once set by motion. § 1.2, § 2.1</td></tr>
+        <tr><td>Bloc / Blocking</td><td>An informal group of delegates collaborating on documents; recruiting members is called blocking. § 9.3, § 10.9</td></tr>
+        <tr><td>Chit (Formal / Informal)</td><td>A one-on-one written message during formal session. § 10.7</td></tr>
+        <tr><td>Degree of Disruption</td><td>How much a motion interrupts committee flow; used to prioritize competing motions. § 9.4</td></tr>
+        <tr><td>Draft Resolution / Resolution</td><td>A proposed solution document, or one that has passed. § 10.4</td></tr>
+        <tr><td>Flow of Committee</td><td>The required order of proceedings. § 2</td></tr>
+        <tr><td>GSL (General Speaker's List)</td><td>The committee's continuous default Speaker's List. § 6</td></tr>
+        <tr><td>Lobbying</td><td>Persuading other delegates to support a motion or resolution. § 9.3</td></tr>
+        <tr><td>Motion</td><td>A formal request to the Chair about debate flow. § 5</td></tr>
+        <tr><td>Out of Order</td><td>A point, motion, or ruling that violates procedure or timing.</td></tr>
+        <tr><td>Point</td><td>A formal question or request to the Chair. § 4</td></tr>
+        <tr><td>Position Paper</td><td>A pre-committee submission stating a portfolio's stance. § 10.1</td></tr>
+        <tr><td>Quorum</td><td>Minimum attendance for committee to act. § 1.2</td></tr>
+        <tr><td>Roll Call Vote</td><td>A vote taken by calling delegates alphabetically. § 11.1</td></tr>
+        <tr><td>Simple / Special Majority</td><td>More than 50%, or two-thirds or more, of those present and voting. § 11.5</td></tr>
+        <tr><td>Speaker's List</td><td>The order in which delegates speak. § 6, § 7.2</td></tr>
+        <tr><td>Substantive Chit</td><td>A brief document submitted to the Chair to make up for lost speaking time. § 10.8</td></tr>
+        <tr><td>Working Paper</td><td>An informal draft of ideas, a precursor to a Draft Resolution. § 10.3</td></tr>
+        <tr><td>Yield</td><td>How a delegate disposes of remaining speech time. § 8</td></tr>
+      </table>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <p class="credit">&#169; Copyright Kinara Goyal 2026 <img src="downward_arrow.png" class="scrollArrow" id="scrollArrow" alt="Scroll down"></p>
+  </div>
+  <script>
+    const scrollArrow = document.getElementById('scrollArrow');
+    function updateScrollArrow() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      if (scrollable - scrolled <= 2) {
+        scrollArrow.style.visibility = 'hidden';
+      } else {
+        scrollArrow.style.visibility = 'visible';
+      }
+    }
+    window.addEventListener('scroll', updateScrollArrow);
+    window.addEventListener('resize', updateScrollArrow);
+    window.addEventListener('load', updateScrollArrow);
+
+  </script>
+</body>
+</html>

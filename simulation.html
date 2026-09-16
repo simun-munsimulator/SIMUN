@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>SIMUN</title>
+<!-- Favicon Icon -->
+<link rel="icon" type="image/png" href="logo2.png">
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<style>
+/* ============================================================
+   DESIGN SYSTEM & CSS VARIABLES
+   ============================================================ */
+:root {
+  --un-blue: #25c1ff;        /* Official UN Light Blue brand accent */
+  --un-blue-dark: #021c6f;   /* Primary dark contrast color for headers/buttons */
+  --ink: #1c2733;            /* Default dark text color */
+  --paper: #e2edf9;          /* Page background tint */
+  --card: #ffffff;           /* Container/Card background color */
+  --border: #d7dee5;         /* Standard border color */
+  --chair: #feeeff;          /* Light purple background for Chair interventions */
+  --chair-border: #a001b8;   /* Deep purple left accent border for Chair turns */
+  --user: #f8ece1;           /* Warm beige background for Human Delegate turns */
+  --user-border: #f6bc64;     /* Gold left accent border for Human Delegate turns */
+  --narrator: #eeeeee;       /* Light grey background for procedural narration */
+}
+
+/* Reset border-box sizing across all elements */
+* { box-sizing: border-box; }
+
+/* Global typography and background styling */
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+h1, h2, h3 { font-weight: normal; }
+
+/* Default primary button styling */
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.5em 1.2em;
+  border: 1px solid var(--un-blue-dark);
+  background: var(--un-blue);
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover { background: var(--un-blue-dark); }
+button:disabled { background: #9bb7c4; border-color: #9bb7c4; cursor: default; }
+
+/* Secondary button style (white background with dark border) */
+button.secondary {
+  background: #fff;
+  color: var(--un-blue-dark);
+}
+button.secondary:hover { background: #eef7fb; }
+
+/* Form inputs & dropdowns */
+input[type=text], input[type=password], textarea, select {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  padding: 0.4em;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  width: 100%;
+}
+
+/* Faint background watermark showing the official UN emblem */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("un_logo.png");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.05;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ============================================================
+   LAYOUT COMPONENTS & CARDS
+   ============================================================ */
+.screen {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.field { margin-bottom: 1.2rem; }
+.field label { display: block; margin-bottom: 0.3rem; font-weight: bold; }
+.hint { color: #5a6b7a; font-size: 0.9rem; }
+
+/* Form validation error box */
+.error {
+  background: #fdecea;
+  border: 1px solid #e57373;
+  color: #b71c1c;
+  padding: 0.7em 1em;
+  border-radius: 4px;
+  margin: 0.8rem 0;
+  white-space: pre-wrap;
+}
+
+/* ============================================================
+   SIMULATION HEADER BAR
+   ============================================================ */
+#sim-header {
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  background: var(--un-blue);
+  color: #ffffff;
+  padding: 0.8rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  align-items: center;
+}
+#sim-header img {
+  height: 55px;
+  width: auto;
+  display: block;
+}
+#sim-header .title { font-size: 1.2rem; }
+#sim-header .meta  { font-size: 0.9rem; opacity: 0.9; max-width: 35%; }
+#sim-header button {
+  margin-left: auto;
+  background: #fff;
+  color: var(--un-blue-dark);
+  border-color: #fff;
+  font-size: 0.85rem;
+  padding: 0.3em 0.9em;
+}
+
+/* ============================================================
+   TRANSCRIPT & SPEECH CARDS
+   ============================================================ */
+#transcript { padding-bottom: 1rem; }
+
+.turn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--border);
+  border-radius: 6px;
+  padding: 0.8rem 1.1rem;
+  margin: 0.7rem 0;
+}
+
+.turn .who {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+/* Unicode Flag Emoji styling */
+.flag-icon {
+  font-size: 1.15em;
+  line-height: 1;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+#header-country { display: flex; align-items: center; gap: 0.4em; }
+#country-select-row { display: flex; align-items: center; gap: 0.5rem; }
+
+/* Sub-phase tag inside turn header (e.g. "GSL", "MODERATED CAUCUS") */
+.turn .who .phase {
+  font-weight: normal;
+  color: #5a6b7a;
+  font-size: 0.8rem;
+  margin-left: 0.6em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Formatted Speech Paragraphs & Markdown styles */
+.turn .text { line-height: 1.5; }
+.turn .text p { margin: 0 0 0.8em 0; }
+.turn .text p:last-child { margin-bottom: 0; }
+.turn .text u { text-decoration: underline; }
+.turn .text strong { color: #021c6f; font-weight: bold; }
+.turn .text blockquote {
+  border-left: 3px solid var(--un-blue-dark);
+  margin: 0.6em 0;
+  padding-left: 0.8em;
+  font-style: italic;
+  color: #2c3e50;
+}
+.turn .text ul {
+  margin: 0.5em 0 0.8em 0;
+  padding-left: 1.4em;
+}
+.turn .text li { margin-bottom: 0.3em; }
+
+/* Persona role color overrides */
+.turn.chair    { background: var(--chair);    border-left-color: var(--chair-border); }
+.turn.user     { background: var(--user);     border-left-color: var(--user-border); }
+.turn.narrator { background: var(--narrator); border-left-color: #9e9e9e; font-style: italic; }
+
+/* Interactive highlightable keywords for Beginner Mode */
+.mun-keyword {
+  font-weight: bold;
+  color: var(--un-blue-dark);
+  text-decoration: underline dotted var(--un-blue-dark);
+  cursor: pointer;
+  padding: 0 2px;
+  background: rgba(37, 193, 255, 0.18);
+  border-radius: 3px;
+}
+.mun-keyword:hover {
+  background: rgba(37, 193, 255, 0.4);
+}
+
+/* ============================================================
+   CHIT IM POPUP STYLES (BOTTOM RIGHT CORNER)
+   ============================================================ */
+.chit-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 330px;
+  background: var(--card);
+  border: 2px solid var(--un-blue-dark);
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  z-index: 1002;
+  display: flex;
+  flex-direction: column;
+  transition: max-height 0.3s ease;
+  font-family: Georgia, serif;
+}
+.chit-container.collapsed #chit-body {
+  display: none;
+}
+#chit-header {
+  background: var(--un-blue-dark);
+  color: #ffffff;
+  padding: 0.6rem 1rem;
+  font-weight: bold;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+}
+#chit-toggle-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+}
+#chit-body {
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #f9fbfd;
+}
+.chit-field label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.chit-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+  margin-top: -0.1rem;
+  margin-bottom: 0.1rem;
+}
+.chit-toggle-row input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+#chit-messages {
+  height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.chit-msg {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  max-width: 85%;
+  word-wrap: break-word;
+  line-height: 1.35;
+}
+.chit-msg.sent {
+  align-self: flex-end;
+  background: var(--user);
+  border: 1px solid var(--user-border);
+}
+.chit-msg.received {
+  align-self: flex-start;
+  background: #eef7fb;
+  border: 1px solid var(--un-blue);
+}
+.chit-msg .sender {
+  font-weight: bold;
+  font-size: 0.75rem;
+  margin-bottom: 0.2rem;
+  color: var(--un-blue-dark);
+}
+.chit-msg .eb-tag {
+  font-weight: normal;
+  font-style: italic;
+  font-size: 0.7rem;
+  opacity: 0.85;
+  color: #7b1fa2;
+  margin-left: 0.3em;
+}
+.chit-input-row {
+  display: flex;
+  gap: 0.4rem;
+}
+.chit-input-row input {
+  font-size: 0.85rem;
+  padding: 0.4em;
+}
+.chit-input-row button {
+  font-size: 0.85rem;
+  padding: 0.4em 0.8em;
+  white-space: nowrap;
+}
+
+/* Circular red dot badge for widget header */
+.badge {
+  background: #e53935;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 1.3em;
+  height: 1.3em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 0.4rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   MODAL DIALOG POPUPS
+   ============================================================ */
+#modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(40, 40, 40, 0.75);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-box {
+  background: var(--card);
+  border: 2px solid var(--un-blue-dark);
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  max-width: 550px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+  text-align: center;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-box h3 {
+  margin-top: 0;
+  color: var(--un-blue-dark);
+  font-size: 1.3rem;
+  border-bottom: 2px solid var(--un-blue);
+  padding-bottom: 0.4em;
+}
+.modal-box div.content {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  color: var(--ink);
+}
+
+/* ============================================================
+   STICKY BOTTOM CONTROLS PANEL
+   ============================================================ */
+#controls {
+  position: sticky;
+  bottom: 0;
+  background: var(--card);
+  border-top: 2px solid var(--un-blue);
+  padding: 1rem 1.5rem;
+}
+#controls .inner { max-width: 860px; margin: 0 auto; }
+#user-prompt-hint { margin-bottom: 0.6rem; font-style: italic; color: #37474f; }
+#option-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem; }
+#user-text { min-height: 4.5em; margin-bottom: 0.6rem; }
+
+/* Loading spinner animation */
+.spinner {
+  display: inline-block;
+  width: 1em; height: 1em;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  vertical-align: -0.15em;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   FINAL SCORE REPORT TABLE
+   ============================================================ */
+table.scores { border-collapse: collapse; width: 100%; }
+table.scores th, table.scores td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.7em;
+  text-align: left;
+}
+table.scores th { background: var(--un-blue); color: #fff; }
+table.scores tr.user-row { background: var(--user); font-weight: bold; }
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: API KEY INPUT SCREEN -->
+<div id="screen-key" class="screen" style="display:none">
+  <h1>SIMUN</h1>
+  <div class="card">
+    <h2>API key required</h2>
+    <p>This simulator uses an AI model to play the committee chair and all delegates except you. Currently we use Google Gemini AI. For this, we need you to provide an API key, which is completely free!</p>
+    <p class="hint">You can create a free key at
+       <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>.
+       The key is stored only in this browser's local storage.</p>
+    <div class="field">
+      <label for="api-key-input">Gemini API key</label>
+      <input type="password" id="api-key-input" placeholder="AIzaSy..." autocomplete="off"/>
+    </div>
+    <div id="key-error"></div>
+    <button id="save-key-btn">Save key and continue</button>
+  </div>
+</div>
+
+<!-- SCREEN 2: CONFERENCE SETUP SCREEN -->
+<div id="screen-setup" class="screen" style="display:none">
+  <h1>Plan Your Conference</h1>
+  <div class="card">
+    <div class="field">
+      <label for="committee-select">1. Choose Your Committee</label>
+      <p class="hint">Which organ of the UN will your discussion take place in?</p>
+      <select id="committee-select"></select>
+    </div>
+    <div class="field">
+      <label for="agenda-input">2. Agenda for the meeting</label>
+      <p class="hint">What will your committee discuss?</p>
+      <textarea id="agenda-input" rows="3"
+        placeholder="e.g. Financing climate adaptation in vulnerable coastal nations"></textarea>
+    </div>
+    <div class="field">
+      <label for="country-select">3. The country you will represent</label>
+      <p class="hint">Who will you speak for?</p>
+      <div id="country-select-row">
+        <span id="country-select-flag"></span>
+        <select id="country-select"></select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="difficulty-select">4. Choose Difficulty Level</label>
+      <p class="hint">Adjust committee complexity, AI delegate ability, and rules guidance.</p>
+      <select id="difficulty-select">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate" selected>Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+    <!-- CRISIS / BREAKING NEWS OPTION -->
+    <div class="field" id="crisis-field">
+      <label for="crisis-select">5. Include Mid-Committee Crisis / Breaking News?</label>
+      <p class="hint">Inject an unexpected emergency event halfway through debate that requires urgent diplomatic response and resolution proposals.</p>
+      <select id="crisis-select">
+        <option value="no" selected>No crisis (Standard Session)</option>
+        <option value="yes">Yes (Inject Breaking News Crisis)</option>
+      </select>
+    </div>
+    <div id="setup-error"></div>
+    <button id="start-btn">Begin</button>
+    <button id="change-key-btn" class="secondary" style="margin-left:0.5rem">Change API key</button>
+  </div>
+</div>
+
+<!-- SCREEN 3: ACTIVE SIMULATION INTERFACE -->
+<div id="screen-sim" style="display:none">
+  <div id="sim-header">
+    <span><img src="logo2.png" alt="Logo"></span>
+    <span class="title" id="header-committee"></span>
+    <span class="meta" id="header-agenda"></span>
+    <span class="meta" id="header-country"></span>
+    <span><button id="new-session-btn">New session</button></span>
+  </div>
+
+  <div class="screen">
+    <div id="transcript"></div>
+    <div id="sim-error"></div>
+    <div id="closing-report"></div>
+  </div>
+
+  <!-- CHIT IM POPUP BOX -->
+  <div id="chit-box" class="chit-container collapsed">
+    <div id="chit-header">
+      <span>💬 Diplomatic Chits <span id="chit-badge" class="badge" style="display:none">0</span></span>
+      <button id="chit-toggle-btn" type="button" aria-label="Toggle Chit Window">+</button>
+    </div>
+    <div id="chit-body">
+      <div class="chit-field">
+        <label for="chit-recipient-select">Send Chit To:</label>
+        <select id="chit-recipient-select"></select>
+      </div>
+      <label class="chit-toggle-row">
+        <input type="checkbox" id="chit-via-eb-checkbox"/>
+        <span>Via EB (Executive Board)</span>
+      </label>
+      <div id="chit-messages"></div>
+      <div class="chit-input-row">
+        <input type="text" id="chit-text-input" placeholder="Type a chit..." autocomplete="off"/>
+        <button id="chit-send-btn" type="button">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <div class="inner">
+      <div id="next-area">
+        <button id="next-btn">Continue &#9654;</button>
+        <span class="hint" style="margin-left:0.8rem">Click to let the committee proceed.</span>
+      </div>
+
+      <div id="respond-area" style="display:none">
+        <div id="user-prompt-hint"></div>
+        <div id="option-buttons"></div>
+        <textarea id="user-text" placeholder="Type your response, motion, point, or speech here..."></textarea>
+        <button id="submit-response-btn">Submit response</button>
+      </div>
+
+      <div id="done-area" style="display:none">
+        <button id="export-btn">Export transcript (HTML)</button>
+        <span class="hint" style="margin-left:0.8rem">The committee is adjourned.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-overlay" style="display:none"></div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+/* ==================================================================
+   1. DATA DEFINITIONS: COMMITTEES, AGENDAS AND MEMBER ROSTERS
+   ================================================================== */
+
+const COMMITTEES = [
+  { name: "WHO",    full: "World Health Organization", agendaHint: "e.g. Strengthening global pandemic preparedness and equitable vaccine distribution" },
+  { name: "UNHRC",  full: "United Nations Human Rights Council", agendaHint: "e.g. Protecting freedom of expression and digital privacy in conflict zones", members: [
+      "Albania","Algeria","Bangladesh","Belgium","Benin","Bolivia","Brazil","Bulgaria","Burundi",
+      "Chile","China","Costa Rica","Côte d'Ivoire","Cuba","Cyprus","Democratic Republic of the Congo",
+      "Dominican Republic","Eritrea","France","Gambia","Georgia","Germany","Ghana","Honduras",
+      "Indonesia","Japan","Kazakhstan","Kuwait","Kyrgyzstan","Malawi","Maldives","Mexico",
+      "Montenegro","Morocco","Netherlands","North Macedonia","Pakistan","Qatar","Republic of Korea",
+      "Saudi Arabia","Somalia","South Africa","Spain","Sudan","Switzerland","Ukraine","Viet Nam",
+    ] },
+  { name: "UNW",    full: "UN Women", agendaHint: "e.g. Enhancing economic empowerment and eliminating gender-based violence in crisis areas" },
+  { name: "ICC",    full: "International Criminal Court", agendaHint: "e.g. Investigating war crimes and protection of civilian infrastructure during conflict" },
+  { name: "ICJ",    full: "International Court of Justice", agendaHint: "e.g. Legal obligations of states regarding climate change and transboundary environmental harm" },
+  { name: "UNDP",   full: "United Nations Development Programme", agendaHint: "e.g. Financing sustainable energy transitions in developing nations" },
+  { name: "UNSC",   full: "United Nations Security Council", agendaHint: "e.g. Mitigating security risks of autonomous weapons systems and cyber warfare", members: [
+      "China","France","Russian Federation","United Kingdom","United States",
+      "Algeria","Denmark","Greece","Guyana","Pakistan","Republic of Korea",
+      "Sierra Leone","Slovenia","Somalia","Panama",
+    ] },
+  { name: "CCC",    full: "Continuous Crisis Committee", agendaHint: "e.g. Rapid response to territorial escalation in the South China Sea" },
+  { name: "DISEC",  full: "Disarmament and International Security Committee", agendaHint: "e.g. Preventing an arms race in outer space and regulating hypersonic weaponry" },
+  { name: "ECOSOC", full: "Economic and Social Council", agendaHint: "e.g. Sustainable debt relief frameworks and post-pandemic economic recovery", members: [
+      "Algeria","Angola","Australia","Austria","Bahamas","Belgium","Bolivia","Botswana","Brazil",
+      "Bulgaria","Cameroon","Canada","Chile","China","Colombia","Croatia","Cuba","Czechia",
+      "Denmark","Ecuador","Egypt","Eswatini","Ethiopia","Finland","France","Germany","Ghana",
+      "Greece","Guinea-Bissau","India","Indonesia","Iraq","Italy","Japan","Kenya","Malaysia",
+      "Mexico","Netherlands","Nigeria","Pakistan","Peru","Poland","Republic of Korea",
+      "Russian Federation","Rwanda","Saudi Arabia","Spain","Sweden","Thailand","Türkiye",
+      "United Kingdom","United States","Uruguay","Zambia","Zimbabwe",
+    ] },
+  { name: "UNEP",   full: "United Nations Environment Programme", agendaHint: "e.g. Establishing legally binding treaties on global plastic pollution" },
+  { name: "ECOFIN", full: "Economic and Financial Committee", agendaHint: "e.g. Restructuring sovereign debt and combating international tax evasion" },
+  { name: "Legal",  full: "Legal Committee (Sixth Committee)", agendaHint: "e.g. Standardizing legal definitions for state responsibility in cyber attacks" },
+  { name: "G7",     full: "Group of Seven", agendaHint: "e.g. Strengthening global supply chain resilience and critical mineral security", members: [
+      "Canada","France","Germany","Italy","Japan","United Kingdom","United States",
+    ] },
+  { name: "UNGA",   full: "United Nations General Assembly", agendaHint: "e.g. Accelerating progress toward the 2030 Sustainable Development Goals" },
+];
+
+const UN_MEMBERS = [
+"Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia",
+"Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium",
+"Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei Darussalam",
+"Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada",
+"Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica",
+"Côte d'Ivoire","Croatia","Cuba","Cyprus","Czechia","Democratic People's Republic of Korea",
+"Democratic Republic of the Congo","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador",
+"Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland",
+"France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea",
+"Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq",
+"Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait",
+"Kyrgyzstan","Lao People's Democratic Republic","Latvia","Lebanon","Lesotho","Liberia","Libya",
+"Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta",
+"Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Monaco","Mongolia","Montenegro",
+"Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua",
+"Niger","Nigeria","North Macedonia","Norway","Oman","Pakistan","Palau","Panama","Papua New Guinea",
+"Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Republic of Korea","Republic of Moldova",
+"Romania","Russian Federation","Rwanda","Saint Kitts and Nevis","Saint Lucia",
+"Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia",
+"Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands",
+"Somalia","South Africa","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland",
+"Syrian Arab Republic","Tajikistan","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago",
+"Tunisia","Türkiye","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates",
+"United Kingdom","United Republic of Tanzania","United States","Uruguay","Uzbekistan","Vanuatu",
+"Venezuela","Viet Nam","Yemen","Zambia","Zimbabwe"
+];
+
+function committeeMembers(committee) {
+  return (committee && committee.members) ? committee.members : UN_MEMBERS;
+}
+
+function isCommitteeMember(committee, country) {
+  return committeeMembers(committee).includes(country);
+}
+
+const COUNTRY_CODES = {
+  "Afghanistan": "af", "Albania": "al", "Algeria": "dz", "Andorra": "ad", "Angola": "ao",
+  "Antigua and Barbuda": "ag", "Argentina": "ar", "Armenia": "am", "Australia": "au", "Austria": "at",
+  "Azerbaijan": "az", "Bahamas": "bs", "Bahrain": "bh", "Bangladesh": "bd", "Barbados": "bb",
+  "Belarus": "by", "Belgium": "be", "Belize": "bz", "Benin": "bj", "Bhutan": "bt",
+  "Bolivia": "bo", "Bosnia and Herzegovina": "ba", "Botswana": "bw", "Brazil": "br", "Brunei Darussalam": "bn",
+  "Bulgaria": "bg", "Burkina Faso": "bf", "Burundi": "bi", "Cabo Verde": "cv", "Cambodia": "kh",
+  "Cameroon": "cm", "Canada": "ca", "Central African Republic": "cf", "Chad": "td", "Chile": "cl",
+  "China": "cn", "Colombia": "co", "Comoros": "km", "Congo": "cg", "Costa Rica": "cr",
+  "Côte d'Ivoire": "ci", "Croatia": "hr", "Cuba": "cu", "Cyprus": "cy", "Czechia": "cz",
+  "Democratic People's Republic of Korea": "kp", "Democratic Republic of the Congo": "cd", "Denmark": "dk", "Djibouti": "dj", "Dominica": "dm",
+  "Dominican Republic": "do", "Ecuador": "ec", "Egypt": "eg", "El Salvador": "sv", "Equatorial Guinea": "gq",
+  "Eritrea": "er", "Estonia": "ee", "Eswatini": "sz", "Ethiopia": "et", "Fiji": "fj",
+  "Finland": "fi", "France": "fr", "Gabon": "ga", "Gambia": "gm", "Georgia": "ge",
+  "Germany": "de", "Ghana": "gh", "Greece": "gr", "Grenada": "gd", "Guatemala": "gt",
+  "Guinea": "gn", "Guinea-Bissau": "gw", "Guyana": "gy", "Haiti": "ht", "Honduras": "hn",
+  "Hungary": "hu", "Iceland": "is", "India": "in", "Indonesia": "id", "Iran": "ir",
+  "Iraq": "iq", "Ireland": "ie", "Israel": "il", "Italy": "it", "Jamaica": "jm",
+  "Japan": "jp", "Jordan": "jo", "Kazakhstan": "kz", "Kenya": "ke", "Kiribati": "ki",
+  "Kuwait": "kw", "Kyrgyzstan": "kg", "Lao People's Democratic Republic": "la", "Latvia": "lv", "Lebanon": "lb",
+  "Lesotho": "ls", "Liberia": "lr", "Libya": "ly", "Liechtenstein": "li", "Lithuania": "lt",
+  "Luxembourg": "lu", "Madagascar": "mg", "Malawi": "mw", "Malaysia": "my", "Maldives": "mv",
+  "Mali": "ml", "Malta": "mt", "Marshall Islands": "mh", "Mauritania": "mr", "Mauritius": "mu",
+  "Mexico": "mx", "Micronesia": "fm", "Monaco": "mc", "Mongolia": "mn", "Montenegro": "me",
+  "Morocco": "ma", "Mozambique": "mz", "Myanmar": "mm", "Namibia": "na", "Nauru": "nr",
+  "Nepal": "np", "Netherlands": "nl", "New Zealand": "nz", "Nicaragua": "ni", "Niger": "ne",
+  "Nigeria": "ng", "North Macedonia": "mk", "Norway": "no", "Oman": "om", "Pakistan": "pk",
+  "Palau": "pw", "Panama": "pa", "Papua New Guinea": "pg", "Paraguay": "py", "Peru": "pe",
+  "Philippines": "ph", "Poland": "pl", "Portugal": "pt", "Qatar": "qa", "Republic of Korea": "kr",
+  "Republic of Moldova": "md", "Romania": "ro", "Russian Federation": "ru", "Rwanda": "rw", "Saint Kitts and Nevis": "kn",
+  "Saint Lucia": "lc", "Saint Vincent and the Grenadines": "vc", "Samoa": "ws", "San Marino": "sm", "Sao Tome and Principe": "st",
+  "Saudi Arabia": "sa", "Senegal": "sn", "Serbia": "rs", "Seychelles": "sc", "Sierra Leone": "sl",
+  "Singapore": "sg", "Slovakia": "sk", "Slovenia": "si", "Solomon Islands": "sb", "Somalia": "so",
+  "South Africa": "za", "South Sudan": "ss", "Spain": "es", "Sri Lanka": "lk", "Sudan": "sd",
+  "Suriname": "sr", "Sweden": "se", "Switzerland": "ch", "Syrian Arab Republic": "sy", "Tajikistan": "tj",
+  "Thailand": "th", "Timor-Leste": "tl", "Togo": "tg", "Tonga": "to", "Trinidad and Tobago": "tt",
+  "Tunisia": "tn", "Türkiye": "tr", "Turkmenistan": "tm", "Tuvalu": "tv", "Uganda": "ug",
+  "Ukraine": "ua", "United Arab Emirates": "ae", "United Kingdom": "gb", "United Republic of Tanzania": "tz", "United States": "us",
+  "Uruguay": "uy", "Uzbekistan": "uz", "Vanuatu": "vu", "Venezuela": "ve", "Viet Nam": "vn",
+  "Yemen": "ye", "Zambia": "zm", "Zimbabwe": "zw"
+};
+
+function codeToFlagEmoji(code) {
+  if (!code || code.length !== 2) return "";
+  const A = 0x1F1E6;
+  const chars = [...code.toUpperCase()].map(c => A + (c.charCodeAt(0) - 65));
+  return String.fromCodePoint(...chars);
+}
+
+function flagImg(country) {
+  const code = COUNTRY_CODES[country];
+  if (!code) return null;
+  const span = document.createElement("span");
+  span.className = "flag-icon";
+  span.textContent = codeToFlagEmoji(code);
+  span.setAttribute("role", "img");
+  span.setAttribute("aria-label", `${country} flag`);
+  return span;
+}
+
+/* ==================================================================
+   2. BEGINNER KEYWORD GLOSSARY DEFINITIONS
+   ================================================================== */
+const KEYWORD_DEFINITIONS = {
+  "working paper": "A preliminary informal document drafted by delegates to outline proposed solutions before it is formally formatted and introduced as a draft resolution.",
+  "working papers": "Preliminary informal documents drafted by delegates to outline proposed solutions before being formally formatted into draft resolutions.",
+  "draft resolution": "A formal document proposing solutions to the agenda topic, written in preambulatory and operative clauses, requiring committee approval to be voted on.",
+  "draft resolutions": "Formal documents proposing solutions to the agenda topic, written in preambulatory and operative clauses, requiring committee approval to be voted on.",
+  "resolution": "A draft resolution that has been formally voted on and passed by the committee, becoming an official decision of the UN body.",
+  "resolutions": "Draft resolutions that have been formally voted on and passed by the committee.",
+  "amendment": "A formal proposal to add, delete, or modify clauses in a draft resolution. Friendly amendments need all authors' consent; unfriendly amendments require a committee vote.",
+  "amendments": "Formal proposals to add, delete, or modify clauses in a draft resolution. Friendly amendments need all authors' consent; unfriendly amendments require a committee vote.",
+  "motion": "A formal proposal made by a delegate to direct the flow of committee business (e.g., entering caucuses, setting the agenda, moving to vote, or adjourning).",
+  "motions": "Formal proposals made by delegates to direct the flow of committee business.",
+  "point": "A procedural request raised by a delegate (e.g., Point of Personal Privilege, Point of Order, Point of Parliamentary Inquiry, or Point of Information).",
+  "points": "Procedural requests raised by delegates to address personal comfort, rules violations, questions on procedure, or questions to speakers.",
+  "moderated caucus": "A structured form of debate with a specific subtopic, total duration, and individual speaking time limit managed by the Chair.",
+  "unmoderated caucus": "An informal session where formal rules are suspended, allowing delegates to move freely around the room, negotiate, build coalitions, and draft documents.",
+  "general speakers list": "The primary default list of delegates wishing to speak on the overall agenda topic when no other motion is active.",
+  "gsl": "General Speakers List: the primary continuous list of speakers on the main agenda topic.",
+  "yield": "To give up remaining speaking time. A delegate may yield time to the Chair, to another delegate, or to Points of Information (questions).",
+  "yields": "Giving up remaining speaking time to the Chair, another delegate, or Points of Information.",
+  "yielding": "Giving up remaining speaking time to the Chair, another delegate, or Points of Information.",
+  "point of information": "A formal question asked by one delegate to another speaker who has completed a speech and yielded time to questions.",
+  "points of information": "Formal questions asked by delegates to a speaker who has completed a speech and yielded time to questions.",
+  "point of personal privilege": "A point raised when a delegate experiences discomfort (e.g., cannot hear the speaker, room temperature) that hinders participation.",
+  "point of order": "A point raised when a delegate believes the Chair or another delegate has violated the committee's Rules of Procedure.",
+  "point of parliamentary inquiry": "A question directed to the Chair asking for clarification on committee rules or parliamentary procedure.",
+  "right of reply": "A right requested by a delegate whose national honor or sovereignty has been explicitly insulted during another delegate's speech.",
+  "roll call": "The initial procedure where the Chair calls out each member state to determine attendance ('Present' or 'Present and Voting') and establish quorum.",
+  "quorum": "The minimum number of delegates required to be present for the committee to officially conduct business (usually 1/3 of members).",
+  "second": "An agreement by another delegate supporting a motion so it can be brought to a vote. Most motions require a second.",
+  "seconds": "Agreements by delegates supporting a motion so it can be brought to a vote.",
+  "objection": "A formal opposition by a delegate to a motion. If there are objections, the motion usually proceeds to a vote.",
+  "objections": "Formal oppositions by delegates to a motion.",
+  "signatory": "A delegation that wishes to see a draft resolution discussed by the committee without necessarily endorsing all its content.",
+  "signatories": "Delegations that agree to allow a draft resolution to be introduced and discussed on the committee floor.",
+  "sponsor": "A delegation that authored or strongly supports a draft resolution and helped write its clauses.",
+  "sponsors": "Primary authors and chief supporters of a draft resolution.",
+  "preambulatory clause": "A clause at the beginning of a resolution explaining the historical context, problem background, and relevant past UN actions.",
+  "operative clause": "An actionable clause in a resolution stating the specific measures, policies, and solutions the committee recommends or authorizes.",
+  "table": "A motion to temporarily or permanently suspend discussion on a topic or document.",
+  "adjourn": "To formally end a committee session or the entire conference.",
+  "present and voting": "A roll call response where a delegate agrees to vote Yes or No on all draft resolutions and waives the right to abstain.",
+  "present": "A roll call response where a delegate establishes presence but retains the right to abstain on final resolution votes.",
+  "bloc": "A group of delegates with similar geographical, political, or economic interests working together to write resolutions.",
+  "blocs": "Alliances of delegations working collaboratively on shared proposals.",
+  "floor": "The right to speak or the current state of active committee proceedings (e.g., 'the floor is open for motions').",
+  "decorum": "An order issued by the Chair reminding delegates to maintain respectful, formal diplomatic etiquette in the committee room."
+};
+
+const KW_KEYS = Object.keys(KEYWORD_DEFINITIONS).sort((a, b) => b.length - a.length);
+const KW_REGEX = new RegExp("\\b(" + KW_KEYS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("|") + ")\\b", "gi");
+
+/* ==================================================================
+   3. RULES OF PROCEDURE REFERENCE PROMPT
+   ================================================================== */
+const RULES_OF_PROCEDURE = `
+CONDENSED UNA-USA RULES OF PROCEDURE
+
+FLOW OF COMMITTEE (required order):
+1. Chair opens committee (quorum = 1/3 of delegates, assume it is met) and calls for points or motions.
+2. Motion to enter formal debate (simple majority). All Delegates must vote on this motion. Then ROLL CALL in alphabetical order of portfolio short names: each delegate answers "Present" (may later vote Yes/No/Abstain) or "Present and Voting" (may NOT abstain on documentation for the rest of committee).
+3. Motion to set the agenda (simple majority).
+4. Chair opens the General Speaker's List (GSL), calling alphabetically for delegates who wish to be added.
+5. Debate cycle: roughly 3-4 GSL speeches, then moderated caucuses (focused subtopic discussion, fixed speakers list, max 60s per speaker) and unmoderated caucuses (informal; the Chair is absent; used for lobbying, bloc formation and drafting; no points awarded). At least one GSL speech must occur between caucuses. GSL speeches are limited to 90 seconds; a portfolio appears at most once on the GSL at a time.
+6. Resolution phase: a long unmoderated caucus for drafting. Blocs submit Draft Resolutions (DRs); typically 2-3 are accepted.
+   MANDATORY STEP - PRESENTED RESOLUTION QUESTIONS:
+   When a Draft Resolution is presented by its authors, the Chair MUST explicitly open the floor for questions / Points of Information regarding the presented resolution. At least 1-2 questions must be taken and answered by the authors BEFORE moving to amendments or voting. Do not skip taking questions on presented resolutions.
+7. Amendments: Chair explicitly asks for friendly or unfriendly amendments.
+8. Voting procedure on each DR. If a DR passes, committee is successful, remaining DRs are not voted on, and committee is adjourned. If all DRs fail, the committee is unsuccessful and adjourned.
+
+POINTS (raised as "The Delegate of [portfolio] would like to raise a point of ..."):
+- Point of Personal Privilege (personal request; may interrupt a speech).
+- Point of Order (ROP violation or factual/procedural error; raised after a speech ends).
+- Point of Parliamentary Inquiry (question about procedure).
+- Point of Information (a question to a speaker after a GSL speech or presented resolution).
+
+MOTIONS: enter formal debate; set the agenda; suspend formal debate for an unmoderated caucus; enter a moderated caucus; introduce a draft resolution; introduce a friendly or unfriendly amendment; amend the ROP; extend speaking time; close debate / adjourn / reconsider.
+
+ADDRESS AND SELF-REFERENCING MANDATE:
+All delegates MUST refer to themselves exclusively as "the Delegate of [Country]" or "this delegation", NEVER by individual personal names or first-person pronouns ("I", "we", "my").
+
+SCORING: delegates earn points for research and knowledge, speech writing, lobbying, Rules of Procedure knowledge, and resolution writing.
+`;
+
+/* ==================================================================
+   4. AI BACKEND API HANDLER (WITH EXPONENTIAL BACKOFF RETRY)
+   ================================================================== */
+const DEFAULT_BACKEND = "gemini";
+
+const Backends = {
+  gemini: {
+    label: "Google Gemini",
+    model: "gemini-3.6-flash",
+    storageKey: "mun_api_key_gemini",
+    getKey()      { return localStorage.getItem(this.storageKey) || ""; },
+    setKey(k)     { localStorage.setItem(this.storageKey, k); },
+    clearKey()    { localStorage.removeItem(this.storageKey); },
+
+    async generateJSON(system, userText, schema) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${encodeURIComponent(this.getKey())}`;
+      const body = {
+        system_instruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: userText }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: schema,
+          temperature: 0.9,
+        },
+      };
+
+      const maxRetries = 4;
+      let delayMs = 1000;
+
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+
+          if (!resp.ok) {
+            let detail = "";
+            try { detail = (await resp.json()).error.message; } catch (e) { /* ignore */ }
+            
+            // Retry on rate limits (429) or server errors (5xx)
+            const isRetryable = resp.status === 429 || resp.status >= 500;
+            if (!isRetryable || attempt === maxRetries) {
+              const err = new Error(`Gemini API error (${resp.status}): ${detail}`);
+              err.status = resp.status;
+              throw err;
+            }
+            throw new Error(`HTTP ${resp.status}: ${detail}`);
+          }
+
+          const data = await resp.json();
+          const text = data?.candidates?.[0]?.text || data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!text) throw new Error("Gemini returned no text (possibly blocked). Try again.");
+          return JSON.parse(text);
+
+        } catch (err) {
+          // Immediately rethrow non-retryable client errors (e.g. invalid key 401/403 or bad request 400)
+          if (err.status && err.status !== 429 && err.status < 500) {
+            throw err;
+          }
+          if (attempt === maxRetries) {
+            throw err;
+          }
+
+          // Exponential backoff delay with randomized jitter
+          const jitter = Math.random() * 200;
+          const currentDelay = delayMs + jitter;
+          console.warn(`[Gemini API] Request failed (${err.message}). Retrying in ${Math.round(currentDelay)}ms (Attempt ${attempt + 1}/${maxRetries})...`);
+          await new Promise(resolve => setTimeout(resolve, currentDelay));
+          delayMs *= 2;
+        }
+      }
+    },
+  },
+};
+
+/* ==================================================================
+   5. STRUCTURED JSON RESPONSE SCHEMAS
+   ================================================================== */
+
+const SETUP_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    chairName: { type: "STRING", description: "Full name of the committee chair, e.g. 'Chairperson Amara Diallo'" },
+    chairPersonality: { type: "STRING", description: "Chair's personality archetype and presiding style." },
+    delegates: {
+      type: "ARRAY",
+      description: "5-15 AI-played delegates (countries), excluding the user's country",
+      items: {
+        type: "OBJECT",
+        properties: {
+          country: { type: "STRING", description: "Official UN short name of the member state" },
+          name: { type: "STRING", description: "Full diplomatic name of the delegate, e.g. 'Ambassador Sarah Chen' or 'Delegate Mateo Silva'" },
+          persona: { type: "STRING", description: "One sentence stance and negotiating style" },
+          speechStyle: { type: "STRING", description: "Primary rhetorical archetype (e.g. Firebrand, Policy Specialist, Passive-Aggressive Diplomat, Consensus Builder, Strategic Agitator, or hybrid)" },
+          openingStyle: { type: "STRING", description: "Preferred opening technique (Emotional, Clinical, Quote, Anecdotal, Rhetorical Question, Direct Call-out, Decorum)" },
+          closingStyle: { type: "STRING", description: "Preferred closing technique (Impactful Point, Executive Summary, Call to Unity, Brighter Future, Reflective Quote, Line-in-the-Sand, Caucus Call)" },
+          researchQuality: { type: "STRING", enum: ["underprepared", "adequate", "well-researched", "exceptionally well-researched"] },
+          articulation: { type: "STRING", enum: ["halting and imprecise", "clear but plain", "polished and persuasive", "masterfully eloquent"] },
+          aggression: { type: "STRING", description: "Assertiveness across contexts" },
+        },
+        required: ["country", "name", "persona", "speechStyle", "openingStyle", "closingStyle", "researchQuality", "articulation", "aggression"],
+      },
+    },
+  },
+  required: ["chairName", "chairPersonality", "delegates"],
+};
+
+const TURN_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    speaker: { type: "STRING", description: "Who is speaking: 'Chair', a delegate's country name, or 'Narrator'" },
+    role:    { type: "STRING", enum: ["chair", "delegate", "narrator"] },
+    phase:   { type: "STRING", description: "Short label for the current stage" },
+    text:    { type: "STRING", description: "What the speaker says (or narration)." },
+    requiresUserResponse: { type: "BOOLEAN", description: "True if human delegate must respond" },
+    userPromptHint: { type: "STRING", description: "One sentence telling the user what response is expected" },
+    userResponseOptions: {
+      type: "ARRAY", items: { type: "STRING" },
+      description: "List of fixed choice options, or empty",
+    },
+    chit: {
+      type: "OBJECT",
+      description: "Optional private chit / IM sent by an AI delegate to the human user (replying to a user chit or initiating an off-the-record message). Omit if no chit.",
+      properties: {
+        sender: { type: "STRING", description: "Country name of the AI delegate sending the chit" },
+        text: { type: "STRING", description: "The private chit message text" },
+        viaEB: { type: "BOOLEAN", description: "True if the chit is passed via the Executive Board / Chair desk" }
+      },
+      required: ["sender", "text"]
+    },
+    sessionOver: { type: "BOOLEAN", description: "True only on final turn" },
+    scores: {
+      type: "ARRAY",
+      description: "Only when sessionOver: final score for EVERY delegate",
+      items: {
+        type: "OBJECT",
+        properties: {
+          country: { type: "STRING" },
+          score:   { type: "NUMBER", description: "0-100" },
+          comment: { type: "STRING", description: "One sentence feedback" },
+        },
+        required: ["country", "score", "comment"],
+      },
+    },
+  },
+  required: ["speaker", "role", "phase", "text", "requiresUserResponse", "sessionOver"],
+};
+
+/* ==================================================================
+   6. APPLICATION STATE & LOCAL STORAGE PERSISTENCE
+   ================================================================== */
+const SESSION_STORAGE_KEY = "mun_session_v1";
+
+let state = null;
+
+function newState(committee, agenda, userCountry, difficulty, enableCrisis) {
+  return {
+    backend: DEFAULT_BACKEND,
+    committee,
+    agenda,
+    userCountry,
+    difficulty: difficulty || "intermediate",
+    enableCrisis: !!enableCrisis,
+    crisisTriggered: false,
+    userIsMember: null,
+    chairName: null,
+    chairPersonality: null,
+    delegates: [],
+    transcript: [],
+    chits: [], // Array of private chit messages { id, timestamp, sender, recipient, text, unread, viaEB }
+    pendingUser: null,
+    userRollCall: null,
+    resolutionPhasePopupShown: false,
+    sessionOver: false,
+    scores: null,
+    startedAt: new Date().toISOString(),
+  };
+}
+
+function saveSession() {
+  try { localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { /* local storage full or disabled */ }
+}
+function clearSession() { localStorage.removeItem(SESSION_STORAGE_KEY); }
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+/* ==================================================================
+   7. DYNAMIC PROMPT BUILDERS
+   ================================================================== */
+
+function buildSystemPrompt() {
+  const roster = state.delegates.map(d =>
+    `- ${d.country} (${d.name}): ${d.persona}
+    Rhetorical Archetype: ${d.speechStyle || "balanced"}
+    Opening Style: ${d.openingStyle || "varied"}
+    Closing Style: ${d.closingStyle || "varied"}
+    Research quality: ${d.researchQuality || "adequate"}
+    Articulation: ${d.articulation || "clear but plain"}
+    Aggression: ${d.aggression || "measured"}`
+  ).join("\n");
+
+  let difficultyInstructions = "";
+  if (state.difficulty === "beginner") {
+    difficultyInstructions = `
+DIFFICULTY LEVEL: BEGINNER
+- Target committee length: ~30-45 turns.
+- AI delegates have beginner-friendly abilities (simpler research quality, plain articulation).
+- Provide maximum structure and guidance for the user.
+- Ensure Chair and Narrator turns clearly include key procedural terms (e.g. working paper, draft resolution, amendments, motion, point, moderated caucus, unmoderated caucus, points of information) so they can be highlighted for the beginner learner.`;
+  } else if (state.difficulty === "advanced") {
+    difficultyInstructions = `
+DIFFICULTY LEVEL: ADVANCED
+- Maximum committee length: up to 80 turns.
+- AI delegates possess high ability (exceptionally well-researched, highly articulate, masterfully eloquent, strategically combative).
+- Allow less structural limitations and deeper debate.
+- EXACT REMAINING TIME & WORD-COUNT CALCULATION (MANDATORY):
+  1. Standard MUN speaking rate is approximately 130-150 words per minute (~2.2 words per second).
+  2. Whenever a delegate speaks or finishes a speech, the Chair MUST calculate the exact speaking time used based on their word count, calculate the remaining time left out of the total allotted speaking time (e.g., 90 seconds for GSL), and explicitly state both the used time and exact seconds remaining left in their announcement (e.g., "Delegate of France, you spoke for 45 seconds [approximately 98 words], leaving 45 seconds remaining. How do you yield your remaining time?").
+  3. When a delegate yields their remaining time, the Chair MUST state the exact number of seconds remaining being yielded.
+- POSITION PAPERS (ADVANCED REQUIREMENT):
+  1. At the very beginning of committee (right after opening/roll call), the Chair MUST ask the human delegate if they wish to submit a position paper.
+  2. The Chair MUST explicitly explain: "You may submit a position paper now. If you choose to submit one, paste it in the box to be evaluated and graded. If you choose not to submit one, no marks will be deducted, but no position paper marks will be awarded."
+  3. Set requiresUserResponse=true with options: ["Submit position paper", "Skip position paper"].
+  4. If the user submits a paper, the Chair grades it in final scoring.
+  5. Immediately after the human's response, add a NARRATOR turn summarizing whether other AI delegates submitted position papers, including a 1- or 2-line summary of exactly what their papers stated.
+  6. The Chair MUST grade AI delegates' position papers as well in final scoring.`;
+  } else {
+    difficultyInstructions = `
+DIFFICULTY LEVEL: INTERMEDIATE
+- Target committee length: ~40-60 turns.
+- Follow current committee rules of procedure strictly to the tee.
+- Balanced mix of AI delegate abilities.`;
+  }
+
+  let crisisInstructions = "";
+  if (state.enableCrisis) {
+    crisisInstructions = `
+MID-COMMITTEE CRISIS / BREAKING NEWS FEATURE ENABLED:
+- The user has enabled a Breaking News Crisis for this session.
+- Midway through the committee (around turn 18-25 depending on length), the Chair MUST break procedure to announce a sudden emergency crisis or recent development directly related to the agenda topic.
+- After the crisis is introduced, all subsequent delegate speeches must react to this development, address its urgent implications, and propose concrete solutions to resolve the crisis in their draft resolutions.`;
+  }
+
+  return `You are running a Model United Nations simulation. You play BOTH the committee chair ("${state.chairName}") and every AI delegate EXCEPT the delegate of ${state.userCountry}, who is a human user.
+
+COMMITTEE: ${state.committee.name} (${state.committee.full})
+AGENDA: ${state.agenda}
+HUMAN USER'S PORTFOLIO: ${state.userCountry}
+HUMAN'S MEMBERSHIP STATUS: ${state.userIsMember
+  ? "This is a full VOTING MEMBER of " + state.committee.name + "."
+  : "This is a non-member OBSERVER on " + state.committee.name + ". The human delegate may speak and join caucuses, but may NEVER vote on motions or resolutions."}
+
+${difficultyInstructions}
+
+${crisisInstructions}
+
+CHAIR PERSONALITY & STYLE:
+${state.chairPersonality || "The Encouraging Mentor"}
+Embody this specific Chair personality persona consistently across all Chair interventions:
+- Rigid Formalist: Pedantic, strictly legalistic, zero tolerance for procedural missteps, passive voice, quotes parliamentary rules.
+- Weary Realist: Pragmatic, dry wit, subtly exasperated by circular debate, keeps committee moving briskly.
+- High-Energy Ringmaster: Dramatic gaveling, fast-paced transitions, treats debate like a tense spectator sport.
+- Encouraging Mentor: Patient with procedural mistakes, offers gentle corrective nudges, warm and supportive tone.
+- Diplomatic Tactician: Speaks in measured, calculating tones; subtly pushes blocs toward consensus and compromise.
+
+AI-PLAYED DELEGATES:
+${roster}
+
+CHITS / INSTANT MESSAGING (OFF-THE-RECORD DIPLOMACY & VIA EB):
+- Delegates and the human user can exchange private "chits" (Instant Messages) in parallel with committee debate.
+- Chits can be sent directly or routed "Via EB" (Executive Board / Chair desk).
+- If the prompt indicates that the human user sent a chit to an AI delegate (with or without 'Via EB'), that specific AI delegate MAY choose to respond to the human user using the optional \`chit\` property in your JSON output (setting viaEB=true or false as appropriate). If they choose not to respond, omit the \`chit\` field.
+- AI delegates may also occasionally initiate a private chit to the human user using the \`chit\` field (e.g., to discretely propose alliances, whip votes, request resolution co-sponsorship, or negotiate off the record).
+
+DELEGATE SPEECH STRUCTURE & FORMATTING (MANDATORY VARIETY):
+- DO NOT generate speeches as one big long wall of text. Break delegate speeches into at least 3 distinct paragraphs or sections (e.g. Opening, Body, Closing).
+- Vary speech structures from delegate to delegate:
+  * Some speeches should use **bold text** to emphasize key clauses, stances, or directives.
+  * Some speeches should use bullet points (*) to list policy proposals, multi-step actions, or grievances.
+  * Some speeches should include blockquotes (>) for treaty citations or historical quotes.
+  * Summaries and formal yield lines are optional and should vary per delegate.
+- OPENING STYLES: Execute each delegate's defined opening style (Emotional/human impact, Clinical/data-driven, Historical or treaty quote, Personal/regional anecdote, Provocative/rhetorical question, Direct call-out/challenge, or Traditional diplomatic decorum).
+- CLOSING STYLES: Execute each delegate's defined closing style (Impactful mic-drop point, Executive summary/synthesis, Call to unity/cooperation, Visionary brighter future, Reflective quote/warning, Line in the sand/ultimatum, or Direct caucus call-to-action).
+- DELEGATE PERSONALITIES & SKILL MIX: Embody their persona (Firebrand, Policy Specialist, Passive-Aggressive Diplomat, Consensus Builder, Strategic Agitator, or mixed hybrid) combined with their specific research quality, articulation, and aggression.
+
+${RULES_OF_PROCEDURE}
+
+CRITICAL RULES:
+1. ADDRESS AND SELF-REFERENCING:
+   - All AI delegates MUST refer to themselves exclusively as "the Delegate of [Country]" or "this delegation" or "[Country]".
+   - DO NOT let delegates refer to themselves by their personal individual names (e.g., do NOT say "Ambassador Watanabe" or "I").
+2. REMAINING TIME ANNOUNCEMENT:
+   - Whenever a speech ends or a delegate yields, the Chair MUST state the time used and the exact remainder of time left in seconds.
+3. YIELDS TO POINTS OF INFORMATION (QUESTIONS):
+   - When any delegate yields their remaining time to Points of Information / questions, the Chair MUST NOT immediately say "Seeing no questions" or assume there are no questions.
+   - The Chair MUST explicitly open the floor for questions and prompt the committee.
+   - CRITICAL: When a speaker yields to Points of Information, the Chair's turn MUST ask the human delegate if they wish to ask a question (set requiresUserResponse=true) with prompt options such as ["Ask a Point of Information", "No questions"] (or allow typing a question) so the human delegate has the explicit opportunity to ask a question BEFORE the Chair declares "seeing no questions".
+4. PRESENTED RESOLUTION QUESTIONS (MANDATORY):
+   - When a Draft Resolution is presented by its authors, the Chair MUST open the floor for questions / Points of Information from other delegates on the presented resolution.
+   - At least 1-2 questions MUST be asked and answered before moving to amendments or voting. Never skip taking questions on presented resolutions.
+5. YIELDS & DELEGATE VOICES:
+   - Apply each AI delegate's speech style, closing style, research quality, articulation, and aggression consistently.
+   - Vary yield options (yield to questions, yield to comments, yield to another delegate, yield to Chair).
+6. Output only the JSON turn object matching the schema provided.`;
+}
+
+function buildTurnRequest() {
+  const lines = state.transcript.map(t => {
+    const tag = t.role === "user" ? `${t.speaker} (THE HUMAN USER)`
+              : t.role === "chair" ? "Chair"
+              : t.speaker;
+    return `[${t.phase || ""}] ${tag}:\n${t.text}`;
+  });
+  let req = `TRANSCRIPT SO FAR (turn ${state.transcript.length}):\n\n`
+          + (lines.length ? lines.join("\n\n---\n\n") : "(none - the committee has not started)")
+          + "\n\n===\nGenerate the NEXT single turn of the simulation now.";
+  if (state.userRollCall) {
+    req += `\nReminder: the human delegate answered roll call with "${state.userRollCall}".`;
+  }
+  const last = state.transcript[state.transcript.length - 1];
+  if (last && last.role === "user"
+      && /GSL|speaker/i.test(last.phase || "")
+      && last.text.length > 200
+      && !/yield/i.test(last.text)) {
+    req += "\nReminder: the human delegate just finished a GSL speech without yielding. "
+         + "Per the YIELD PROTOCOL, the Chair's next turn must calculate and state their remaining time left and ask them how they wish to use their remaining time.";
+  }
+
+  /* CHIT IM HISTORY INCLUSION */
+  if (state.chits && state.chits.length > 0) {
+    req += "\n\nPRIVATE CHITS / IM HISTORY (OFF-THE-RECORD):\n";
+    const recentChits = state.chits.slice(-10);
+    recentChits.forEach(c => {
+      const ebTag = c.viaEB ? " (Via Executive Board)" : "";
+      req += `- From ${c.sender} to ${c.recipient}${ebTag}: "${c.text}"\n`;
+    });
+    req += "\nNotice: If the human user sent a chit to an AI delegate recently, that delegate may optionally respond using the 'chit' JSON field this turn. AI delegates may also send a new chit to the user if appropriate.";
+  } else {
+    req += "\n\n(No private chits sent yet. AI delegates may optionally initiate a chit to the user using the 'chit' JSON field if desired.)";
+  }
+
+  /* MID-COMMITTEE CRISIS INJECTION LOGIC */
+  if (state.enableCrisis && !state.crisisTriggered) {
+    const targetHalfwayTurns = state.difficulty === "advanced" ? 25 : 18;
+    if (state.transcript.length >= targetHalfwayTurns) {
+      req += "\n\nCRISIS TRIGGER DIRECTIVE: We have reached roughly the midpoint of committee turns! In this turn, the Chair MUST interrupt debate to introduce a dramatic breaking news crisis / sudden escalation related to the agenda. State phase as 'CRISIS BREAKING NEWS'. Inform all delegates that they must address this crisis in their speeches and resolution proposals.";
+      state.crisisTriggered = true;
+    }
+  }
+
+  return req;
+}
+
+/* ==================================================================
+   8. DOM & MODAL UI HELPERS
+   ================================================================== */
+
+function delegateInfo(country) {
+  return state.delegates.find(d => d.country === country) || null;
+}
+
+function showScreen(name) {
+  for (const s of ["screen-key", "screen-setup", "screen-sim"]) {
+    $(s).style.display = (s === `screen-${name}`) ? "" : "none";
+  }
+}
+
+function setError(id, msg) {
+  $(id).innerHTML = msg ? '<div class="error"></div>' : "";
+  if (msg) $(id).firstChild.textContent = msg;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function showModal(title, htmlContent) {
+  const overlay = $("modal-overlay");
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <h3>${escapeHtml(title)}</h3>
+      <div class="content">${htmlContent}</div>
+      <button id="modal-ok-btn">OK</button>
+    </div>
+  `;
+  overlay.style.display = "flex";
+  $("modal-ok-btn").addEventListener("click", closeModal);
+}
+
+function closeModal() {
+  const overlay = $("modal-overlay");
+  overlay.style.display = "none";
+  overlay.innerHTML = "";
+}
+
+window.showKeywordPopup = function(term) {
+  const lower = term.toLowerCase().trim();
+  const desc = KEYWORD_DEFINITIONS[lower] || KEYWORD_DEFINITIONS[lower.replace(/s$/, '')] || "A Model UN procedural term.";
+  const title = term.charAt(0).toUpperCase() + term.slice(1);
+  showModal(title, desc);
+};
+
+function formatTurnHtml(raw, role) {
+  let html = escapeHtml(raw);
+
+  // Formatting conversions
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+  html = html.replace(/_(.+?)_/g, "<u>$1</u>");
+
+  // Highlight beginner terms in Chair/Narrator turns
+  if (state && state.difficulty === "beginner" && (role === "chair" || role === "narrator")) {
+    html = html.replace(KW_REGEX, match => `<b class="mun-keyword" onclick="window.showKeywordPopup('${escapeHtml(match)}')">${match}</b>`);
+  }
+
+  const blocks = html.split(/\n\s*\n/);
+  const formattedBlocks = blocks.map(block => {
+    const lines = block.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length === 0) return "";
+    
+    if (lines.every(l => /^[\*\-\u2022]\s+/.test(l))) {
+      const items = lines.map(l => "<li>" + l.replace(/^[\*\-\u2022]\s+/, "") + "</li>").join("");
+      return `<ul>${items}</ul>`;
+    }
+
+    if (lines.every(l => /^&gt;\s*/.test(l))) {
+      const content = lines.map(l => l.replace(/^&gt;\s*/, "")).join("<br>");
+      return `<blockquote>${content}</blockquote>`;
+    }
+
+    return `<p>${lines.join("<br>")}</p>`;
+  });
+
+  return formattedBlocks.join("");
+}
+
+/* Helper function for dynamic placeholders during live simulation */
+function getDynamicPlaceholder(hintText, currentPhase) {
+  const h = (hintText || "").toLowerCase();
+  const p = (currentPhase || "").toLowerCase();
+  const diff = (state && state.difficulty) ? state.difficulty : "intermediate";
+  const country = (state && state.userCountry) ? state.userCountry : "your country";
+
+  if (h.includes("position paper") || p.includes("position paper")) {
+    if (diff === "beginner") return "Paste your position paper here explaining your country's official policy stance, historical background, and proposed solutions...";
+    if (diff === "intermediate") return "Unleash your foreign policy manifesto (or just paste what ChatGPT wrote)...";
+    return "Submit policy paper statement...";
+  }
+
+  if (h.includes("roll call") || p.includes("roll call")) {
+    if (diff === "beginner") return "Declare your presence: type 'Present' to keep voting flexibility, or 'Present and Voting' if committing to no abstentions...";
+    if (diff === "intermediate") return "Say 'Present' or 'Present and Voting' so the Chair knows you didn't sleep in...";
+    return "State 'Present' or 'Present and Voting'...";
+  }
+
+  if (h.includes("yield") || p.includes("yield")) {
+    if (diff === "beginner") return "Specify how to dispose of remaining time (e.g., 'Yield time to the Chair', 'Yield to questions', or 'Yield to another delegate')...";
+    if (diff === "intermediate") return "Yield to Chair, questions, or another delegate before the Chair cuts you off...";
+    return "State your yield (Chair, questions, or delegate)...";
+  }
+
+  if (h.includes("question") || h.includes("point of information") || p.includes("question")) {
+    if (diff === "beginner") return "Deliver Point of Information (question) directed to the current speaker regarding their policy proposal or speech...";
+    if (diff === "intermediate") return "Respectfully grill the delegate on their questionable policy claims...";
+    return "Enter your Point of Information...";
+  }
+
+  if (h.includes("vote") || h.includes("voting") || p.includes("voting")) {
+    if (diff === "beginner") return "Cast your delegation's vote: 'Yes', 'No', or 'Abstain'...";
+    if (diff === "intermediate") return "Vote Yes, No, or Abstain (and hope your bloc doesn't backstab you)...";
+    return "Enter vote (Yes / No / Abstain)...";
+  }
+
+  if (h.includes("amendment") || p.includes("amendment")) {
+    if (diff === "beginner") return "Draft your proposed amendment. Specify whether to add, modify, or strike out specific operative clause(s) in the draft resolution...";
+    if (diff === "intermediate") return "Rewrite their resolution line-by-line until it actually makes sense...";
+    return "Enter proposed amendment text...";
+  }
+
+  if (h.includes("motion") || p.includes("motion")) {
+    if (diff === "beginner") return `Propose a motion specifying type, purpose, total duration, and individual speaking time...`;
+    if (diff === "intermediate") return `Motion to steer this committee before someone proposes an unmod forever...`;
+    return `Raise motion (type, duration, speaking time)...`;
+  }
+
+  if (h.includes("speech") || p.includes("gsl") || p.includes("moderated caucus") || p.includes("debate")) {
+    if (diff === "beginner") return `Deliver your speech as Delegate of ${country}, outlining your policy stance and constructive solutions...`;
+    if (diff === "intermediate") return `Deliver eloquence, diplomatic shade, or key policy arguments as Delegate of ${country}...`;
+    return `Enter diplomatic speech as Delegate of ${country}...`;
+  }
+
+  if (diff === "beginner") return `Enter your response, formal motion, procedural point, or speech as Delegate of ${country}...`;
+  if (diff === "intermediate") return `Speak now, Delegate of ${country}, or forever hold your decorum...`;
+  return `Motion to type...`;
+}
+
+function updateAgendaPlaceholder() {
+  const selectedName = $("committee-select").value;
+  const comm = COMMITTEES.find(c => c.name === selectedName);
+  const agendaInput = $("agenda-input");
+  if (comm && comm.agendaHint) {
+    agendaInput.placeholder = comm.agendaHint;
+  } else {
+    agendaInput.placeholder = "e.g. Financing climate adaptation in vulnerable coastal nations";
+  }
+}
+
+function updateCrisisVisibility() {
+  const diff = $("difficulty-select").value;
+  const crisisField = $("crisis-field");
+  const crisisSelect = $("crisis-select");
+  if (!crisisField) return;
+
+  if (diff === "beginner") {
+    crisisField.style.display = "none";
+    crisisSelect.value = "no";
+  } else {
+    crisisField.style.display = "";
+  }
+}
+
+/* ==================================================================
+   9. CHIT IM POPUP LOGIC & RENDERERS
+   ================================================================== */
+
+function populateChitRecipients() {
+  const sel = $("chit-recipient-select");
+  if (!sel || !state || !state.delegates) return;
+  const previous = sel.value;
+  sel.innerHTML = "";
+  state.delegates.forEach(d => {
+    const opt = document.createElement("option");
+    opt.value = d.country;
+    opt.textContent = `Delegate of ${d.country}`;
+    sel.appendChild(opt);
+  });
+  if (previous && state.delegates.some(d => d.country === previous)) {
+    sel.value = previous;
+  }
+  updateChitDropdownOptions();
+  renderChitMessages();
+}
+
+function updateChitDropdownOptions() {
+  const sel = $("chit-recipient-select");
+  if (!sel || !state || !state.delegates) return;
+  Array.from(sel.options).forEach(opt => {
+    const country = opt.value;
+    const hasUnread = (state.chits || []).some(
+      c => c.sender === country && c.recipient === state.userCountry && c.unread
+    );
+    opt.textContent = `Delegate of ${country}${hasUnread ? " 🔴" : ""}`;
+  });
+}
+
+function renderChitMessages() {
+  const container = $("chit-messages");
+  if (!container || !state) return;
+  container.innerHTML = "";
+  const recipient = $("chit-recipient-select").value;
+  if (!recipient) {
+    container.innerHTML = `<div style="color:#888; font-style:italic; text-align:center; margin-top:1rem;">Select a delegate to begin private chits.</div>`;
+    return;
+  }
+
+  // Clear unread status for messages from this recipient when viewed
+  if (state.chits) {
+    let changed = false;
+    state.chits.forEach(c => {
+      if (c.sender === recipient && c.recipient === state.userCountry && c.unread) {
+        c.unread = false;
+        changed = true;
+      }
+    });
+    if (changed) {
+      saveSession();
+      updateChitBadge();
+    }
+  }
+
+  const filtered = (state.chits || []).filter(c =>
+    (c.sender === state.userCountry && c.recipient === recipient) ||
+    (c.sender === recipient && c.recipient === state.userCountry)
+  );
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="color:#888; font-style:italic; font-size:0.8rem; text-align:center; margin-top:1rem;">No private chits with ${escapeHtml(recipient)} yet. Send a private message below.</div>`;
+    return;
+  }
+
+  filtered.forEach(c => {
+    const isSent = c.sender === state.userCountry;
+    const viaEbTag = c.viaEB ? `<span class="eb-tag">(Via EB)</span>` : "";
+    const div = document.createElement("div");
+    div.className = `chit-msg ${isSent ? "sent" : "received"}`;
+    div.innerHTML = `<div class="sender">${isSent ? "You" : escapeHtml(c.sender)}${viaEbTag}</div>` +
+                    `<div>${escapeHtml(c.text)}</div>`;
+    container.appendChild(div);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendUserChit() {
+  const input = $("chit-text-input");
+  const recipient = $("chit-recipient-select").value;
+  const text = input.value.trim();
+  const viaEB = $("chit-via-eb-checkbox") ? $("chit-via-eb-checkbox").checked : false;
+  if (!text || !recipient) return;
+
+  if (!state.chits) state.chits = [];
+  state.chits.push({
+    sender: state.userCountry,
+    recipient: recipient,
+    text: text,
+    timestamp: new Date().toISOString(),
+    unread: false,
+    viaEB: viaEB
+  });
+
+  input.value = "";
+  renderChitMessages();
+  saveSession();
+}
+
+function updateChitBadge() {
+  const unreadCount = (state.chits || []).filter(c => c.recipient === state.userCountry && c.unread).length;
+  const badge = $("chit-badge");
+  if (unreadCount > 0) {
+    badge.textContent = unreadCount;
+    badge.style.display = "inline-flex";
+  } else {
+    badge.style.display = "none";
+  }
+  updateChitDropdownOptions();
+}
+
+function toggleChitBox() {
+  const box = $("chit-box");
+  const btn = $("chit-toggle-btn");
+  const isCollapsed = box.classList.toggle("collapsed");
+  btn.textContent = isCollapsed ? "+" : "—";
+
+  if (!isCollapsed) {
+    renderChitMessages();
+  }
+}
+
+/* ==================================================================
+   10. RENDERING AND UI UPDATES
+   ================================================================== */
+
+function renderTurn(t) {
+  const div = document.createElement("div");
+  div.className = `turn ${t.role === "user" ? "user" : t.role}`;
+  const who = document.createElement("div");
+  who.className = "who";
+
+  if (t.role !== "chair" && t.role !== "narrator") {
+    const flag = flagImg(t.speaker);
+    if (flag) who.appendChild(flag);
+  }
+  const label = document.createElement("span");
+  if (t.role === "chair") {
+    label.textContent = `Chair — ${state.chairName || ""}`;
+  } else if (t.role === "narrator") {
+    label.textContent = "— Narration —";
+  } else if (t.role === "user") {
+    label.textContent = `Delegate of ${t.speaker} (you)`;
+  } else {
+    const info = delegateInfo(t.speaker);
+    label.textContent = (info && info.name) ? `${info.name} (${t.speaker})` : `Delegate of ${t.speaker}`;
+  }
+  who.appendChild(label);
+
+  if (t.phase) {
+    const ph = document.createElement("span");
+    ph.className = "phase";
+    ph.textContent = t.phase;
+    who.appendChild(ph);
+  }
+  const text = document.createElement("div");
+  text.className = "text";
+  text.innerHTML = formatTurnHtml(t.text, t.role);
+  div.appendChild(who);
+  div.appendChild(text);
+  $("transcript").appendChild(div);
+  div.scrollIntoView({ behavior: "smooth", block: "end" });
+
+  if (state && state.difficulty === "beginner" && !state.resolutionPhasePopupShown) {
+    const phaseLower = (t.phase || "").toLowerCase();
+    if (phaseLower.includes("resolution phase")) {
+      state.resolutionPhasePopupShown = true;
+      saveSession();
+      setTimeout(() => {
+        showModal(
+          "Resolution Phase Overview",
+          "<strong>Welcome to the Resolution Phase!</strong><br><br>" +
+          "Here is what happens during this phase:<br><br>" +
+          "• <strong>Presenting a Resolution:</strong> Authoring blocs present their formal Draft Resolutions to the committee.<br>" +
+          "• <strong>Questions:</strong> Delegates raise Points of Information to ask authors questions about their resolution's clauses.<br>" +
+          "• <strong>Amendments:</strong> Delegates propose friendly or unfriendly amendments to modify, add, or delete clauses.<br>" +
+          "• <strong>Voting:</strong> The committee votes on each resolution in order. A simple majority adopts a resolution."
+        );
+      }, 300);
+    }
+  }
+}
+
+function renderFullTranscript() {
+  $("transcript").innerHTML = "";
+  state.transcript.forEach(renderTurn);
+}
+
+function updateControls() {
+  $("next-area").style.display    = (!state.sessionOver && !state.pendingUser) ? "" : "none";
+  $("respond-area").style.display = (!state.sessionOver &&  state.pendingUser) ? "" : "none";
+  $("done-area").style.display    = state.sessionOver ? "" : "none";
+
+  if (state.pendingUser) {
+    const hintText = state.pendingUser.hint || "The Chair awaits your response.";
+    $("user-prompt-hint").textContent = hintText;
+
+    const lastTurn = state.transcript.length ? state.transcript[state.transcript.length - 1] : null;
+    const currentPhase = lastTurn ? (lastTurn.phase || "") : "";
+
+    const userTextElem = $("user-text");
+    userTextElem.placeholder = getDynamicPlaceholder(hintText, currentPhase);
+
+    const box = $("option-buttons");
+    box.innerHTML = "";
+    let options = state.pendingUser.options || [];
+
+    if (state.userRollCall === "Present and Voting") {
+      options = options.filter(o => !/abstain/i.test(o));
+    }
+    if (state.userIsMember === false) {
+      const VOTE_ONLY = ["yes", "no", "abstain", "yes with rights", "no with rights", "present and voting"];
+      options = options.filter(o => !VOTE_ONLY.includes(o.trim().toLowerCase()));
+    }
+    for (const opt of options) {
+      const b = document.createElement("button");
+      b.textContent = opt;
+      b.addEventListener("click", () => submitUserResponse(opt));
+      box.appendChild(b);
+    }
+    userTextElem.value = "";
+    userTextElem.style.display = "";
+    if (options.length === 0) userTextElem.focus();
+  }
+}
+
+function renderScores() {
+  if (!state.scores || !state.scores.length) { $("closing-report").innerHTML = ""; return; }
+  const rows = state.scores
+    .slice()
+    .sort((a, b) => b.score - a.score)
+    .map(s => {
+      const code = COUNTRY_CODES[s.country];
+      const flagTag = code ? `<span class="flag-icon" style="margin-right:0.4em">${codeToFlagEmoji(code)}</span>` : "";
+      const info = delegateInfo(s.country);
+      const nameTag = (info && info.name) ? ` — ${escapeHtml(info.name)}` : "";
+      const isUser = s.country === state.userCountry;
+      return `<tr class="${isUser ? "user-row" : ""}">
+        <td>${flagTag}Delegate of ${escapeHtml(s.country)}${nameTag}${isUser ? " (you)" : ""}</td>
+        <td>${escapeHtml(s.score)}</td>
+        <td>${escapeHtml(s.comment)}</td>
+      </tr>`;
+    }).join("");
+
+  $("closing-report").innerHTML = `
+    <div class="card">
+      <h2>Final delegate scores</h2>
+      <table class="scores">
+        <tr><th>Delegate</th><th>Score</th><th>Chair’s comments</th></tr>
+        ${rows}
+      </table>
+    </div>`;
+}
+
+function renderHeader() {
+  $("header-committee").textContent = `${state.committee.name} (${state.difficulty.toUpperCase()}${state.enableCrisis ? " + CRISIS" : ""})`;
+  $("header-agenda").textContent = `Agenda: ${state.agenda}`;
+  const headerCountry = $("header-country");
+  headerCountry.innerHTML = "";
+  const flag = flagImg(state.userCountry);
+  if (flag) headerCountry.appendChild(flag);
+  const label = document.createElement("span");
+  label.textContent = `You: Delegate of ${state.userCountry}`;
+  headerCountry.appendChild(label);
+}
+
+/* ==================================================================
+   11. SIMULATION ENGINE & EXECUTION FLOW
+   ================================================================== */
+
+let requestInFlight = false;
+
+async function advanceTurn() {
+  if (requestInFlight || state.sessionOver) return;
+  requestInFlight = true;
+  setError("sim-error", "");
+  const nextBtn = $("next-btn"), submitBtn = $("submit-response-btn");
+  const oldNext = nextBtn.innerHTML;
+  nextBtn.disabled = submitBtn.disabled = true;
+  nextBtn.innerHTML = '<span class="spinner"></span> Thinking...';
+
+  try {
+    const backend = Backends[state.backend];
+    const turn = await backend.generateJSON(buildSystemPrompt(), buildTurnRequest(), TURN_SCHEMA);
+
+    const entry = {
+      speaker: turn.speaker || "Chair",
+      role: (turn.role === "chair" || turn.role === "narrator") ? turn.role : "delegate",
+      phase: turn.phase || "",
+      text: turn.text || "",
+    };
+    state.transcript.push(entry);
+    renderTurn(entry);
+
+    // Process incoming private chit from AI delegate if generated
+    if (turn.chit && turn.chit.sender && turn.chit.text) {
+      if (!state.chits) state.chits = [];
+      const box = $("chit-box");
+      const isCollapsed = box.classList.contains("collapsed");
+      const currentSelected = $("chit-recipient-select").value;
+
+      state.chits.push({
+        sender: turn.chit.sender,
+        recipient: state.userCountry,
+        text: turn.chit.text,
+        timestamp: new Date().toISOString(),
+        unread: isCollapsed || (currentSelected !== turn.chit.sender),
+        viaEB: !!turn.chit.viaEB
+      });
+
+      if (turn.chit.sender && state.delegates.some(d => d.country === turn.chit.sender)) {
+        if (isCollapsed) {
+          $("chit-recipient-select").value = turn.chit.sender;
+        }
+      }
+
+      updateChitBadge();
+      renderChitMessages();
+    }
+
+    if (turn.sessionOver) {
+      state.sessionOver = true;
+      state.pendingUser = null;
+      state.scores = Array.isArray(turn.scores) ? turn.scores : [];
+      renderScores();
+    } else if (turn.requiresUserResponse) {
+      state.pendingUser = {
+        hint: turn.userPromptHint || "",
+        options: Array.isArray(turn.userResponseOptions) ? turn.userResponseOptions : [],
+      };
+    } else {
+      state.pendingUser = null;
+    }
+    saveSession();
+  } catch (e) {
+    if (e.status === 400 || e.status === 401 || e.status === 403) {
+      setError("sim-error", `${e.message}\nYour API key may be invalid.`);
+    } else {
+      setError("sim-error", `${e.message}\nClick Next to retry.`);
+    }
+  } finally {
+    requestInFlight = false;
+    nextBtn.disabled = submitBtn.disabled = false;
+    nextBtn.innerHTML = oldNext;
+    updateControls();
+  }
+}
+
+function submitUserResponse(fixedChoice) {
+  if (requestInFlight) return;
+  const typed = $("user-text").value.trim();
+  const text = fixedChoice || typed;
+  if (!text) { setError("sim-error", "Please type a response or pick an option."); return; }
+  setError("sim-error", "");
+
+  if (state.pendingUser && (state.pendingUser.options || []).includes("Present and Voting")
+      && (text === "Present" || text === "Present and Voting")) {
+    state.userRollCall = text;
+  }
+
+  const entry = {
+    speaker: state.userCountry,
+    role: "user",
+    phase: state.transcript.length ? state.transcript[state.transcript.length - 1].phase : "",
+    text
+  };
+  state.transcript.push(entry);
+  renderTurn(entry);
+  state.pendingUser = null;
+  saveSession();
+  updateControls();
+  advanceTurn();
+}
+
+async function createCommittee() {
+  const backend = Backends[state.backend];
+  
+  let chairGuidance = "";
+  if (state.difficulty === "beginner") {
+    chairGuidance = "The Chair MUST be assigned 'The Encouraging Mentor' personality archetype by default (patient with procedural mistakes, offers gentle corrective nudges, warm and supportive tone).";
+  } else {
+    const archetypes = [
+      "The Rigid Formalist (pedantic, strictly legalistic, quotes rules)",
+      "The Weary Realist (pragmatic, dry wit, keeps committee moving briskly)",
+      "The High-Energy Ringmaster (dramatic gaveling, fast-paced spectator-sport style)",
+      "The Encouraging Mentor (patient, gentle corrective nudges, supportive)",
+      "The Diplomatic Tactician (measured, calculating, pushes blocs toward consensus)"
+    ];
+    const selectedArchetype = archetypes[Math.floor(Math.random() * archetypes.length)];
+    chairGuidance = `The Chair MUST strictly adopt this specific personality archetype for the session: "${selectedArchetype}".`;
+  }
+
+  let abilityGuidance = "";
+  if (state.difficulty === "beginner") {
+    abilityGuidance = "Make delegates generally simpler in capability, with researchQuality 'underprepared' or 'adequate', articulation 'halting and imprecise' or 'clear but plain', and lower aggression.";
+  } else if (state.difficulty === "advanced") {
+    abilityGuidance = "Make delegates highly skilled and challenging, with researchQuality 'well-researched' or 'exceptionally well-researched', articulation 'polished and persuasive' or 'masterfully eloquent', and assertive aggression.";
+  } else {
+    abilityGuidance = "Distribute researchQuality, articulation, and aggression evenly across all standard levels.";
+  }
+
+  const system = `You are setting up a Model United Nations simulation.
+Committee: ${state.committee.name} (${state.committee.full})
+Agenda: ${state.agenda}
+Human country: ${state.userCountry}
+Difficulty: ${state.difficulty.toUpperCase()}`;
+
+  const request = `Create the committee. Choose a plausible chair name and personality description.
+${chairGuidance}
+
+Select 5-15 AI delegates (excluding ${state.userCountry}). ${abilityGuidance}
+
+For EACH delegate:
+1. Invent a full authentic diplomatic name (e.g., 'Ambassador Sarah Chen', 'Delegate Mateo Silva').
+2. Assign a primary rhetorical archetype or preferably hybrid mix from: 'The Ideological Firebrand', 'The Policy Specialist', 'The Passive-Aggressive Diplomat', 'The Pragmatic Consensus Builder', or 'The Strategic Agitator'.
+3. Mix and match these personalities with diverse opening styles (Emotional, Clinical, Quote, Anecdotal, Rhetorical Question, Direct Call-out, Decorum) and closing styles (Impactful Point, Executive Summary, Call to Unity, Brighter Future, Reflective Quote, Line-in-the-Sand, Caucus Call).`;
+
+  const setup = await backend.generateJSON(system, request, SETUP_SCHEMA);
+
+  if (!setup.delegates || setup.delegates.length < 3) {
+    throw new Error("The AI did not return a usable delegate list. Please try again.");
+  }
+  state.chairName = setup.chairName || "The Chair";
+  state.chairPersonality = setup.chairPersonality || "The Encouraging Mentor";
+  state.delegates = setup.delegates.filter(d => d.country && d.country !== state.userCountry).slice(0, 15);
+}
+
+/* ==================================================================
+   12. TRANSCRIPT EXPORT FUNCTIONALITY
+   ================================================================== */
+function exportTranscript() {
+  const turnsHtml = state.transcript.map(t => {
+    const info = (t.role !== "chair" && t.role !== "narrator") ? delegateInfo(t.speaker) : null;
+    let who = t.role === "chair" ? `Chair — ${state.chairName || ""}`
+            : t.role === "narrator" ? "Narration"
+            : t.role === "user" ? `Delegate of ${t.speaker} (human delegate)`
+            : (info && info.name ? `${info.name} (${t.speaker})` : `Delegate of ${t.speaker}`);
+    const code = (t.role !== "chair" && t.role !== "narrator") ? COUNTRY_CODES[t.speaker] : null;
+    const flagTag = code ? `${codeToFlagEmoji(code)} ` : "";
+    const cls = t.role === "user" ? "user" : t.role;
+    return `<div class="turn ${cls}"><div class="who">${flagTag}${escapeHtml(who)}` +
+           (t.phase ? ` <span class="phase">${escapeHtml(t.phase)}</span>` : "") +
+           `</div><div class="text">${formatTurnHtml(t.text, t.role)}</div></div>`;
+  }).join("\n");
+
+  const doc = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<title>MUN Transcript — ${escapeHtml(state.committee.name)}</title>
+<style>
+ body{font-family:Georgia,serif;max-width:820px;margin:2rem auto;padding:0 1rem;color:#1c2733;line-height:1.5}
+ h1{border-bottom:3px solid #009edb;padding-bottom:.3em}
+ .turn{border:1px solid #d7dee5;border-left:5px solid #d7dee5;border-radius:6px;padding:.8rem 1.1rem;margin:.8rem 0}
+ .turn.chair{background:#feeeff;border-left-color:#a001b8}
+ .turn.user{background:#f8ece1;border-left-color:#f6bc64}
+ .turn.narrator{background:#eee;border-left-color:#9e9e9e;font-style:italic}
+ .who{font-weight:bold;margin-bottom:.3rem}
+ blockquote{border-left:3px solid #021c6f;margin:.5em 0;padding-left:.8em;font-style:italic}
+ ul{margin:.5em 0;padding-left:1.4em}
+</style></head><body>
+<h1>Model United Nations — Session Transcript</h1>
+<p><strong>Committee:</strong> ${escapeHtml(state.committee.name)} (${escapeHtml(state.difficulty.toUpperCase())})<br>
+<strong>Agenda:</strong> ${escapeHtml(state.agenda)}</p>
+${turnsHtml}
+</body></html>`;
+
+  const blob = new Blob([doc], { type: "text/html" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `mun-transcript-${state.committee.name.toLowerCase()}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ==================================================================
+   13. INITIALIZATION & EVENT LISTENERS
+   ================================================================== */
+
+function populateSetupSelects() {
+  const cSel = $("committee-select");
+  cSel.innerHTML = "";
+  for (const c of COMMITTEES) {
+    const o = document.createElement("option");
+    o.value = c.name;
+    o.textContent = `${c.name} — ${c.full}`;
+    cSel.appendChild(o);
+  }
+  populateCountrySelect();
+  updateAgendaPlaceholder();
+  updateCrisisVisibility();
+  
+  cSel.addEventListener("change", () => {
+    populateCountrySelect();
+    updateAgendaPlaceholder();
+  });
+  $("country-select").addEventListener("change", updateCountrySelectFlag);
+  $("difficulty-select").addEventListener("change", updateCrisisVisibility);
+}
+
+function populateCountrySelect() {
+  const committee = COMMITTEES.find(c => c.name === $("committee-select").value) || COMMITTEES[0];
+  const nSel = $("country-select");
+  const previous = nSel.value;
+  nSel.innerHTML = "";
+  for (const n of UN_MEMBERS) {
+    const o = document.createElement("option");
+    o.value = n;
+    o.textContent = `${n}${isCommitteeMember(committee, n) ? " — Member" : " — Observer (speaking rights only)"}`;
+    nSel.appendChild(o);
+  }
+  if (previous && UN_MEMBERS.includes(previous)) nSel.value = previous;
+  updateCountrySelectFlag();
+}
+
+function updateCountrySelectFlag() {
+  const box = $("country-select-flag");
+  box.innerHTML = "";
+  const flag = flagImg($("country-select").value);
+  if (flag) box.appendChild(flag);
+}
+
+function enterApp() {
+  const saved = loadSession();
+  if (saved && saved.transcript && saved.transcript.length) {
+    state = saved;
+    startSimulationUI(true);
+  } else {
+    populateSetupSelects();
+    showScreen("setup");
+  }
+}
+
+function startSimulationUI(resumed) {
+  showScreen("sim");
+  renderHeader();
+  renderFullTranscript();
+  renderScores();
+  populateChitRecipients();
+  updateChitBadge();
+  updateControls();
+  if (!resumed) advanceTurn();
+}
+
+/* Event Handlers */
+$("save-key-btn").addEventListener("click", () => {
+  const key = $("api-key-input").value.trim();
+  if (!key) { setError("key-error", "Please paste an API key."); return; }
+  Backends[DEFAULT_BACKEND].setKey(key);
+  setError("key-error", "");
+  enterApp();
+});
+
+$("start-btn").addEventListener("click", async () => {
+  const committee = COMMITTEES.find(c => c.name === $("committee-select").value);
+  const agenda = $("agenda-input").value.trim();
+  const userCountry = $("country-select").value;
+  const difficulty = $("difficulty-select").value;
+  const enableCrisis = (difficulty !== "beginner") && ($("crisis-select").value === "yes");
+
+  if (!agenda) { setError("setup-error", "Please enter an agenda for the meeting."); return; }
+  setError("setup-error", "");
+  const btn = $("start-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creating committee...';
+
+  state = newState(committee, agenda, userCountry, difficulty, enableCrisis);
+  state.userIsMember = isCommitteeMember(committee, userCountry);
+
+  try {
+    await createCommittee();
+    saveSession();
+    startSimulationUI(false);
+  } catch (e) {
+    setError("setup-error", e.message);
+    state = null;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Begin";
+  }
+});
+
+$("change-key-btn").addEventListener("click", () => {
+  Backends[DEFAULT_BACKEND].clearKey();
+  $("api-key-input").value = "";
+  showScreen("key");
+});
+
+$("next-btn").addEventListener("click", () => advanceTurn());
+$("submit-response-btn").addEventListener("click", () => submitUserResponse(null));
+$("user-text").addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitUserResponse(null);
+});
+$("export-btn").addEventListener("click", exportTranscript);
+$("new-session-btn").addEventListener("click", () => {
+  if (!confirm("Discard this session and start a new one?")) return;
+  clearSession();
+  state = null;
+  populateSetupSelects();
+  showScreen("setup");
+});
+
+/* Chit IM Box Event Listeners */
+$("chit-header").addEventListener("click", toggleChitBox);
+$("chit-toggle-btn").addEventListener("click", e => {
+  e.stopPropagation();
+  toggleChitBox();
+});
+$("chit-send-btn").addEventListener("click", sendUserChit);
+$("chit-text-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendUserChit();
+  }
+});
+$("chit-recipient-select").addEventListener("change", renderChitMessages);
+
+/* Bootstrapping application entry point */
+if (Backends[DEFAULT_BACKEND].getKey()) {
+  enterApp();
+} else {
+  showScreen("key");
+}
+</script>
+</body>
+</html>

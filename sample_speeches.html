@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="design.css">
+  <title>SIMUN - Sample Speeches</title>
+  <link rel="icon" type="image/png" href="logo2.png">
+  <style>
+    /* Page-specific tweaks matching the layout of rules_of_procedure.html */
+    .ropPage .imageContainer {
+      flex-direction: column;
+      align-items: flex-start !important;
+      justify-content: flex-start;
+      gap: 1.2rem;
+      padding-top: 0;
+      top: 110px !important;
+      height: calc(100vh - 100px) !important;
+    }
+    .ropPanel {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.6rem 1.8rem;
+    }
+    .ropPanel h1 {
+      font-size: clamp(1.5rem, 2vw + 1rem, 2.2rem) !important;
+      margin-bottom: 0.6rem !important;
+    }
+    .ropPanel p {
+      font-size: clamp(0.9rem, 0.4vw + 0.75rem, 1.05rem) !important;
+      color: var(--note);
+      margin-top: 0;
+    }
+    .ropDownloads {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+    .ropDownloads a {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1rem;
+      padding: 0.7em 1em;
+      border-radius: 6px;
+      border: 1px solid var(--un-blue-dark);
+      background: var(--un-blue-dark);
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+    }
+    .ropDownloads a.secondary {
+      background: #fff;
+      color: var(--un-blue-dark);
+    }
+    .ropDownloads a:hover {
+      opacity: 0.85;
+    }
+    .ropNav {
+      width: 100%;
+      max-height: 75vh;
+      overflow-y: auto;
+      font-size: 0.95rem;
+    }
+    .ropNav > a,
+    .ropNav .tocGroup summary {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 0.35rem 0;
+      border-bottom: 1px dotted var(--border);
+      cursor: pointer;
+    }
+    .ropNav > a:hover,
+    .ropNav .tocGroup summary:hover { color: var(--un-blue-dark); text-decoration: underline; }
+    .ropNav .tocGroup {
+      border-bottom: 1px dotted var(--border);
+    }
+    .ropNav .tocGroup summary {
+      border-bottom: none;
+      list-style: none;
+      position: relative;
+      padding-right: 1.2rem;
+    }
+    .ropNav .tocGroup summary::-webkit-details-marker { display: none; }
+    .ropNav .tocGroup summary::after {
+      content: '▸';
+      position: absolute;
+      right: 0.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      color: var(--note);
+      transition: transform 0.15s ease;
+    }
+    .ropNav .tocGroup[open] summary::after {
+      transform: translateY(-50%) rotate(90deg);
+    }
+    .ropNav .tocGroup summary a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .ropNav .tocSub {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0.4rem 0.9rem;
+    }
+    .ropNav .tocSub li {
+      border-bottom: none;
+    }
+    .ropNav .tocSub a {
+      display: block;
+      padding: 0.2rem 0;
+      color: var(--note);
+      text-decoration: none;
+      font-size: 0.88rem;
+    }
+    .ropNav .tocSub a:hover {
+      color: var(--un-blue-dark);
+      text-decoration: underline;
+    }
+
+    .ropContent h1 {
+      border-bottom: 2px solid var(--un-blue);
+      padding-bottom: 0.3rem;
+      margin-top: 3rem;
+    }
+    .ropContent h2 {
+      font-size: clamp(1.3rem, 1.5vw + 0.9rem, 1.8rem) !important;
+      color: var(--un-blue-dark);
+      margin-top: 1.2rem;
+    }
+    .ropContent h3 {
+      font-size: clamp(1.05rem, 1vw + 0.7rem, 1.3rem) !important;
+      color: var(--ink);
+      font-style: italic;
+      margin-top: 1.4rem;
+      margin-bottom: 0.4rem;
+    }
+    .ropContent p, .ropContent li {
+      font-size: clamp(0.95rem, 0.4vw + 0.85rem, 1.15rem) !important;
+      line-height: 1.55;
+    }
+    .ropContent .script {
+      font-style: italic;
+      border-left: 3px solid var(--border);
+      padding-left: 1rem;
+      margin: 0.8rem 0 1.2rem 0;
+      color: #444;
+    }
+    .ropContent table {
+      margin: 1rem 0 2rem 0;
+      font-size: 0.95rem;
+    }
+    .ropContent .note {
+      color: var(--note);
+      font-style: italic;
+    }
+    @media (orientation: portrait) {
+      .ropPage .pageRow { flex-direction: column; }
+    }
+  </style>
+</head>
+<body class="ropPage">
+  <div id="header">
+    <span><a href="index.html"><img src="logo2.png"></a></span>
+    <span><a href="index.html" class="nameHomepageLink"><p class="title">SI<span style="color:var(--un-blue-dark)">M</span>UN</p></a></span>
+    <span class="dropdown">
+      <button class="menu">Resource Material</button>
+      <span class="dropdown-content">
+        <a href="rules_of_procedure.html">Rules Of Procedure</a>
+        <a href="sample_position_paper.html">Sample Position Paper</a>
+        <a href="draft_resolution_template.html">Draft Resolution Template</a>
+        <a href="sample_speeches.html">Sample Speeches</a>
+      </span>
+    </span>
+    <span><a class="menu" href="how-it-works.html">How it Works</a></span>
+    <span><a class="menu" href="what-is-mun.html">What is MUN?</a></span>
+    <span><a class="menu" href="faq.html">FAQ</a></span>
+    <span><a class="menu" href="contact.html">Contact</a></span>
+    <span><button><a href="simulation.html" class="newSession">Start a Session</a></button></span>
+  </div>
+
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="ropPanel">
+        <h1>Sample Speeches</h1>
+        <p>Example General Speaker's List (GSL) speeches covering key global agendas and portfolio positions.</p>
+        <div class="ropDownloads">
+          <a id="downloadPdf" href="Sample_GSL_Speeches.pdf" target="_blank" rel="noopener">↗ Open PDF</a>
+          <a id="downloadDocx" class="secondary" href="Sample_GSL_Speeches.docx" download="Sample_GSL_Speeches.docx">⬇ Download as Word (.docx)</a>
+        </div>
+      </div>
+      <div class="ropPanel ropNav">
+        <h2>Table of Contents</h2>
+        <a class="tocTop" href="#speech-1">1. Germany — Refugee Resettlement</a>
+        <a class="tocTop" href="#speech-2">2. Kenya — Digital Sovereignty</a>
+        <a class="tocTop" href="#speech-3">3. Norway — Autonomous Weapons</a>
+        <a class="tocTop" href="#speech-4">4. India — Climate Adaptation</a>
+        <a class="tocTop" href="#speech-5">5. Chile — Deep-Sea Mining</a>
+      </div>
+    </div>
+
+    <div class="pageContent ropContent">
+
+      <h1 id="speech-1">1. Germany</h1>
+      <h2>Agenda: Reforming Global Refugee Resettlement Frameworks</h2>
+      <p>Hannah Arendt once warned that the world found nothing more sacred than the nakedness of being human, and nothing more helpless.</p>
+      <p>Since 2015, Germany has absorbed over 1.2 million displaced individuals. That experience delivered a brutal truth: compassion without structure is a short-lived policy, and resettlement without integration funding fails twice—once for the refugee who remains isolated, and once for the host community that bears the burden alone. The world does not lack the financial resources to solve this crisis; it lacks the structural discipline to distribute them.</p>
+      <p>Germany urges this committee to replace unpredictable voluntary quotas with a Municipal Resettlement Clearinghouse and Impact Bond (MRC-IB) Framework. Under this model:</p>
+      <p>We decouple resettlement from political goodwill and tie it directly to local capacity. Municipalities across donor states submit real-time data on labor shortages, school vacancies, and housing stock to a centralized UN clearinghouse. Frontline host nations receive non-repayable integration capital—scaled to national GDP—that automatically disburses as municipal benchmarks for language acquisition, skill certification, and direct workforce placement are met. By converting static displacement into dynamic economic contribution, we transform a perceived domestic burden into a measurable national asset.</p>
+      <p>If international law guarantees the right to seek asylum, international finance must guarantee the dignity of the answer. We do not lack the money; we lack the mechanism. We do not lack the capacity; we lack the courage. Germany calls on major host states and donor nations to move past symbolic gestures and join us at the drafting table today.</p>
+      <p class="script">I yield my remaining time to questions.</p>
+
+      <h1 id="speech-2">2. Kenya</h1>
+      <h2>Agenda: Regulating Cross-Border Data Flows and Digital Sovereignty</h2>
+      <p>Colonialism did not disappear; it digitized.</p>
+      <p>Nairobi is celebrated worldwide as the Silicon Savannah—a soaring beacon of technological innovation. Yet beneath this pride lies a quiet, structural extraction: over 80 percent of the digital data generated by African citizens is exported, stored, and monetized on servers thousands of miles away, governed by foreign courts under laws we never wrote.</p>
+      <p>Data is not ambient light passing through undersea cables; it is a national asset as material as our minerals and as sovereign as our coastlines. Digital sovereignty is not protectionism—it is self-determination. Kenya rejects the false choice between total digital isolation and total digital exploitation. We propose a Compute-for-Data Sovereign Reciprocity Protocol:</p>
+      <ul>
+        <li><b>Sovereign Cloud Escrows:</b> Core public data—including health telemetry, agricultural analytics, and financial records—must be stored within domestic or regional African trust zones.</li>
+        <li><b>The Compute Dividend:</b> Foreign technology conglomerates extracting local data must trade access to physical compute infrastructure, GPU clusters, and open algorithmic weights, fostering native AI development rather than raw data export.</li>
+        <li><b>AfCFTA Interoperable Frameworks:</b> Establishing cross-border digital corridors that allow private commercial data exchange only when mutual judicial oversight and localized tax equity are guaranteed.</li>
+      </ul>
+      <p>We refuse to remain digital colonies supplying raw human data to foreign platforms. We do not seek to wall off the internet; we demand our rightful seat where its governing protocols are written.</p>
+      <p class="script">Kenya yields the floor to the Delegate of Brazil.</p>
+
+      <h1 id="speech-3">3. Norway</h1>
+      <h2>Agenda: Establishing Liability Standards for Autonomous Weapons Systems</h2>
+      <p>A sensor sweeps across a silent valley. An algorithm calculates target probability at 98 percent. A non-human actuator fires—and no human finger was ever near a trigger.</p>
+      <p>When a machine executes a lethal targeting decision, who stands in the dock at The Hague? The engineer who wrote line 400 of the neural network? The commander who activated the system? Or the state that deployed code it could not predict?</p>
+      <p>This is the central legal void of modern warfare, and every session we delay, the gap between machine lethality and legal accountability widens. Great power competition makes an outright ban on military artificial intelligence politically unrealizable. Norway approaches this issue with strict strategic realism: we do not attempt the impossible prohibition of software, but we demand the non-negotiable enforcement of responsibility.</p>
+      <p>International Humanitarian Law was built around human intent, human judgment, and human culpability—qualities a neural network can never possess. Norway proposes a strict legal doctrine of Systemic Command Liability and Explainability Injunctions:</p>
+      <p>Any military system operating without real-time, human-understandable "Explainable AI" telemetry automatically loses sovereign legal immunity. If an algorithmic strike results in civilian casualties, strict joint liability attaches immediately to both the commanding officer who defined the operational parameters and the deploying state under absolute civil and criminal liability. If an algorithm's decision-making process cannot be explained in a court of law, it must never be authorized on the battlefield.</p>
+      <p>When that silent sensor sweeps the valley, law must govern the machine—or law ceases to exist entirely.</p>
+      <p class="script">I yield to comments.</p>
+
+      <h1 id="speech-4">4. India</h1>
+      <h2>Agenda: Financing Climate Adaptation in Vulnerable Coastal Nations</h2>
+      <p>Seven thousand kilometers of exposed coastline. Over one billion lives. Zero patience remaining for diplomatic promises.</p>
+      <p>Developing nations are being forced to buy back their own survival on credit. Pledged adaptation funds turn into bureaucratic delays, high-interest loans, and management consultancy fees long before reaching vulnerable shorelines. Frontline states are incurring sovereign debt to build sea walls against rising oceans caused by the industrial emissions of distant powers. We are being asked to pay for a global catastrophe we did not create with money we do not have.</p>
+      <p>India rejects this performative financial diplomacy. We demand a structural pivot from discretionary donor charity to an automated Sovereign Resilience Debt-Swap &amp; Parametric Protocol:</p>
+      <ul>
+        <li><b>Parametric Disbursement Triggers:</b> Adaptation capital released automatically to frontline states based on satellite thermal and sea-level thresholds, entirely bypassing diplomatic negotiation.</li>
+        <li><b>Debt-to-Adaptation Conversion:</b> Bilateral debt service payments owed by vulnerable coastal states are automatically redirected into sovereign, locally managed seawall and early-warning engineering funds.</li>
+        <li><b>Direct CDRI Capitalization:</b> Funding channeled directly through the Coalition for Disaster Resilient Infrastructure to deploy standardized, disaster-resilient coastal defenses without administrative overhead.</li>
+      </ul>
+      <p>We do not ask for donor benevolence; we demand institutional equity. As the Arthashastra declared millennia ago: "All human undertakings depend upon finance; therefore, let fundamental management be applied to the treasury first."</p>
+      <p class="script">I yield to the Chair.</p>
+
+      <h1 id="speech-5">5. Chile</h1>
+      <h2>Agenda: Governing the Extraction of Deep-Sea Mineral Resources</h2>
+      <p>Four thousand meters below the Pacific surface lies the abyssal plain—a world of perpetual darkness and delicate ecosystems millions of years in the making. Today, commercial mining submersibles prepare to strip that seabed under the guise of saving the planet.</p>
+      <p>We are sold a false dichotomy: that we must destroy the ocean floor to extract the nickel and cobalt required for clean energy batteries, or compromise the green transition to protect marine life. Chile—as the world's leading land-based copper producer and a nation defined by thousands of miles of ocean border—exposes this logic for what it is: corporate convenience disguised as environmental necessity.</p>
+      <p>Benthic sediment plumes do not respect maritime lines. Once these deep habitats are destroyed, they will not recover on any timescale relevant to human policy. Furthermore, breakthroughs in lithium-iron-phosphate chemistries and circular-economy metal recycling prove that terrestrial closed-loop supply chains can meet green energy demands without crushing the ocean floor.</p>
+      <p>Under Article 145 of UNCLOS, the deep seabed is legally designated as the common heritage of mankind. It belongs to future generations, not to mining consortiums seeking extraction margins. Chile proposes a Ten-Year Precautionary Pause Paired with a Circular Metallurgy Mandate:</p>
+      <p>We halt all commercial seabed exploitation contracts while mandating that donor nations enforce strict closed-loop metal recycling quotas on all battery manufacturers. In the pitch-black quiet of the ocean floor, life moves at a pace humanity is only beginning to comprehend. If we shatter that fragile world before we understand it, we prove that our technology has evolved far faster than our wisdom.</p>
+      <p class="script">I yield my remaining time to questions.</p>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <p class="credit">&#169; Copyright Kinara Goyal 2026 <img src="downward_arrow.png" class="scrollArrow" id="scrollArrow" alt="Scroll down"></p>
+  </div>
+  <script>
+    const scrollArrow = document.getElementById('scrollArrow');
+    function updateScrollArrow() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      if (scrollable - scrolled <= 2) {
+        scrollArrow.style.visibility = 'hidden';
+      } else {
+        scrollArrow.style.visibility = 'visible';
+      }
+    }
+    window.addEventListener('scroll', updateScrollArrow);
+    window.addEventListener('resize', updateScrollArrow);
+    window.addEventListener('load', updateScrollArrow);
+  </script>
+</body>
+</html>

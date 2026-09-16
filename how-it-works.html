@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="design.css">
+    <title>SIMUN - How it Works</title>
+    <!-- Favicon Icon -->
+  <link rel="icon" type="image/png" href="logo2.png">
+</head>
+<body class="stepsPage">
+  <div id="header">
+    <span><a href="index.html"><img src="logo2.png"></a></span>
+    <span><a href="index.html" class="nameHomepageLink"><p class="title">SI<span style="color:var(--un-blue-dark)">M</span>UN</p></a></span>
+    <span class="dropdown">
+      <button class="menu">Resource Material</button>
+      <span class="dropdown-content">
+        <a href="rules_of_procedure.html">Rules Of Procedure</a>
+        <a href="sample_position_paper.html">Sample Position Paper</a>
+        <a href="draft_resolution_template.html">Draft Resolution Template</a>
+        <a href="sample_speeches.html">Sample Speeches</a>
+      </span>
+    </span>
+    <span><a class="menu" href="how-it-works.html">How it Works</a></span>
+    <span><a class="menu" href="what-is-mun.html">What is MUN?</a></span>
+    <span><a class="menu" href="faq.html">FAQ</a></span>
+    <span><a class="menu" href="contact.html">Contact</a></span>
+    <span><button><a href="simulation.html" class="newSession">Start a Session</a></button></span>
+  </div>
+
+  <div class="pageRow">
+    <div class="imageContainer">
+      <video controls playsinline width="100%">
+        <source src="get_api_key.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+    <div class="pageContent">
+      <h2>Step 1: Get An API key</h2>
+      <div class="contentBlock">
+          <p>To get an API key to use in this website, do the following:</p>
+          <ol>
+              <li>Open Google AI studios.</li>
+              <li>Sign in (if required).</li>
+              <li> Click 'Create New Project'.</li>
+              <li>Click 'Create API key'.</li>
+              <li>Copy the API key.</li>
+              <li>Return to this page.</li>
+              <li>Click 'Start a New Session' in the header.</li>
+              <li>Paste the API key in the space given.</li>
+          </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="pageRow">
+    <div class="imageContainer">
+        <img src="plan_your_conference_page_screenshot.png">
+    </div>
+    <div class="pageContent">
+      <h2>Step 2: Set Up Your Session</h2>
+      <div class="contentBlock">
+          <p>After you submit your API key, we need some details to create you simulation. You will be redirected to a new screen, where you will need to give the following details:</p>
+          <ol>
+              <li><b>Choose Your Committee:</b> Which body of the UN will your session take place in?</li>
+              <li><b>Set the Agenda:</b> What will the committee discuss?</li>
+              <li><b>Set Your Portfolio:</b> Which nation will you represent?</li>
+              <li><b>Choose difficulty level:</b> How tough will your competition be?</li>
+          </ol>
+          <p>After you do this, you will have to wait 1-2 minutes while the AI generates the specifics of the simulation.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pageRow">
+    <div class="imageContainer">
+      <img src="chair_greeting.png">
+    </div>
+    <div class="pageContent">
+      <h2>Step 3: Meet the Chair</h2>
+      <div class="contentBlock">
+          <p>Once the AI finsihes generating the simulation, the Chair will open the committee by introducing themselves. At this point you will need to submit your position paper. To learn more about position papers, please refer to the Rules of Procedure page.</p>
+          <p>After you submit your position paper, you're all set to start!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pageRow">
+    <div class="imageContainer">
+        <img src="commiittee_seession.png">
+    </div>
+    <div class="pageContent">
+      <h2>Step 4: Let the Word Wars Begin!</h2>
+      <div class="contentBlock">
+          <p>Start playing. Make speeches, ask questions, raise motions and find solutions to global problems.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p class="credit">&#169; Copyright Kinara Goyal 2026 <img src="downward_arrow.png" class="scrollArrow" id="scrollArrow" alt="Scroll down"></p>
+  </div>
+  <script>
+    const scrollArrow = document.getElementById('scrollArrow');
+    function updateScrollArrow() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      if (scrollable - scrolled <= 2) {
+        scrollArrow.style.visibility = 'hidden';
+      } else {
+        scrollArrow.style.visibility = 'visible';
+      }
+    }
+    window.addEventListener('scroll', updateScrollArrow);
+    window.addEventListener('resize', updateScrollArrow);
+    window.addEventListener('load', updateScrollArrow);
+  </script>
+</body>
+</html>

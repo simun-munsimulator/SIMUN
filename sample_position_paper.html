@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="design.css">
+  <title>SIMUN - Sample Position Paper</title>
+  <link rel="icon" type="image/png" href="logo2.png">
+  <style>
+    /* Page-specific tweaks that don't belong in the shared stylesheet */
+    .ropPage .imageContainer {
+      flex-direction: column;
+      align-items: flex-start !important;
+      justify-content: flex-start;
+      gap: 1.2rem;
+      padding-top: 0;
+      top: 40vh;
+      height: calc(100vh - 100px) !important;
+    }
+    .ropPanel {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.6rem 1.8rem;
+    }
+    .ropPanel h1 {
+      font-size: clamp(1.5rem, 2vw + 1rem, 2.2rem) !important;
+      margin-bottom: 0.6rem !important;
+    }
+    .ropPanel p {
+      font-size: clamp(0.9rem, 0.4vw + 0.75rem, 1.05rem) !important;
+      color: var(--note);
+      margin-top: 0;
+    }
+    .ropDownloads {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+    .ropDownloads a {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1rem;
+      padding: 0.7em 1em;
+      border-radius: 6px;
+      border: 1px solid var(--un-blue-dark);
+      background: var(--un-blue-dark);
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+    }
+    .ropDownloads a.secondary {
+      background: #fff;
+      color: var(--un-blue-dark);
+    }
+    .ropDownloads a:hover {
+      opacity: 0.85;
+    }
+
+    .ropContent h1 {
+      border-bottom: 2px solid var(--un-blue);
+      padding-bottom: 0.3rem;
+      margin-top: 1rem;
+    }
+    .ropContent h2 {
+      font-size: clamp(1.3rem, 1.5vw + 0.9rem, 1.8rem) !important;
+      color: var(--un-blue-dark);
+      margin-top: 2.2rem;
+    }
+    .ropContent p, .ropContent li {
+      font-size: clamp(0.95rem, 0.4vw + 0.85rem, 1.15rem) !important;
+      line-height: 1.6;
+    }
+    .ropContent sup {
+      font-size: 0.7em;
+      color: var(--un-blue-dark);
+    }
+    .paperHeader {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem 1.8rem;
+      margin-bottom: 2rem;
+    }
+    .paperHeader p {
+      font-size: clamp(0.95rem, 0.4vw + 0.85rem, 1.1rem) !important;
+      margin: 0.3rem 0 !important;
+      color: var(--ink) !important;
+    }
+    .paperHeader p b {
+      color: var(--un-blue-dark);
+    }
+    .referencesList {
+      padding-left: 1.4rem;
+      color: var(--note);
+      font-size: 0.95rem !important;
+      line-height: 1.6;
+    }
+    .referencesList li {
+      margin-bottom: 0.9rem;
+      font-size: 0.95rem !important;
+    }
+    .referencesList a {
+      color: var(--un-blue-dark);
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body class="ropPage">
+  <div id="header">
+    <span><a href="index.html"><img src="logo2.png"></a></span>
+    <span><a href="index.html" class="nameHomepageLink"><p class="title">SI<span style="color:var(--un-blue-dark)">M</span>UN</p></a></span>
+    <span class="dropdown">
+      <button class="menu">Resource Material</button>
+      <span class="dropdown-content">
+        <a href="rules_of_procedure.html">Rules Of Procedure</a>
+        <a href="sample_position_paper.html">Sample Position Paper</a>
+        <a href="draft_resolution_template.html">Draft Resolution Template</a>
+        <a href="sample_speeches.html">Sample Speeches</a>
+      </span>
+    </span>
+    <span><a class="menu" href="how-it-works.html">How it Works</a></span>
+    <span><a class="menu" href="what-is-mun.html">What is MUN?</a></span>
+    <span><a class="menu" href="faq.html">FAQ</a></span>
+    <span><a class="menu" href="contact.html">Contact</a></span>
+    <span><button><a href="simulation.html" class="newSession">Start a Session</a></button></span>
+  </div>
+
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="ropPanel">
+        <h1>Sample Position Paper</h1>
+        <p>A full example position paper, so you can see the expected structure, tone, and citation style before writing your own.</p>
+        <div class="ropDownloads">
+          <a id="downloadPdf" href="Position_paper.pdf" target="_blank" rel="noopener">↗ Open PDF</a>
+          <a id="downloadDocx" class="secondary" href="Position_paper.docx" download="Position_paper.docx">⬇ Download as Word (.docx)</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="pageContent ropContent">
+      <h1>Sample Position Paper</h1>
+      <div class="paperHeader">
+        <p><b>Committee:</b> World Health Organization</p>
+        <p><b>Agenda:</b> Deliberating the ethical permissibility of human genome editing in relation to public health priorities and individual bodily autonomy</p>
+        <p><b>Country:</b> Republic of South Africa</p>
+      </div>
+
+      <p>Since the advent of CRISPR-Cas9 in 2012, the field of gene editing has been rapidly progressing.<sup>1</sup> Treatments for sickle cell syndrome and beta-thalassemia have already been approved in some nations.<sup>1</sup> Other treatments are still in their infancy, with many countries conducting clinical trials for cancers, which involve the modification of CAR-T cells enabling T-cells to identify and destroy carcinogenic cells and tumors within the body.<sup>1</sup> This treatment may significantly increase life expectancy of several thousand cancer patients, or mitigate the life-threatening nature of some cancers entirely. Modification of bacteriophages to combat chronic bacterial infection is also being explored. Therapy for blood infections, cardiovascular disease, lupus and HIV are being tested.<sup>1</sup> All these therapies involve somatic gene-editing, or editing of non-reproductive cells, ensuring that the edits only exist within one person.<sup>2</sup> Somatic genome editing poses several challenges, such as unintended indels within a chromosome, off-target effects and even mosaicism.<sup>2</sup> These unintended side-effects can result in serious, and perhaps irreparable harm to the individual, due to unforeseeable side-effects. While the technology is improving, and several advancements have been made over the last decade enhancing the precision of TALENs, zinc-finger nucleases (ZFNs), and mostly CRISPR, there remain significant risks with a 16% chance of large chromosomal abnormalities when employing certain experimental treatments.<sup>2</sup> Yet, due to the life-threatening nature of these ailments, South Africa believes that with careful administration, strict regulations, and comprehensive clinical trials overseen by national and international organizations, somatic genome-editing is safe and useful for specific clinical purposes. However, a more complex, and more hazardous form of genome-editing remains unexplored – germline or heritable gene editing. This form of genome-editing poses many more dangers: the danger that it will encourage the creation of 'designer babies', exacerbating social inequalities, the danger that it will narrow the gene pool, and the danger that it will pass on some unforeseen harmful genetic quality to future generations.<sup>3</sup></p>
+
+      <p>Among other international organizations, the United Nations has provided several guidelines on the ethical permissibility of genome-editing including the UNESCO Universal Declaration on Human Genome and Human Rights, and the WHO Expert Advisory Committee's Human Genome Editing: A Framework for Governance.<sup>1</sup> One important topic for discussion provided by the WHO Expert Advisory Council's Framework for Governance, is where the lines are drawn between therapy, prevention and enhancement, especially since the framework allows for all three, but mandates higher standards for clinical research into genetic enhancement. Genetic enhancement, defined as the improvement or exaggeration of certain traits, is a slippery slope unless defined absolutely within the bounds of the law.<sup>4</sup> Another concern, raised both in the aforementioned report and in the statement by the organizing committee after the Second International Summit on Genome Editing, is the case of illegitimate heritable genome-editing, particularly by Chinese scientist He Jiankui on the embryos of two children while they were in vitro, without the consent of the parents.<sup>4</sup> Protecting patient rights should remain a top priority, and informed consent is necessary to accomplish this.<sup>4</sup> Also, the consequences of germline editing of a human genome could negatively impact an entire population. One point put forth in all the aforementioned documents is a need for regulatory bodies at both national and international levels, to prevent future occurrences of malpractice. A lack of an effective national regulatory body negatively affects the host nation.<sup>4</sup> The ill-effects may extend to other nations as well, as desperate patients from any nation may covertly undergo ethically questionable treatments in those nations that lack effective regulatory bodies, and if there are harmful and heritable side effects to the treatments, the gene pool may be severely affected.<sup>4</sup> A regulatory international body could prevent this, as it may effectively not only set, (as is done by the WHO Expert Advisory Council) but also enforce, standards across borders, preventing the formation of ethically questionable genome-editing research hotbeds, where unsafe treatments are explored, or where prices are well above market levels. Another question raised at the Third International Summit on Genome Editing was equitable access to genome editing therapy. As pointed out by Gautam Dongre, (National Alliance of Sickle Cell Organizations) while the majority of sickle cell patients reside in Africa and India, most people from these nations cannot afford the 2.2 million USD market value for the CRISPR Casgevy therapy.<sup>3</sup> The treatment for beta-thalassemia is more costly, the average treatment priced at 3.1 million USD per patient.<sup>3</sup> While in vivo somatic gene editing is being explored to reduce the cost of these treatments, much more research into delivery methods for this form of genome editing is required, indicating that focusing on reducing the costs of ex vivo genome editing should be a higher priority.<sup>2</sup> Another point raised by Jennifer Doudna during an interview, is that research into embryonic and in utero genome editing is remarkably difficult, as access to materials for such research is highly limited, emphasizing a need for effective allocation of such resources by nations, to ensure that the most promising and viable research is prioritized. In order to do this, oversight bodies with detailed knowledge of the strengths and limitations of genome editing are required, which is another point put forth by the WHO Expert Advisory Council's Framework For Governance.<sup>4</sup></p>
+
+      <p>In the First South African Summit on Genome Editing it was concluded that, while somatic genome editing does pose some risks, the benefits, especially in cases involving life-threatening or severely debilitating illnesses, outweigh these risks, so long as appropriate oversight measures are implemented.<sup>5</sup> South Africa itself has been conducting research in the field of genome editing. At the University of the Witwatersrand, research is being conducted on an anti-tuberculosis vaccination, which works through genome editing.<sup>5</sup> Furthermore, The Africa Wits-INDEPTH partnership for Genomic Studies (AWI-Gen), which is funded by the NIH, is performing a demographic analysis of the African population, in terms of genetic predispositions to obesity and cardiometabolic health problems, and investigating potential solutions to these health issues.<sup>5</sup> South Africa is exploring gene therapy for infectious diseases such as HIV (Human Immunodeficiency Virus), hepatitis-B and Ebola, which are major concerns in the region.<sup>5</sup> Professor Michèle Ramsay has served on the Global Ethics Commission to discuss the ethical considerations on human germline editing. South Africa is conducting research to solve problems faced by a vast majority of Africans. While we understand the importance of research, we also recognize the potential dangers that genome editing could pose, particularly at the testing stages. To tackle these potential dangers, South Africa has introduced strict regulations on genome editing. Section 57(1) of National Health Act No. 61, 2003 clearly states that "A person may not (a) manipulate any genetic material, including genetic material of human gametes, zygotes or embryos or; (b) engage in any activity, including nuclear transfer or embryo splitting, gametes, zygotes or embryos for the purpose of the reproductive cloning of a human being.", implying that germline editing for cloning purposes is not permitted. While the technology is not specifically named, the statutory language clearly covers germline editing.<sup>6</sup> The guidelines published by the National Health Research Ethics Council (NHREC) in South Africa have set out clear rules for the collection and usage of Human Biological Materials (HBM) in genetic and genomic research. The guidelines also outline the role of Human Research Ethics Committees (HRECs) in protecting the rights of research participants during trials for therapies involving genome editing, and in ensuring that research is relatively safe, with the perceived pros outweighing the perceived cons, for the betterment of society. One important point to clarify is that, while the NHREC guidelines version 3, 2024 permitted human heritable genome editing under adequate scrutiny, after much discussion with the general populace and conversation with field specialists, NHREC has decided (as stated in version 3.1 of the guidelines)<sup>7</sup> to place its policy on heritable human genome editing under review. We will amend it after adequate information is available.</p>
+
+      <p>In conclusion, South Africa firmly believes that both clinical use and research into somatic genome editing for therapeutic purposes is aligned with public health interests, as long as necessary regulations are put in place and regulatory bodies both national and international are created to monitor research. The goals of these bodies should be to ensure research is conducted fairly and safely, in alignment with past UN resolutions and for the betterment of society. Also, for research into the therapeutic uses of genome editing, once created and approved, these therapies should be affordable to all to ensure health equity. Also, while research is conducted, research subjects should have a full and detailed understanding of the procedures they will undergo, the chances of success and the potential risks. In utero and in vitro somatic genome editing are permissible as long as they are solely for therapeutic or preventative purposes. Research into these forms of genome editing should be for the betterment of society, the background research should be detailed, and the odds of success high as access to such resources are scarce. Human heritable genome editing could be very profitable, but poses many risks and until these are addressed, South Africa recommends that research be paused and policies re-evaluated in all nations, even ones that prohibit it entirely.</p>
+
+      <h1 id="references">References</h1>
+      <ol class="referencesList">
+        <li>Henderson, Hope. "CRISPR Clinical Trials: A 2025 Update." <i>Innovative Genomics Institute (IGI)</i>, 9 July 2025, <a href="https://innovativegenomics.org/news/crispr-clinical-trials-2025/" target="_blank" rel="noopener">innovativegenomics.org/news/crispr-clinical-trials-2025/</a>.</li>
+        <li>"Current Capabilities for Genome Editing." <i>WHO Expert Advisory Committee</i>, 2021, <a href="https://iris.who.int/bitstream/handle/10665/342484/9789240030060-eng.pdf?sequence=1" target="_blank" rel="noopener">iris.who.int/bitstream/handle/10665/342484/9789240030060-eng.pdf</a>.</li>
+        <li>"Third International Summit on Human Genome Editing: Expanding Capabilities, Participation, and Access: Proceedings of a Workshop—in Brief." <i>The National Academies Press, National Academies of Sciences, Engineering, and Medicine</i>, 26 Apr. 2024, <a href="https://www.nap.edu/read/27361/chapter/1" target="_blank" rel="noopener">nap.edu/read/27361/chapter/1</a>.</li>
+        <li>"Human Genome Editing: A Framework for Governance." <i>WHO Expert Advisory Committee</i>, 2021, <a href="https://iris.who.int/bitstream/handle/10665/342484/9789240030060-eng.pdf?sequence=1" target="_blank" rel="noopener">iris.who.int/bitstream/handle/10665/342484/9789240030060-eng.pdf</a>.</li>
+        <li>Dhai, A. "Governance of Gene Editing in South Africa." <i>South African Journal of Science</i>, vol. 116, no. 1/2, 2020.</li>
+        <li>"National Health Act, 2003 (Act No. 61 of 2003)." <i>Government of South Africa</i>, 23 July 2004, <a href="https://www.gov.za/sites/default/files/gcis_document/201409/a61-03.pdf" target="_blank" rel="noopener">gov.za/sites/default/files/gcis_document/201409/a61-03.pdf</a>.</li>
+        <li>"South African Ethics in Health Research Guidelines: Principles, Processes and Structures." 3rd ed., <i>National Health Research Ethics Council</i>, 2024, <a href="https://www.health.gov.za/wp-content/uploads/2025/07/SA-Ethics-in-Health-Research-2024.pdf" target="_blank" rel="noopener">health.gov.za/wp-content/.../SA-Ethics-in-Health-Research-2024.pdf</a>.</li>
+      </ol>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <p class="credit">&#169; Copyright Kinara Goyal 2026 <img src="downward_arrow.png" class="scrollArrow" id="scrollArrow" alt="Scroll down"></p>
+  </div>
+  <script>
+    const scrollArrow = document.getElementById('scrollArrow');
+    function updateScrollArrow() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      if (scrollable - scrolled <= 2) {
+        scrollArrow.style.visibility = 'hidden';
+      } else {
+        scrollArrow.style.visibility = 'visible';
+      }
+    }
+    window.addEventListener('scroll', updateScrollArrow);
+    window.addEventListener('resize', updateScrollArrow);
+    window.addEventListener('load', updateScrollArrow);
+  </script>
+</body>
+</html>
