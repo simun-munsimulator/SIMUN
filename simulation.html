@@ -101,6 +101,19 @@ body::before {
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1rem;
+  position: relative;
+}
+
+.homeLink {
+  position: absolute;
+  bottom: 0.9rem;
+  right: 1.2rem;
+  font-size: 0.85rem;
+  color: #5a6b7a;
+  text-decoration: none;
+}
+.homeLink:hover {
+  text-decoration: underline;
 }
 
 .field { margin-bottom: 1.2rem; }
@@ -476,6 +489,7 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
     </div>
     <div id="key-error"></div>
     <button id="save-key-btn">Save key and continue</button>
+    <a class="homeLink" href="index.html">Return to home</a>
   </div>
 </div>
 
@@ -523,6 +537,7 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
     <div id="setup-error"></div>
     <button id="start-btn">Begin</button>
     <button id="change-key-btn" class="secondary" style="margin-left:0.5rem">Change API key</button>
+    <a class="homeLink" href="index.html">Return to home</a>
   </div>
 </div>
 
