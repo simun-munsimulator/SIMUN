@@ -791,5 +791,25 @@
     window.addEventListener('load', updateScrollArrow);
 
   </script>
+  <script>
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    const targetId = this.getAttribute('href');
+    if (targetId === '#') return;
+    
+    const targetElement = document.querySelector(targetId);
+    if (targetElement) {
+      e.preventDefault();
+      const headerHeight = document.querySelector('#header')?.offsetHeight || 110;
+      const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
+      
+      window.scrollTo({
+        top: elementPosition - headerHeight,
+        behavior: 'instant' // Change to 'smooth' if you want animated scrolling
+      });
+    }
+  });
+});
+</script>
 </body>
 </html>
