@@ -6,15 +6,22 @@
   <title>SIMUN - Rules of Procedure</title>
   <link rel="icon" type="image/png" href="logo2.png">
   <style>
-    /* Page-specific tweaks that don't belong in the shared stylesheet */
+    /* Desktop / Landscape Sticky Sidebar */
+    @media (orientation: landscape) {
+      .ropPage .imageContainer {
+        position: sticky;
+        top: 110px !important;
+        height: calc(100vh - 100px) !important;
+      }
+    }
+
+    /* Base Styles */
     .ropPage .imageContainer {
       flex-direction: column;
       align-items: flex-start !important;
       justify-content: flex-start;
       gap: 1.2rem;
       padding-top: 0;
-      top: 110px !important;
-      height: calc(100vh - 100px) !important;
     }
     .ropPanel {
       width: 100%;
@@ -160,9 +167,25 @@
       color: var(--note);
       font-style: italic;
     }
-    /* Cover intro row keeps normal (non-sticky-video) look since we have no image here */
+
+    /* Portrait View Fixes */
     @media (orientation: portrait) {
-      .ropPage .pageRow { flex-direction: column; }
+      .ropPage .pageRow {
+        flex-direction: column;
+        padding: 0 1rem;
+      }
+      .ropPage .imageContainer {
+        position: static !important;
+        height: auto !important;
+        top: auto !important;
+        width: 100% !important;
+      }
+      .ropNav {
+        max-height: 35vh; /* Caps TOC height in portrait so main content remains visible */
+      }
+      .ropContent h1:first-of-type {
+        margin-top: 1.5rem;
+      }
     }
   </style>
 </head>
@@ -174,9 +197,9 @@
       <button class="menu">Resource Material</button>
       <span class="dropdown-content">
         <a href="rules-of-procedure.html">Rules Of Procedure</a>
-        <a href="sample_position_paper.html">Sample Position Paper</a>
-        <a href="draft_resolution_template.html">Draft Resolution Template</a>
-        <a href="sample_speeches.html">Sample Speeches</a>
+        <a href="">Sample Position Paper</a>
+        <a href="">Draft Resolution Template</a>
+        <a href="">Sample Speeches</a>
       </span>
     </span>
     <span><a class="menu" href="how-it-works.html">How it Works</a></span>
