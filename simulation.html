@@ -835,7 +835,7 @@ SCORING: delegates earn points for research and knowledge, speech writing, lobby
 `;
 
 /* ==================================================================
-   4. AI BACKEND API HANDLER (WITH EXPONENTIAL BACKOFF RETRY)
+   4. AI BACKEND API HANDLER
    ================================================================== */
 const DEFAULT_BACKEND = "gemini";
 
@@ -860,53 +860,24 @@ const Backends = {
         },
       };
 
-      const maxRetries = 4;
-      let delayMs = 1000;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          const resp = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-
-          if (!resp.ok) {
-            let detail = "";
-            try { detail = (await resp.json()).error.message; } catch (e) { /* ignore */ }
-            
-            // Retry on rate limits (429) or server errors (5xx)
-            const isRetryable = resp.status === 429 || resp.status >= 500;
-            if (!isRetryable || attempt === maxRetries) {
-              const err = new Error(`Gemini API error (${resp.status}): ${detail}`);
-              err.status = resp.status;
-              throw err;
-            }
-            throw new Error(`HTTP ${resp.status}: ${detail}`);
-          }
-
-          const data = await resp.json();
-          const text = data?.candidates?.[0]?.text || data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!text) throw new Error("Gemini returned no text (possibly blocked). Try again.");
-          return JSON.parse(text);
-
-        } catch (err) {
-          // Immediately rethrow non-retryable client errors (e.g. invalid key 401/403 or bad request 400)
-          if (err.status && err.status !== 429 && err.status < 500) {
-            throw err;
-          }
-          if (attempt === maxRetries) {
-            throw err;
-          }
-
-          // Exponential backoff delay with randomized jitter
-          const jitter = Math.random() * 200;
-          const currentDelay = delayMs + jitter;
-          console.warn(`[Gemini API] Request failed (${err.message}). Retrying in ${Math.round(currentDelay)}ms (Attempt ${attempt + 1}/${maxRetries})...`);
-          await new Promise(resolve => setTimeout(resolve, currentDelay));
-          delayMs *= 2;
-        }
+      if (!resp.ok) {
+        let detail = "";
+        try { detail = (await resp.json()).error.message; } catch (e) { /* ignore */ }
+        const err = new Error(`Gemini API error (${resp.status}): ${detail}`);
+        err.status = resp.status;
+        throw err;
       }
+
+      const data = await resp.json();
+      const text = data?.candidates?.[0]?.text || data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error("Gemini returned no text (possibly blocked). Try again.");
+      return JSON.parse(text);
     },
   },
 };
