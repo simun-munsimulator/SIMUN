@@ -479,13 +479,32 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
   <h1>SIMUN</h1>
   <div class="card">
     <h2>API key required</h2>
-    <p>This simulator uses an AI model to play the committee chair and all delegates except you. Currently we use Google Gemini AI. For this, we need you to provide an API key, which is completely free!</p>
-    <p class="hint">You can create a free key at
-       <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>.
-       The key is stored only in this browser's local storage.</p>
+    <p>This simulator uses an AI model to play the committee chair and all delegates except you.
+       Choose the AI provider you have (or want) an account with, then paste its API key.</p>
+
+    <!-- Provider picker. Options come from the Backends registry in the script,
+         so adding a backend there makes it appear here automatically. Changing
+         the selection re-points the model box and key field via refreshBackendUI(). -->
     <div class="field">
-      <label for="api-key-input">Gemini API key</label>
-      <input type="password" id="api-key-input" placeholder="AIzaSy..." autocomplete="off"/>
+      <label for="backend-select">1. AI provider</label>
+      <select id="backend-select"></select>
+    </div>
+
+    <!-- Model override. Pre-filled with the provider's default model but left as a
+         free-text box (with suggestions in the datalist) because providers release
+         new model names constantly and a fixed dropdown would go stale. -->
+    <div class="field">
+      <label for="model-input">2. Model</label>
+      <input type="text" id="model-input" list="model-suggestions" autocomplete="off" spellcheck="false"/>
+      <datalist id="model-suggestions"></datalist>
+      <p class="hint" id="model-hint"></p>
+    </div>
+
+    <!-- Key field. Label, placeholder and help text are all filled in per provider. -->
+    <div class="field">
+      <label for="api-key-input" id="api-key-label">3. API key</label>
+      <input type="password" id="api-key-input" autocomplete="off"/>
+      <p class="hint" id="key-hint"></p>
     </div>
     <div id="key-error"></div>
     <button id="save-key-btn">Save key and continue</button>
@@ -835,51 +854,316 @@ SCORING: delegates earn points for research and knowledge, speech writing, lobby
 `;
 
 /* ==================================================================
-   4. AI BACKEND API HANDLER
+   4. AI BACKEND API HANDLERS
+   ------------------------------------------------------------------
+   The simulation only ever needs one thing from an AI provider: "here is
+   a system prompt, a user prompt and a JSON schema - give me back a
+   JavaScript object matching that schema". Every backend below exposes
+   exactly that through generateJSON(), so the rest of the app never has
+   to know which provider is in use.
+
+   Each backend object provides:
+     label          provider name shown in the picker on the key screen
+     defaultModel   model used unless the user types an override
+     models         suggestions offered in the model box (free text, so
+                    a newly released model can always be typed in)
+     modelHint      one line of guidance shown under the model box
+     keyLabel /
+     keyPlaceholder /
+     keyHint        copy for the API key field on the key screen
+     storageKey     localStorage slot holding this provider's API key
+     generateJSON(system, userText, schema) -> Promise<object>
+
+   plus the shared key/model persistence helpers mixed in from
+   backendStorage below.
+
+   ERROR POLICY: each generateJSON() makes exactly ONE HTTP request.
+   There is deliberately no automatic retry or exponential backoff - a
+   failure is reported straight to the user, who can press Next to try
+   again. Automatic retries hid failures behind long pauses and silently
+   multiplied the user's API bill.
+
+   To add another provider, copy one of the objects below, give it a
+   unique key in Backends, and it will appear in the picker automatically.
    ================================================================== */
+
+/* Which provider the user picked last time (see the key screen). */
+const BACKEND_STORAGE_KEY = "mun_backend";
 const DEFAULT_BACKEND = "gemini";
 
+/* ---------- Shared helpers used by more than one backend ---------- */
+
+/* The response schemas in section 5 are written in Gemini's dialect of
+   OpenAPI, which uses UPPER-CASE type names ("OBJECT", "STRING", ...).
+   Anthropic, OpenAI and Groq all want ordinary JSON Schema, which is the
+   same shape with lower-case type names. Rather than maintain two copies
+   of every schema, we convert on the fly. */
+function toJsonSchema(node) {
+  if (Array.isArray(node)) return node.map(toJsonSchema);
+  if (!node || typeof node !== "object") return node;
+  const out = {};
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "type" && typeof value === "string") {
+      out.type = value.toLowerCase();
+    } else if (key === "properties") {
+      out.properties = {};
+      for (const [propName, propSchema] of Object.entries(value)) {
+        out.properties[propName] = toJsonSchema(propSchema);
+      }
+    } else if (key === "items") {
+      out.items = toJsonSchema(value);
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+/* Most providers can be told to return strict JSON, but some (notably
+   Groq's agentic "compound" systems) cannot, and may wrap the answer in
+   prose or a ```json fence. This digs the JSON object back out. */
+function extractJSON(text) {
+  const trimmed = String(text).trim();
+  try { return JSON.parse(trimmed); } catch (e) { /* not bare JSON, keep trying */ }
+
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) {
+    try { return JSON.parse(fenced[1].trim()); } catch (e) { /* keep trying */ }
+  }
+
+  // Last resort: take everything between the first { and the last }.
+  const first = trimmed.indexOf("{"), last = trimmed.lastIndexOf("}");
+  if (first !== -1 && last > first) {
+    try { return JSON.parse(trimmed.slice(first, last + 1)); } catch (e) { /* give up */ }
+  }
+  throw new Error("The model did not return valid JSON. Click Next to try again.");
+}
+
+/* Turn a failed HTTP response into a readable Error. The body is read as
+   text first because a non-JSON error page would otherwise make
+   resp.json() throw and lose the real message. */
+async function apiError(label, resp) {
+  let detail = "";
+  try {
+    const raw = await resp.text();
+    try {
+      const body = JSON.parse(raw);
+      detail = body?.error?.message || body?.error?.type || body?.message || raw;
+    } catch (e) {
+      detail = raw;
+    }
+  } catch (e) { /* body unreadable; status alone will have to do */ }
+  const err = new Error(`${label} API error (${resp.status}): ${String(detail).slice(0, 400)}`);
+  err.status = resp.status;
+  return err;
+}
+
+/* Key + model persistence, identical for every provider. Mixed into each
+   backend object so `this.storageKey` resolves to that provider's slot. */
+const backendStorage = {
+  getKey()   { return localStorage.getItem(this.storageKey) || ""; },
+  setKey(k)  { localStorage.setItem(this.storageKey, k); },
+  clearKey() { localStorage.removeItem(this.storageKey); },
+
+  /* The model the user last chose for this provider, or its default. */
+  getModel() { return localStorage.getItem(this.storageKey + "_model") || this.defaultModel; },
+  setModel(m) {
+    // Only store a real override, so changing our default later takes effect.
+    if (m && m !== this.defaultModel) localStorage.setItem(this.storageKey + "_model", m);
+    else localStorage.removeItem(this.storageKey + "_model");
+  },
+};
+
+/* OpenAI and Groq both speak OpenAI's "chat completions" wire format, so
+   they share this one request function. `structured` says how hard the
+   API can be made to return JSON:
+     "schema" - the API validates the reply against our JSON Schema
+     "object" - the API only guarantees *some* valid JSON object
+     "prompt" - the API guarantees nothing, so we ask in the prompt
+   For the last two we also paste the schema into the system prompt. */
+async function chatCompletionsJSON({ label, url, apiKey, model, system, userText, schema, structured }) {
+  const jsonSchema = toJsonSchema(schema);
+  const body = { model, messages: [] };
+  let systemPrompt = system;
+
+  if (structured === "schema") {
+    // strict:false because our schemas have optional properties, which
+    // OpenAI's strict mode forbids (it requires every property to be required).
+    body.response_format = {
+      type: "json_schema",
+      json_schema: { name: "mun_response", schema: jsonSchema, strict: false },
+    };
+  } else if (structured === "object") {
+    body.response_format = { type: "json_object" };
+  }
+
+  if (structured !== "schema") {
+    systemPrompt += `\n\nReply with a single JSON object and nothing else - no prose, no markdown fences. The object must match this JSON Schema:\n${JSON.stringify(jsonSchema)}`;
+  }
+
+  body.messages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userText },
+  ];
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) throw await apiError(label, resp);
+
+  const data = await resp.json();
+  const text = data?.choices?.[0]?.message?.content;
+  if (!text) throw new Error(`${label} returned no text. Click Next to try again.`);
+  return extractJSON(text);
+}
+
+/* ---------- The providers themselves ---------- */
+
 const Backends = {
-  gemini: {
+
+  /* --- Google Gemini: free tier, JSON enforced via responseSchema --- */
+  gemini: Object.assign({}, backendStorage, {
     label: "Google Gemini",
-    model: "gemini-3.6-flash",
+    defaultModel: "gemini-3.6-flash",
+    models: ["gemini-3.6-flash", "gemini-3.6-pro", "gemini-2.5-flash", "gemini-2.5-pro"],
+    modelHint: "Flash models are fastest and cheapest; Pro models write better speeches.",
+    keyLabel: "Gemini API key",
+    keyPlaceholder: "AIzaSy...",
+    keyHint: 'Create a free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>.',
     storageKey: "mun_api_key_gemini",
-    getKey()      { return localStorage.getItem(this.storageKey) || ""; },
-    setKey(k)     { localStorage.setItem(this.storageKey, k); },
-    clearKey()    { localStorage.removeItem(this.storageKey); },
 
     async generateJSON(system, userText, schema) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${encodeURIComponent(this.getKey())}`;
-      const body = {
-        system_instruction: { parts: [{ text: system }] },
-        contents: [{ role: "user", parts: [{ text: userText }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: schema,
-          temperature: 0.9,
-        },
-      };
-
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.getModel())}:generateContent?key=${encodeURIComponent(this.getKey())}`;
       const resp = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts: [{ text: userText }] }],
+          generationConfig: {
+            // Gemini takes the schema in its own upper-case dialect, so it is
+            // passed through unconverted.
+            responseMimeType: "application/json",
+            responseSchema: schema,
+            temperature: 0.9,
+          },
+        }),
       });
-
-      if (!resp.ok) {
-        let detail = "";
-        try { detail = (await resp.json()).error.message; } catch (e) { /* ignore */ }
-        const err = new Error(`Gemini API error (${resp.status}): ${detail}`);
-        err.status = resp.status;
-        throw err;
-      }
+      if (!resp.ok) throw await apiError("Gemini", resp);
 
       const data = await resp.json();
       const text = data?.candidates?.[0]?.text || data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error("Gemini returned no text (possibly blocked). Try again.");
-      return JSON.parse(text);
+      if (!text) throw new Error("Gemini returned no text (the reply may have been blocked). Click Next to try again.");
+      return extractJSON(text);
     },
-  },
+  }),
+
+  /* --- Anthropic Claude: JSON enforced via output_config.format --- */
+  anthropic: Object.assign({}, backendStorage, {
+    label: "Anthropic (Claude)",
+    defaultModel: "claude-sonnet-5",
+    models: ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5", "claude-opus-4-8"],
+    modelHint: "Sonnet 5 balances quality and cost; Opus 5 is stronger but pricier; Haiku 4.5 is the cheapest.",
+    keyLabel: "Anthropic API key",
+    keyPlaceholder: "sk-ant-...",
+    keyHint: 'Create a key in the <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console</a> (requires purchased credit).',
+    storageKey: "mun_api_key_anthropic",
+
+    async generateJSON(system, userText, schema) {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": this.getKey(),
+          "anthropic-version": "2023-06-01",
+          // Required when calling Anthropic straight from a browser page.
+          // Without it the browser's CORS preflight is rejected.
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: this.getModel(),
+          max_tokens: 16000,
+          system,                                    // Claude takes the system prompt as its own field
+          messages: [{ role: "user", content: userText }],
+          output_config: {
+            // Claude validates its own reply against the schema for us.
+            format: { type: "json_schema", schema: toJsonSchema(schema) },
+            // "medium" keeps each turn responsive; raise to "high" for better
+            // speeches at the cost of latency and tokens.
+            effort: "medium",
+          },
+        }),
+      });
+      if (!resp.ok) throw await apiError("Anthropic", resp);
+
+      const data = await resp.json();
+      // A safety decline arrives as HTTP 200 with stop_reason "refusal".
+      if (data.stop_reason === "refusal") {
+        throw new Error("Claude declined to generate this turn. Click Next to try again.");
+      }
+      const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+      if (!text) throw new Error("Anthropic returned no text. Click Next to try again.");
+      return extractJSON(text);
+    },
+  }),
+
+  /* --- OpenAI: JSON enforced via response_format json_schema --- */
+  openai: Object.assign({}, backendStorage, {
+    label: "OpenAI (GPT)",
+    defaultModel: "gpt-5",
+    models: ["gpt-5", "gpt-5-mini", "gpt-4.1", "gpt-4o"],
+    modelHint: "Any chat model your account can access. Mini models are cheaper and faster.",
+    keyLabel: "OpenAI API key",
+    keyPlaceholder: "sk-...",
+    keyHint: 'Create a key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a> (requires purchased credit).',
+    storageKey: "mun_api_key_openai",
+
+    async generateJSON(system, userText, schema) {
+      // Note: no temperature and no max_tokens are sent. Newer GPT models
+      // reject the old "max_tokens" field and restrict temperature, and the
+      // defaults work fine for this app.
+      return chatCompletionsJSON({
+        label: "OpenAI",
+        url: "https://api.openai.com/v1/chat/completions",
+        apiKey: this.getKey(),
+        model: this.getModel(),
+        system, userText, schema,
+        structured: "schema",
+      });
+    },
+  }),
+
+  /* --- Groq: OpenAI-compatible endpoint, very fast inference --- */
+  groq: Object.assign({}, backendStorage, {
+    label: "Groq",
+    defaultModel: "groq/compound",
+    models: ["groq/compound", "groq/compound-mini", "llama-3.3-70b-versatile", "openai/gpt-oss-120b"],
+    modelHint: "groq/compound is an agentic system, so its JSON is requested in the prompt rather than enforced by the API; plain models are enforced more strictly.",
+    keyLabel: "Groq API key",
+    keyPlaceholder: "gsk_...",
+    keyHint: 'Create a free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>.',
+    storageKey: "mun_api_key_groq",
+
+    async generateJSON(system, userText, schema) {
+      const model = this.getModel();
+      // Compound models are agentic systems and do not accept response_format,
+      // so for them the schema goes into the prompt instead.
+      const structured = /compound/i.test(model) ? "prompt" : "object";
+      return chatCompletionsJSON({
+        label: "Groq",
+        url: "https://api.groq.com/openai/v1/chat/completions",
+        apiKey: this.getKey(),
+        model,
+        system, userText, schema,
+        structured,
+      });
+    },
+  }),
 };
 
 /* ==================================================================
@@ -964,7 +1248,7 @@ let state = null;
 
 function newState(committee, agenda, userCountry, difficulty, enableCrisis) {
   return {
-    backend: DEFAULT_BACKEND,
+    backend: currentBackendId(),
     committee,
     agenda,
     userCountry,
@@ -1817,6 +2101,55 @@ ${turnsHtml}
    13. INITIALIZATION & EVENT LISTENERS
    ================================================================== */
 
+/* ---------- API key / provider screen ---------- */
+
+/* The provider the user picked last time, falling back to the default if
+   nothing is stored or the stored name no longer exists in Backends. */
+function currentBackendId() {
+  const saved = localStorage.getItem(BACKEND_STORAGE_KEY);
+  return Backends[saved] ? saved : DEFAULT_BACKEND;
+}
+
+/* Fill the provider dropdown from the Backends registry (done once at start-up). */
+function populateBackendSelect() {
+  const sel = $("backend-select");
+  sel.innerHTML = "";
+  for (const [id, backend] of Object.entries(Backends)) {
+    const o = document.createElement("option");
+    o.value = id;
+    o.textContent = backend.label;
+    sel.appendChild(o);
+  }
+  sel.value = currentBackendId();
+}
+
+/* Re-point the model box, key field and help text at whichever provider is
+   selected. Called at start-up and whenever the provider dropdown changes.
+   The key and model shown are that provider's saved ones, so switching back
+   and forth never loses a key you already entered. */
+function refreshBackendUI() {
+  const backend = Backends[$("backend-select").value];
+
+  $("model-input").value = backend.getModel();
+  $("model-hint").textContent = backend.modelHint;
+
+  const list = $("model-suggestions");
+  list.innerHTML = "";
+  for (const m of backend.models) {
+    const o = document.createElement("option");
+    o.value = m;
+    list.appendChild(o);
+  }
+
+  $("api-key-label").textContent = backend.keyLabel;
+  $("api-key-input").placeholder = backend.keyPlaceholder;
+  $("api-key-input").value = backend.getKey();
+  // keyHint contains an author-written link, so it is set as HTML, not text.
+  $("key-hint").innerHTML = backend.keyHint + " The key is stored only in this browser's local storage.";
+
+  setError("key-error", "");
+}
+
 function populateSetupSelects() {
   const cSel = $("committee-select");
   cSel.innerHTML = "";
@@ -1864,6 +2197,12 @@ function enterApp() {
   const saved = loadSession();
   if (saved && saved.transcript && saved.transcript.length) {
     state = saved;
+    // A saved session records which provider it was started with. If that
+    // provider has since been removed or had its key cleared, fall back to
+    // whichever one is configured now so the session can still be resumed.
+    if (!Backends[state.backend] || !Backends[state.backend].getKey()) {
+      state.backend = currentBackendId();
+    }
     startSimulationUI(true);
   } else {
     populateSetupSelects();
@@ -1883,10 +2222,21 @@ function startSimulationUI(resumed) {
 }
 
 /* Event Handlers */
+/* Changing the provider swaps in that provider's model, key and help text. */
+$("backend-select").addEventListener("change", refreshBackendUI);
+
 $("save-key-btn").addEventListener("click", () => {
+  const backendId = $("backend-select").value;
+  const backend = Backends[backendId];
   const key = $("api-key-input").value.trim();
+  const model = $("model-input").value.trim();
+
   if (!key) { setError("key-error", "Please paste an API key."); return; }
-  Backends[DEFAULT_BACKEND].setKey(key);
+  if (!model) { setError("key-error", "Please choose a model."); return; }
+
+  backend.setKey(key);
+  backend.setModel(model);
+  localStorage.setItem(BACKEND_STORAGE_KEY, backendId);  // remember it for next visit
   setError("key-error", "");
   enterApp();
 });
@@ -1921,8 +2271,11 @@ $("start-btn").addEventListener("click", async () => {
 });
 
 $("change-key-btn").addEventListener("click", () => {
-  Backends[DEFAULT_BACKEND].clearKey();
-  $("api-key-input").value = "";
+  // Clear only the current provider's key; other providers' keys are kept so
+  // the user can switch between them without re-entering everything.
+  Backends[currentBackendId()].clearKey();
+  populateBackendSelect();
+  refreshBackendUI();
   showScreen("key");
 });
 
@@ -1956,7 +2309,9 @@ $("chit-text-input").addEventListener("keydown", e => {
 $("chit-recipient-select").addEventListener("change", renderChitMessages);
 
 /* Bootstrapping application entry point */
-if (Backends[DEFAULT_BACKEND].getKey()) {
+populateBackendSelect();
+refreshBackendUI();
+if (Backends[currentBackendId()].getKey()) {
   enterApp();
 } else {
   showScreen("key");
