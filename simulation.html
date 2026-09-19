@@ -1248,16 +1248,16 @@ const Backends = {
     // lose track of the impersonation rules under a prompt this long.
     // Avoid groq/compound: it is an agentic system that cannot be given a
     // response schema and regularly ignores "never speak for the human delegate".
-    defaultModel: "moonshotai/kimi-k2-instruct",
+    defaultModel: "meta-llama/llama-prompt-guard-2-86m",
     models: [
-      "moonshotai/kimi-k2-instruct",
+      "meta-llama/llama-prompt-guard-2-86m",
       "meta-llama/llama-4-maverick-17b-128e-instruct",
       "meta-llama/llama-4-scout-17b-16e-instruct",
       "llama-3.3-70b-versatile",
       "openai/gpt-oss-120b",
       "groq/compound",
     ],
-    modelHint: "moonshotai/kimi-k2-instruct is recommended: strong instruction following, accepts JSON schema enforcement, and available on Groq's free tier. If it shows as unavailable, try llama-4-maverick or openai/gpt-oss-120b. Avoid groq/compound — it cannot accept a response schema and will speak for your delegation.",
+    modelHint: "meta-llama/llama-prompt-guard-2-86m is recommended: strong instruction following, accepts JSON schema enforcement, and available on Groq's free tier. If it shows as unavailable, try llama-4-maverick or openai/gpt-oss-120b. Avoid groq/compound — it cannot accept a response schema and will speak for your delegation.",
     keyLabel: "Groq API key",
     keyPlaceholder: "gsk_...",
     keyHint: 'Create a free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>.',
@@ -4504,7 +4504,7 @@ const Backends = {
       "meta-llama/llama-4-scout-17b-16e-instruct",
       "meta-llama/llama-4-maverick-17b-128e-instruct",
       "openai/gpt-oss-120b",
-      "moonshotai/kimi-k2-instruct",
+      "meta-llama/llama-prompt-guard-2-86m",
       "groq/compound",
     ],
     modelHint: "llama-3.3-70b-versatile is recommended: fast, free-tier friendly, and follows the committee rules well. Avoid groq/compound — it cannot accept a response schema and will speak for your delegation.",
