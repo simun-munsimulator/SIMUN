@@ -1242,19 +1242,22 @@ const Backends = {
   /* --- Groq: OpenAI-compatible endpoint, very fast inference --- */
   groq: Object.assign({}, backendStorage, {
     label: "Groq",
-    // Was groq/compound. Compound is an agentic *system*: it cannot be handed a
-    // response schema, it rewrites its own instructions as it works, and it was
-    // by far the worst offender for ignoring "never speak for the human
-    // delegate". A plain instruction-following model is the right tool here.
-    defaultModel: "openai/gpt-oss-120b",
+    // llama-3.3-70b-versatile is the default: it accepts json_object response
+    // format, follows the long MUN system prompt reliably, and is fast on
+    // Groq's hardware. The 70B size matters — smaller Llama models on Groq
+    // lose track of the impersonation rules under a prompt this long.
+    // Avoid groq/compound: it is an agentic system that cannot be given a
+    // response schema and regularly ignores "never speak for the human delegate".
+    defaultModel: "llama-3.3-70b-versatile",
     models: [
+      "llama-3.3-70b-versatile",
+      "meta-llama/llama-4-scout-17b-16e-instruct",
+      "meta-llama/llama-4-maverick-17b-128e-instruct",
       "openai/gpt-oss-120b",
       "moonshotai/kimi-k2-instruct",
-      "llama-3.3-70b-versatile",
-      "meta-llama/llama-4-maverick-17b-128e-instruct",
       "groq/compound",
     ],
-    modelHint: "openai/gpt-oss-120b follows the committee rules most reliably on Groq. Avoid groq/compound: it is an agentic system that cannot be given a response schema and regularly speaks for you.",
+    modelHint: "llama-3.3-70b-versatile is recommended: fast, free-tier friendly, and follows the committee rules well. Avoid groq/compound — it cannot accept a response schema and will speak for your delegation.",
     keyLabel: "Groq API key",
     keyPlaceholder: "gsk_...",
     keyHint: 'Create a free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>.',
