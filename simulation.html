@@ -479,6 +479,22 @@ table.tally tr.user-row { background: var(--user); font-weight: bold; }
   margin-top: 0.3em;
 }
 
+/* Link at the foot of every beginner glossary pop-up.
+   Grey and underlined at rest, light blue on hover, as requested. */
+.rop-link-wrap {
+  margin-top: 0.9rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+a.rop-link {
+  color: #7a8794;
+  text-decoration: underline;
+  font-size: 0.85rem;
+}
+a.rop-link:hover, a.rop-link:focus {
+  color: #25c1ff;
+}
+
 /* ============================================================
    MODAL DIALOG POPUPS
    ============================================================ */
@@ -690,6 +706,10 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
         <input type="checkbox" id="chit-via-eb-checkbox"/>
         <span>Via EB (Executive Board)</span>
       </label>
+      <label class="chit-eb-label" for="chit-bloc-checkbox" title="Send this chit to every delegation sharing the selected delegate's bloc">
+        <input type="checkbox" id="chit-bloc-checkbox"/>
+        <span>Send to entire bloc</span>
+      </label>
       <div id="chit-messages"></div>
       <div id="chit-typing"></div>
       <div class="chit-input-row">
@@ -870,56 +890,143 @@ function flagImg(country) {
 /* ==================================================================
    2. BEGINNER KEYWORD GLOSSARY DEFINITIONS
    ================================================================== */
+/* Each entry is { def, ctx }.
+   `def`  is the explanation shown in the pop-up.
+   `ctx`  is OPTIONAL. When present, the word is only turned into a clickable
+          highlight if the surrounding sentence ALSO matches this pattern.
+          This exists because words like "point", "second", "table", "floor"
+          and "present" are ordinary English as well as MUN jargon. Without a
+          context test, "this delegation would like to point out..." lit up
+          the word "point" and taught beginners the wrong thing. */
 const KEYWORD_DEFINITIONS = {
-  "working paper": "A preliminary informal document drafted by delegates to outline proposed solutions before it is formally formatted and introduced as a draft resolution.",
-  "working papers": "Preliminary informal documents drafted by delegates to outline proposed solutions before being formally formatted into draft resolutions.",
-  "draft resolution": "A formal document proposing solutions to the agenda topic, written in preambulatory and operative clauses, requiring committee approval to be voted on.",
-  "draft resolutions": "Formal documents proposing solutions to the agenda topic, written in preambulatory and operative clauses, requiring committee approval to be voted on.",
-  "resolution": "A draft resolution that has been formally voted on and passed by the committee, becoming an official decision of the UN body.",
-  "resolutions": "Draft resolutions that have been formally voted on and passed by the committee.",
-  "amendment": "A formal proposal to add, delete, or modify clauses in a draft resolution. Friendly amendments need all authors' consent; unfriendly amendments require a committee vote.",
-  "amendments": "Formal proposals to add, delete, or modify clauses in a draft resolution. Friendly amendments need all authors' consent; unfriendly amendments require a committee vote.",
-  "motion": "A formal proposal made by a delegate to direct the flow of committee business (e.g., entering caucuses, setting the agenda, moving to vote, or adjourning).",
-  "motions": "Formal proposals made by delegates to direct the flow of committee business.",
-  "point": "A procedural request raised by a delegate (e.g., Point of Personal Privilege, Point of Order, Point of Parliamentary Inquiry, or Point of Information).",
-  "points": "Procedural requests raised by delegates to address personal comfort, rules violations, questions on procedure, or questions to speakers.",
-  "moderated caucus": "A structured form of debate with a specific subtopic, total duration, and individual speaking time limit managed by the Chair.",
-  "unmoderated caucus": "An informal session where formal rules are suspended, allowing delegates to move freely around the room, negotiate, build coalitions, and draft documents.",
-  "general speakers list": "The primary default list of delegates wishing to speak on the overall agenda topic when no other motion is active.",
-  "gsl": "General Speakers List: the primary continuous list of speakers on the main agenda topic.",
-  "yield": "To give up remaining speaking time. A delegate may yield time to the Chair, to another delegate, or to Points of Information (questions).",
-  "yields": "Giving up remaining speaking time to the Chair, another delegate, or Points of Information.",
-  "yielding": "Giving up remaining speaking time to the Chair, another delegate, or Points of Information.",
-  "point of information": "A formal question asked by one delegate to another speaker who has completed a speech and yielded time to questions.",
-  "points of information": "Formal questions asked by delegates to a speaker who has completed a speech and yielded time to questions.",
-  "point of personal privilege": "A point raised when a delegate experiences discomfort (e.g., cannot hear the speaker, room temperature) that hinders participation.",
-  "point of order": "A point raised when a delegate believes the Chair or another delegate has violated the committee's Rules of Procedure.",
-  "point of parliamentary inquiry": "A question directed to the Chair asking for clarification on committee rules or parliamentary procedure.",
-  "right of reply": "A right requested by a delegate whose national honor or sovereignty has been explicitly insulted during another delegate's speech.",
-  "roll call": "The initial procedure where the Chair calls out each member state to determine attendance ('Present' or 'Present and Voting') and establish quorum.",
-  "quorum": "The minimum number of delegates required to be present for the committee to officially conduct business (usually 1/3 of members).",
-  "second": "An agreement by another delegate supporting a motion so it can be brought to a vote. Most motions require a second.",
-  "seconds": "Agreements by delegates supporting a motion so it can be brought to a vote.",
-  "objection": "A formal opposition by a delegate to a motion. If there are objections, the motion usually proceeds to a vote.",
-  "objections": "Formal oppositions by delegates to a motion.",
-  "signatory": "A delegation that wishes to see a draft resolution discussed by the committee without necessarily endorsing all its content.",
-  "signatories": "Delegations that agree to allow a draft resolution to be introduced and discussed on the committee floor.",
-  "sponsor": "A delegation that authored or strongly supports a draft resolution and helped write its clauses.",
-  "sponsors": "Primary authors and chief supporters of a draft resolution.",
-  "preambulatory clause": "A clause at the beginning of a resolution explaining the historical context, problem background, and relevant past UN actions.",
-  "operative clause": "An actionable clause in a resolution stating the specific measures, policies, and solutions the committee recommends or authorizes.",
-  "table": "A motion to temporarily or permanently suspend discussion on a topic or document.",
-  "adjourn": "To formally end a committee session or the entire conference.",
-  "present and voting": "A roll call response where a delegate agrees to vote Yes or No on all draft resolutions and waives the right to abstain.",
-  "present": "A roll call response where a delegate establishes presence but retains the right to abstain on final resolution votes.",
-  "bloc": "A group of delegates with similar geographical, political, or economic interests working together to write resolutions.",
-  "blocs": "Alliances of delegations working collaboratively on shared proposals.",
-  "floor": "The right to speak or the current state of active committee proceedings (e.g., 'the floor is open for motions').",
-  "decorum": "An order issued by the Chair reminding delegates to maintain respectful, formal diplomatic etiquette in the committee room."
+  /* ---------- Documents ---------- */
+  "working paper": { def: "A preliminary informal document drafted by delegates to outline proposed solutions before it is formally formatted and introduced as a draft resolution." },
+  "working papers": { def: "Preliminary informal documents drafted by delegates to outline proposed solutions before being formally formatted into draft resolutions." },
+  "draft resolution": { def: "A formal document proposing solutions to the agenda topic, written in preambulatory and operative clauses, requiring committee approval to be voted on." },
+  "draft resolutions": { def: "Formal documents proposing solutions to the agenda topic, written in preambulatory and operative clauses." },
+  "resolution": { def: "A draft resolution that has been formally voted on and passed by the committee, becoming an official decision of the UN body." },
+  "resolutions": { def: "Draft resolutions that have been formally voted on and passed by the committee." },
+  "amendment": { def: "A formal proposal to add, delete, or modify clauses in a draft resolution. Friendly amendments need all authors' consent; unfriendly amendments require a committee vote." },
+  "amendments": { def: "Formal proposals to add, delete, or modify clauses in a draft resolution." },
+  "friendly amendment": { def: "An amendment that every author of the draft resolution consents to. It is incorporated without a vote." },
+  "unfriendly amendment": { def: "An amendment the authors do not all consent to. The committee votes on whether to adopt it." },
+  "preambulatory clause": { def: "A clause at the beginning of a resolution explaining historical context, background and relevant past UN action. Begins with a participle such as 'Recalling' and ends with a comma." },
+  "preambulatory clauses": { def: "Opening clauses of a resolution giving context and past UN action. Each begins with a participle and ends with a comma." },
+  "operative clause": { def: "An actionable, numbered clause stating what the committee actually decides or recommends. Begins with an active verb such as 'Calls upon' and ends with a semicolon." },
+  "operative clauses": { def: "Numbered action clauses of a resolution. Each begins with an active verb and ends with a semicolon." },
+  "position paper": { def: "A short document submitted before committee setting out a delegation's policy on the agenda: the background, their country's stance, and their proposed solutions." },
+  "clause": { def: "A single numbered or participle-led sentence in a resolution. Preambulatory clauses give context; operative clauses take action.",
+              ctx: /operative|preambulator|resolution|draft|amend/i },
+
+  /* ---------- Procedure: motions and points ---------- */
+  "motion": { def: "A formal proposal by a delegate to direct committee business — entering a caucus, setting the agenda, moving to vote, or adjourning." },
+  "motions": { def: "Formal proposals by delegates to direct the flow of committee business." },
+  /* "point" is extremely common English. Only highlight it when the sentence
+     is clearly about procedure. */
+  "point": { def: "A procedural request raised by a delegate: Point of Personal Privilege, Point of Order, Point of Parliamentary Inquiry, or Point of Information.",
+             ctx: /\b(raise|raising|rise|rises|entertain|any|no|further|state your|your)\b[^.?!]{0,40}\bpoints?\b|\bpoints?\b[^.?!]{0,20}\b(of order|of information|of personal privilege|of parliamentary inquiry|or motions?|on the floor)\b/i },
+  "points": { def: "Procedural requests raised by delegates — on personal comfort, rule violations, procedure questions, or questions to a speaker.",
+              ctx: /\b(raise|raising|rise|entertain|any|no|further|floor is open for)\b[^.?!]{0,40}\bpoints?\b|\bpoints?\b[^.?!]{0,20}\b(of order|of information|or motions?|on the floor)\b/i },
+  "point of information": { def: "A formal question asked by one delegate to a speaker who has finished speaking and yielded their time to questions." },
+  "points of information": { def: "Formal questions put to a speaker who has yielded time to questions." },
+  "point of order": { def: "Raised when a delegate believes the Chair or another delegate has broken the Rules of Procedure." },
+  "point of personal privilege": { def: "Raised when a delegate is physically unable to participate — cannot hear the speaker, room too cold, and so on. It is the only point that may interrupt a speech." },
+  "point of parliamentary inquiry": { def: "A question to the Chair asking for clarification about the rules or what is currently in order." },
+  "right of reply": { def: "Requested by a delegate whose national honour or sovereignty has been directly insulted in another delegate's speech." },
+
+  /* ---------- Debate formats ---------- */
+  "moderated caucus": { def: "Structured debate on a named subtopic, with a fixed total duration and a fixed individual speaking time, run by the Chair." },
+  "moderated caucuses": { def: "Structured debates on named subtopics with fixed total and individual speaking times." },
+  "unmoderated caucus": { def: "Informal session where formal rules are suspended. Delegates move around freely to negotiate, form blocs and draft documents." },
+  "unmoderated caucuses": { def: "Informal sessions for free negotiation, bloc-building and drafting." },
+  "general speakers list": { def: "The default continuous list of delegates wishing to speak on the overall agenda topic when no other debate format is active." },
+  "gsl": { def: "General Speakers List — the default running list of speakers on the main agenda topic." },
+  "speakers list": { def: "The running list of delegations waiting to address the committee on the main topic." },
+  "formal debate": { def: "The default state of committee, governed by the full Rules of Procedure, in which the Speakers List runs." },
+  "caucus": { def: "A break from the Speakers List for focused discussion. Moderated caucuses are Chair-run; unmoderated caucuses are informal.",
+              ctx: /moderat|unmoderat|motion|suspend|enter|caucus(es)?\b/i },
+
+  /* ---------- Speaking and time ---------- */
+  "yield": { def: "To give up time remaining in your speech. You may yield to the Chair, to another delegate, or to Points of Information." },
+  "yields": { def: "Giving up remaining speaking time to the Chair, another delegate, or Points of Information." },
+  "yielding": { def: "Giving up remaining speaking time to the Chair, another delegate, or Points of Information." },
+  "speaking time": { def: "The maximum time one delegate may speak for in the current format, set when the caucus or Speakers List was established." },
+  "decorum": { def: "A call by the Chair reminding delegates to return to respectful, formal diplomatic conduct." },
+  /* "second"/"seconds" are also units of time. Only highlight the procedural
+     sense, where a delegate is supporting a motion. */
+  "second": { def: "Support given by another delegate so a motion can proceed. Most motions require a second before the committee votes on them.",
+              ctx: /\b(do i hear a|is there a|may i have a|seconds?\?|motion (is |has been )?seconded|i second|seconded by|requires? a second|needs? a second)\b/i },
+  "seconds": { def: "Delegates supporting a motion so it may proceed to a vote.",
+               ctx: /\b(do i hear|is there|any) seconds?\b|\bseconds? (the motion|to the motion)\b/i },
+  "objection": { def: "Formal opposition to a motion. If there is an objection the motion normally goes to a vote." },
+  "objections": { def: "Formal oppositions to a motion." },
+
+  /* ---------- Attendance and voting ---------- */
+  "roll call": { def: "The opening procedure in which the Chair calls each member state to record attendance — 'Present' or 'Present and Voting' — and establish quorum." },
+  "quorum": { def: "The minimum number of delegates who must be present for the committee to do business, usually one third of the membership." },
+  "present and voting": { def: "A roll call answer committing the delegation to vote Yes or No on all substantive matters. It gives up the right to abstain." },
+  /* "present" alone is only meaningful in a roll call sentence. */
+  "present": { def: "A roll call answer recording attendance while keeping the right to abstain on substantive votes.",
+               ctx: /roll call|attendance|answer(ed|s)?\b|quorum|\bpresent and voting\b|how does .{0,30} respond/i },
+  "procedural vote": { def: "A vote on how committee runs — motions, caucuses, closing debate. Every delegation present must vote Yes or No; no abstentions are allowed." },
+  "substantive vote": { def: "A vote on a draft resolution or an amendment. Abstention is allowed unless the delegation answered 'Present and Voting'." },
+  "abstain": { def: "To formally decline to vote either way on a substantive matter. Not permitted on procedural votes, nor for delegations that answered 'Present and Voting'." },
+  "abstention": { def: "A recorded decision not to vote either way on a substantive matter." },
+  "abstentions": { def: "Recorded decisions not to vote either way on a substantive matter." },
+  "simple majority": { def: "More than half of the delegations voting. The threshold for most procedural motions." },
+  "two-thirds majority": { def: "At least two thirds of delegations voting in favour. Required for some motions and, in some committees, for substantive matters." },
+  "voting procedure": { def: "The formal stage in which the committee votes on draft resolutions. The room is sealed: no one may enter, leave, or pass notes." },
+  "placard": { def: "The country card a delegate raises to be recognised by the Chair or to cast a vote." },
+  "veto": { def: "The power of the five permanent members of the Security Council to block a substantive resolution with a single No vote." },
+
+  /* ---------- Documents, people, blocs ---------- */
+  "signatory": { def: "A delegation willing to see a draft resolution debated, without necessarily supporting its content." },
+  "signatories": { def: "Delegations willing to see a draft resolution debated, without necessarily supporting it." },
+  "sponsor": { def: "A delegation that authored a draft resolution and supports it. In this committee a draft resolution may have at most two." },
+  "sponsors": { def: "The authors of a draft resolution. At most two per document here; everyone else is a signatory." },
+  "author": { def: "A delegation that wrote a draft resolution or amendment. Maximum of two per document; further supporters are signatories.",
+              ctx: /resolution|amendment|draft|sponsor|signator|clause/i },
+  "authors": { def: "The delegations that wrote a draft resolution. At most two; further supporters are signatories.",
+               ctx: /resolution|amendment|draft|sponsor|signator|clause/i },
+  "bloc": { def: "A group of delegations with shared interests working together on a common draft resolution." },
+  "blocs": { def: "Alliances of delegations working together on shared proposals." },
+  "executive board": { def: "The Chair and their dais team, who run the committee, receive chits passed through them, and award the final marks." },
+  "dais": { def: "The Chair's desk and the Executive Board sitting behind it." },
+  "chit": { def: "A short written note passed privately between delegates during committee. A chit routed 'via EB' passes through the Executive Board, who read it and may mark it." },
+  "chits": { def: "Short written notes passed privately between delegates during committee." },
+
+  /* ---------- Contextual generals ---------- */
+  "table": { def: "To suspend discussion of a topic or document, either temporarily or for the rest of committee.",
+             ctx: /\bmotion to table\b|\btable (the|this) (topic|debate|resolution|motion|discussion)\b|\btabled\b/i },
+  "adjourn": { def: "To formally end the committee session or the conference." },
+  "floor": { def: "The right to speak, or the state of open committee business — as in 'the floor is open for points and motions'.",
+             ctx: /\bthe floor\b|\byield(s|ed|ing)? the floor\b|\bfloor is (open|yours|now)\b|\bhas the floor\b|\btake the floor\b/i },
+  "agenda": { def: "The topic or topics the committee has voted to debate, in the order it voted to debate them.",
+              ctx: /set the agenda|agenda (has been|is) set|motion to set|on the agenda|agenda item/i },
 };
 
+/* Sorted longest-first so "point of information" wins over "point". */
 const KW_KEYS = Object.keys(KEYWORD_DEFINITIONS).sort((a, b) => b.length - a.length);
 const KW_REGEX = new RegExp("\\b(" + KW_KEYS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("|") + ")\\b", "gi");
+
+/* Look up a term, tolerating a trailing plural. */
+function keywordEntry(term) {
+  const lower = String(term || "").toLowerCase().trim();
+  return KEYWORD_DEFINITIONS[lower]
+      || KEYWORD_DEFINITIONS[lower.replace(/s$/, "")]
+      || null;
+}
+
+/* Should this particular occurrence be highlighted?
+   `sentence` is the plain-text sentence the match sits in. A keyword with no
+   `ctx` rule always highlights; one with a rule only highlights when the
+   sentence supports the procedural reading. */
+function keywordAppliesHere(term, sentence) {
+  const entry = keywordEntry(term);
+  if (!entry) return false;
+  if (!entry.ctx) return true;
+  return entry.ctx.test(sentence || "");
+}
 
 /* ==================================================================
    3. RULES OF PROCEDURE REFERENCE PROMPT
@@ -1378,16 +1485,22 @@ const TURN_SCHEMA = {
     },
     chits: {
       type: "ARRAY",
-      description: "Optional private chits passed this turn. Sender may be any AI delegate; recipient may be the human delegate OR another AI delegate (AI-to-AI traffic). Omit or leave empty if no chits.",
+      description: "Private chits passed this turn. Sender is always an AI delegate. Recipients may include the human delegate and/or other AI delegates.",
       items: {
         type: "OBJECT",
         properties: {
           sender: { type: "STRING", description: "Country name of the AI delegate sending the chit" },
-          recipient: { type: "STRING", description: "Country receiving it: the human delegate's country, or another AI delegate" },
+          recipient: { type: "STRING", description: "Single recipient country. Use this OR recipients, not both." },
+          recipients: {
+            type: "ARRAY", items: { type: "STRING" },
+            description: "Several recipient countries at once, e.g. every member of a bloc being whipped before a vote.",
+          },
           text: { type: "STRING", description: "The private chit message text" },
-          viaEB: { type: "BOOLEAN", description: "True if passed via the Executive Board / Chair desk" },
+          viaEB: { type: "BOOLEAN", description: "True if routed via the Executive Board. Substantive chits about policy, clauses or draft resolutions MUST be viaEB. Only EB-routed chits are seen and marked by the Chair." },
+          substantive: { type: "BOOLEAN", description: "True if this chit asks a real question about policy, a clause or a draft resolution, or makes a concrete drafting proposal. Substantive chits must be answered or the recipient loses marks." },
+          showToUser: { type: "BOOLEAN", description: "For a chit between two AI delegations only: set true if the senders would not mind the human delegate seeing it, e.g. an open bloc-wide circular. Leave false for genuinely confidential traffic." },
         },
-        required: ["sender", "recipient", "text"],
+        required: ["sender", "text"],
       },
     },
     chitGrades: {
@@ -1412,8 +1525,11 @@ const TURN_SCHEMA = {
           country: { type: "STRING" },
           score:   { type: "NUMBER", description: "0-100" },
           comment: { type: "STRING", description: "One sentence feedback" },
-          chitScore: { type: "NUMBER", description: "0-10 for off-the-record chit diplomacy: how well this delegation used private messages to build blocs, whip votes and win co-sponsors" },
+          chitScore: { type: "NUMBER", description: "0-10 for off-the-record chit diplomacy: how well this delegation used private messages to build blocs, whip votes and win co-sponsors. Deduct for substantive via-EB chits they left unanswered." },
           chitComment: { type: "STRING", description: "One sentence on their chit diplomacy" },
+          policyScore: { type: "NUMBER", description: "0-10 for FOREIGN POLICY FIDELITY: did this delegation argue what its real government would argue? Deduct heavily for positions the actual state would never take, or alliances it would never form." },
+          policyComment: { type: "STRING", description: "One sentence naming the moment they were most, or least, true to their country's real policy" },
+          questionScore: { type: "NUMBER", description: "0-10 for the quality of the Points of Information and substantive chit questions this delegation asked others" },
         },
         required: ["country", "score", "comment"],
       },
@@ -1502,54 +1618,63 @@ CHITS: Exchange specific clause ideas Via EB — what it does, which body it tas
     crisisInstructions = `CRISIS ENABLED: Around turn 18-25, Chair MUST interrupt debate with a dramatic breaking news emergency related to the agenda. Phase="CRISIS BREAKING NEWS". All subsequent speeches must address it and incorporate it into draft resolutions.`;
   }
 
-  return `You are running a Model United Nations simulation. You play BOTH the committee chair ("${state.chairName}") and every AI delegate EXCEPT the delegate of ${state.userCountry}, who is a human user.
+  /* Persona lock: the delegate list is restated every turn with the traits
+     that must stay fixed, because persona drift was the most obvious quality
+     problem across a long committee. */
+  return `You are running a Model United Nations simulation. You play the Chair ("${state.chairName}"), the Narrator, and every AI delegate EXCEPT ${state.userCountry}, who is a human.
 
 COMMITTEE: ${state.committee.name} (${state.committee.full})
 AGENDA: ${state.agenda}
-HUMAN USER'S PORTFOLIO: ${state.userCountry}
-HUMAN'S MEMBERSHIP STATUS: ${state.userIsMember
-  ? "This is a full VOTING MEMBER of " + state.committee.name + "."
-  : "This is a non-member OBSERVER on " + state.committee.name + ". The human delegate may speak and join caucuses, but may NEVER vote on motions or resolutions."}
+HUMAN: ${state.userCountry} — ${state.userIsMember ? "full VOTING MEMBER" : "non-member OBSERVER; may speak and caucus but NEVER votes"}
 
 ${difficultyInstructions}
 
 ${crisisInstructions}
 
-CHAIR: ${state.chairName} | Personality: ${state.chairPersonality||"Encouraging Mentor"}
-Archetypes — Rigid Formalist: pedantic, quotes rules. Weary Realist: dry wit, keeps pace. High-Energy Ringmaster: dramatic, fast. Encouraging Mentor: warm, corrects gently. Diplomatic Tactician: calculating, pushes consensus. Embody consistently.
+CHAIR: ${state.chairName} | ${state.chairPersonality||"Encouraging Mentor"}
+Archetypes — Rigid Formalist: pedantic, quotes rules. Weary Realist: dry wit, brisk. High-Energy Ringmaster: dramatic, fast. Encouraging Mentor: warm, corrects gently. Diplomatic Tactician: calculating, pushes consensus. Hold this personality for the WHOLE session.
 
-AI DELEGATES:
+AI DELEGATES — these traits are FIXED. A delegate who was combative in turn 3 is combative in turn 40. Never drift, never swap personas, never let two delegates blur into the same voice:
 ${roster}
 
-CHITS (OFF-THE-RECORD DIPLOMACY):
-Use the \`chits\` array. Each entry: sender, recipient, text, viaEB. Never put ${state.userCountry} in sender. Directions: AI→human (reply or initiate), AI→AI (blocs, vote-whipping, clause trades), human→AI (already in history). viaEB=true for substantive/drafting chits; false for quick tactical asides. Aim for ~1 chit per 2 turns. Uses: react to speeches, propose joint drafting, ask questions unsuitable for the floor, whip votes. Max 3 chits per turn. What's agreed privately MUST show on the floor. Skill 1=short artless chits; Skill 5=terse strategic. Format clause text with markdown (bold verbs, numbered clauses).
+PORTFOLIO FIDELITY (scored): every delegate argues what their REAL government would argue. Their alliances, red lines and funding positions must match actual foreign policy. A state never proposes what it would veto in reality, and never forms a bloc with a genuine adversary on this agenda. This applies to the Chair's marking too.
 
-CHIT GRADING: Chit history marks human's chits GRADED/UNGRADED. Fill \`chitGrades\` array for each UNGRADED chit (score 0-10, one sentence on what to improve). Grade as a demanding Executive Board: specific ask? right delegation? concrete offer? good timing? diplomatic register?
+CHITS: use the \`chits\` array (sender, recipient OR recipients[], text, viaEB, substantive, showToUser). Never put ${state.userCountry} in sender. AI-to-AI traffic should OUTWEIGH chits to the human: whip votes, split drafting, warn allies, undercut rivals. To the human: ask a QUESTION, or propose collaboration ONLY where real policy aligns. Route anything substantive viaEB — the Board only sees and marks EB chits. Mark substantive=true for real policy/drafting questions. Never repeat a chit. ~1 turn in 2 should carry one; max 3 per turn. What is agreed privately MUST surface in sponsorships and votes. Format clause text with markdown.
 
-DELEGATE SKILL (MANDATORY — must be guessable from one speech):
-SK1(60-90w): vague appeals, no real data, misuses procedure, Chair corrects them. SK2(90-120w): one loose fact, repeats prior speaker, runs dry early. SK3(110-150w): 2-3 facts, clear but predictable, correct procedure. SK4(140-190w): named instruments+years, rebuts by name, uses procedure tactically. SK5(150-220w): precise citations, anticipates counterarguments, reframes debate, memorable close, others react. PR rating is independent: PR1 WILL misuse a point/motion and be corrected; PR5 weaponises procedure. Habit and weakness must appear. No two consecutive speeches share structure or length band. Low-skill delegates are earnest, not comic.
+POINTED QUESTIONS BY CHIT: when a delegate yields to the Chair rather than to Points of Information, delegations that OPPOSE them should put the hard question privately via EB instead. The Chair marks the quality of these questions.
 
-SPEECH FORMAT (vary each speech): 3+ paragraphs. Mix **bold**, *bullets*, >blockquotes. Execute each delegate's defined opening+closing style. Archetype (Firebrand/Policy Specialist/Passive-Aggressive Diplomat/Consensus Builder/Strategic Agitator) must show.
+CHIT GRADING: fill \`chitGrades\` for each chit marked UNGRADED (EB-routed human chits only — a direct chit never reached the Board). Score 0-10, one sentence. Mark AI chit diplomacy in final scoring too.
+
+DELEGATE SKILL (must be guessable from one speech):
+SK1(110-150w): vague appeals, no real data, misuses procedure, Chair corrects them. SK2(150-200w): one loose fact, repeats prior speaker, runs dry early. SK3(200-260w): 2-3 facts, clear but predictable, correct procedure. SK4(260-330w): named instruments+years, rebuts by name, uses procedure tactically. SK5(300-400w): precise citations, anticipates counterarguments, reframes debate, memorable close. PR rating is independent: PR1 WILL misuse a point/motion; PR5 weaponises procedure. Each delegate's habit and weakness must appear. Consecutive speeches never share structure or length.
+
+SPEECHES ARE SUBSTANTIAL. A one-paragraph speech is a failure. Minimum 3 developed paragraphs, and hit the word band for the speaker's skill. Execute their opening style (Emotional, Clinical, Quote, Anecdotal, Rhetorical Question, Direct Call-out, Decorum) and closing style (Impactful Point, Executive Summary, Call to Unity, Brighter Future, Reflective Quote, Line-in-the-Sand, Caucus Call). Their archetype (Ideological Firebrand / Policy Specialist / Passive-Aggressive Diplomat / Pragmatic Consensus Builder / Strategic Agitator, or a hybrid) must be unmistakable. Mix **bold**, bullets, >blockquotes.
 
 ${RULES_OF_PROCEDURE}
 
 CRITICAL RULES:
 
-0. ${state.userCountry} IS HUMAN — NEVER PLAY THEM. You play the Chair, Narrator, and the ${state.delegates.length} AI delegates only. NEVER: emit a turn with speaker="${state.userCountry}", set role="user", or write words/votes/speeches attributed to ${state.userCountry} that aren't already in the transcript. The ONLY exception: quoting their exact words back from the transcript. When the Chair calls on ${state.userCountry} for anything: emit that Chair turn with requiresUserResponse=true and STOP. Never skip them either — they get their GSL slot, their vote, their POI opportunity.
+0. ${state.userCountry} IS HUMAN. Never emit a turn with speaker="${state.userCountry}", never role="user", never write their words, votes or speeches. Only exception: quoting what is already in the transcript. When the Chair calls on them: requiresUserResponse=true and STOP. Never skip them either.
 
-0b. ONE TURN = ONE SPEAKER. Never chain multiple delegates into one turn text. Exception: Narrator summarising (vote tally, roll call).
+0b. ONE TURN = ONE SPEAKER. Never chain delegates. Exception: a Narrator turn summarising.
 
-0c. VOTES & ROLL CALLS: Never spend one turn per delegate. Procedure: (a) Chair announces vote; if human is voting member, set requiresUserResponse=true and stop. (b) Human votes. (c) ONE Narrator turn covers ALL other delegations with full \`voteTally\` field + outcome. Same for roll call. Observer? Skip (a)+(b), go straight to Narrator tally.
+0c. VOTES AND ROLL CALL ARE SUMMARISED, NEVER POLLED. Never give a delegation its own turn to say how it votes, and never have the Chair ask delegations one by one. Sequence: (a) Chair announces the vote; if the human votes, requiresUserResponse=true and stop. (b) Human votes. (c) ONE Narrator turn with the complete \`voteTally\` for every other delegation plus the outcome. Roll call works identically. Observer? Skip (a)-(b).
 
-0d. BUTTON OPTIONS: Always set \`expectedResponseType\`. NO BUTTONS (empty array) for: speech, question, answer, amendment, position_paper, unmod. Buttons only for: motion, vote, rollcall, yield, choice. Motion buttons must be complete: "Motion to enter a moderated caucus on [topic], total time X minutes, speaking time Y seconds" — topic + both times required. Unmod needs a duration. "No motions at this time" always valid final option. Only offer motions in order at this stage.
+0d. MOTION WORDING IS FIXED. An AI delegate raising a motion says EXACTLY: "The Delegate of [Country] would like to raise a motion to [motion]." Nothing before it, nothing after it, and the motion must be a real one.
 
-1. Self-reference: AI delegates use only "the Delegate of [Country]", "this delegation", or "[Country]". Never personal names or "I".
-2. Remaining time: Chair states seconds used and seconds remaining after every speech.
-3. POI yields: Chair explicitly opens floor for questions; MUST ask human if they wish to ask before declaring "seeing no questions" (requiresUserResponse=true, options like ["Ask a Point of Information","No questions"]).
-4. Presented DRs: Chair must take 1-2 questions before amendments/voting.
-5. DR authorship: MAX 2 authors/sponsors per DR or amendment. Others are signatories. Author negotiation matters — show friction.
-6. Yields: Vary options (to Chair, to questions, to delegate). Apply each delegate's style consistently.
-7. Final scoring (sessionOver=true only): Score ALL delegations 0-100 on research, speech, lobbying, ROP, resolution writing. Scores must reflect actual performance — no flattery. Also fill chitScore (0-10) + chitComment for each delegation's off-the-record diplomacy.
+0e. PHASES. Use only: ${Object.values(PHASES).join(" | ")}. When the Chair asks for points or motions, phase is OPEN FLOOR and the human always gets to answer. Votes on motions/caucuses/agenda = PROCEDURAL VOTING. Votes on resolutions/amendments = SUBSTANTIVE VOTING.
+
+0f. NEVER REPEAT YOURSELF. Do not restate a sentence, argument or Chair line already in the transcript. If you are about to say something similar to an earlier turn, advance the committee instead — call the next speaker, take a motion, move to the next stage.
+
+0g. BUTTONS. Set \`expectedResponseType\` always. NO buttons for speech, question, answer, amendment, position_paper, unmod. Buttons only for motion, vote, rollcall, yield, choice.
+
+1. Delegates say "the Delegate of [Country]" or "this delegation". Never "I", never personal names.
+2. The Chair states seconds used and seconds remaining after every speech — exact figures are supplied to you each turn.
+3. YIELDS MUST VARY. Do not let delegates keep yielding to the Chair. Rotate between the Chair, Points of Information, and another delegate. The turn request names which is overdue.
+4. Presented draft resolutions: the Chair takes 1-2 Points of Information before amendments.
+5. Draft resolutions and amendments have a MAXIMUM of 2 authors; everyone else is a signatory. Let authorship be contested.
+6. Keep committee unpredictable: vary how many moderated and unmoderated caucuses happen, and in what order. Do not settle into a fixed rhythm. Every caucus needs a genuinely new angle on the agenda, not a restatement of the last one.
+7. FINAL SCORING (sessionOver=true only): score EVERY delegation 0-100 on research, speech, lobbying, ROP and drafting, plus policyScore (0-10 portfolio fidelity), chitScore (0-10, deducting for ignored substantive EB chits) and questionScore (0-10 for questions asked). No flattery, including for the human.
 
 8. Output only the JSON turn object.`;
 }
@@ -1561,57 +1686,87 @@ function buildTurnRequest(correction) {
               : t.speaker;
     return `[${t.phase || ""}] ${tag}:\n${t.text}`;
   });
-  let req = `TRANSCRIPT SO FAR (turn ${state.transcript.length}):\n\n`
-          + (lines.length ? lines.join("\n\n---\n\n") : "(none - the committee has not started)")
-          + "\n\n===\nGenerate the NEXT single turn of the simulation now.";
+  let req = `TRANSCRIPT (turn ${state.transcript.length}):\n\n`
+          + (lines.length ? lines.join("\n\n---\n\n") : "(none - committee has not started)")
+          + "\n\n===\nGenerate the NEXT single turn now.";
 
-  req += `\n\nSTANDING REMINDER: ${state.userCountry} is the human. Your turn may not be spoken by them and may not narrate, summarise or quote anything they have not already said above. If the next thing that should happen is ${state.userCountry} speaking, voting or answering, then your turn is the Chair calling on them with requiresUserResponse=true, and nothing more.`;
+  req += `\n\nSTANDING: ${state.userCountry} is the human. Never speak, vote or narrate for them. If it is their turn, the Chair calls on them with requiresUserResponse=true and stops.`;
 
-  /* Speaker rotation: the model left to itself keeps calling on the same two
-     or three favourites, which flattens the roster. Tell it who is idle. */
+  /* ---- Floor time, so the same three delegates do not dominate ---- */
   const spoken = {};
   state.transcript.forEach(t => {
     if (t.role === "delegate" && t.speaker) spoken[t.speaker] = (spoken[t.speaker] || 0) + 1;
   });
   const silent = state.delegates.filter(d => !spoken[d.country]).map(d => d.country);
-  const counts = state.delegates
-    .map(d => `${d.country} ${spoken[d.country] || 0}`)
-    .join(", ");
-  req += `\n\nFLOOR TIME SO FAR (interventions per delegate): ${counts}.`;
-  if (silent.length) {
-    req += `\nThese delegations have not spoken at all yet: ${silent.join(", ")}. Give one of them the floor unless procedure demands otherwise.`;
+  req += `\n\nFLOOR TIME: ${state.delegates.map(d => `${d.country} ${spoken[d.country] || 0}`).join(", ")}.`;
+  if (silent.length) req += `\nNOT YET SPOKEN: ${silent.join(", ")}. Give one of them the floor unless procedure demands otherwise.`;
+
+  /* ---- Phase state, computed here so the model cannot drift ---- */
+  const lastTurn = state.transcript[state.transcript.length - 1];
+  const currentPhase = lastTurn ? lastTurn.phase : PHASES.OPENING;
+  req += `\n\nCURRENT PHASE: ${currentPhase}. Use ONLY these phase labels: ${Object.values(PHASES).join(" | ")}.`;
+  if (!rollCallDone()) {
+    req += `\nROLL CALL NOT YET COMPLETE. No vote of any kind may happen until the Chair has taken roll call and the human has answered it.`;
   }
 
-  if (state.userRollCall) {
-    req += `\nReminder: the human delegate answered roll call with "${state.userRollCall}".`;
-  }
-  if (state.userIsMember === false) {
-    req += `\nReminder: the human delegate is an OBSERVER and never votes. Do not ask them to vote and do not list them in a vote tally.`;
-  }
-  if (correction) {
-    req += `\n\n!! CORRECTION REQUIRED !!\n${correction}`;
-  }
-  const last = state.transcript[state.transcript.length - 1];
-  if (last && last.role === "user"
-      && /GSL|speaker/i.test(last.phase || "")
-      && last.text.length > 200
-      && !/yield/i.test(last.text)) {
-    req += "\nReminder: the human delegate just finished a GSL speech without yielding. "
-         + "Per the YIELD PROTOCOL, the Chair's next turn must calculate and state their remaining time left and ask them how they wish to use their remaining time.";
-  }
-
-  /* CHIT IM HISTORY INCLUSION */
-  req += "\n\n" + buildChitContext();
-
-  /* MID-COMMITTEE CRISIS INJECTION LOGIC */
-  if (state.enableCrisis && !state.crisisTriggered) {
-    const targetHalfwayTurns = state.difficulty === "advanced" ? 25 : 18;
-    if (state.transcript.length >= targetHalfwayTurns) {
-      req += "\n\nCRISIS TRIGGER DIRECTIVE: We have reached roughly the midpoint of committee turns! In this turn, the Chair MUST interrupt debate to introduce a dramatic breaking news crisis / sudden escalation related to the agenda. State phase as 'CRISIS BREAKING NEWS'. Inform all delegates that they must address this crisis in their speeches and resolution proposals.";
-      state.crisisTriggered = true;
+  /* ---- Exact speech timing, calculated in code ----
+     The model cannot count words reliably, so it is handed the finished
+     arithmetic and told what the Chair must now say. */
+  if (lastTurn && (lastTurn.role === "delegate" || lastTurn.role === "user")
+      && lastTurn.text && lastTurn.text.length > 120
+      && !looksLikeMotion(lastTurn.text)
+      && !/yield/i.test(lastTurn.text)) {
+    const tm = lastTurn.timing || speechTiming(lastTurn.text);
+    const who = lastTurn.role === "user" ? state.userCountry : lastTurn.speaker;
+    req += `\n\nSPEECH TIMING (already calculated - use these exact numbers, do not recompute): `
+         + `${who} spoke ${tm.words} words = ${tm.usedSeconds}s of the ${tm.limit}s limit. `
+         + (tm.overran
+            ? `They OVERRAN by ${tm.usedSeconds - tm.limit}s; the Chair must cut them off and note it.`
+            : `${tm.remaining}s REMAIN. The Chair's next turn MUST state "${tm.usedSeconds} seconds used, ${tm.remaining} seconds remaining" and ASK HOW THEY YIELD.`);
+    if (lastTurn.role === "user" && tm.remaining > 0) {
+      req += ` Since this was the human, set requiresUserResponse=true, expectedResponseType="yield".`;
     }
   }
 
+  /* ---- Yield variety: name the one that is overdue ---- */
+  const yc = yieldUsageCounts();
+  if (yc["the Chair"] + yc["Points of Information"] + yc["another delegate"] > 0) {
+    req += `\n\nYIELDS USED SO FAR: Chair ${yc["the Chair"]}, Points of Information ${yc["Points of Information"]}, another delegate ${yc["another delegate"]}. `
+         + `The next speaker should yield to ${underusedYield()} unless their persona makes that implausible. Do NOT let every delegate yield to the Chair.`;
+  }
+
+  /* ---- Unanswered substantive chits are a markable failure ---- */
+  const ignored = unansweredSubstantiveChits();
+  if (ignored.length) {
+    const c = ignored[0];
+    c.penaltyNoted = true;              // flag once, so the Chair does not nag
+    req += `\n\nUNANSWERED SUBSTANTIVE CHIT: ${c.sender} sent ${c.recipient} a substantive chit via the Executive Board `
+         + `("${String(c.text).slice(0, 80)}...") and it has gone unanswered. `
+         + `The Chair MUST note this publicly and record a deduction against ${c.recipient} for ignoring it. `
+         + `If ${c.recipient} is an AI delegation, they should also now reply via the chits array.`;
+  }
+
+  /* ---- Delegates who did not yield to Points of Information ----
+     Opposing delegations should chase them privately instead. */
+  if (lastTurn && lastTurn.role === "delegate" && /yield[^.]{0,30}chair/i.test(lastTurn.text || "")) {
+    req += `\n\n${lastTurn.speaker} yielded to the Chair, so no one could question them on the floor. `
+         + `A delegation that OPPOSES their position should now put a pointed substantive question to them by chit via the EB.`;
+  }
+
+  if (state.userRollCall) req += `\nHuman answered roll call: "${state.userRollCall}".`;
+  if (state.userIsMember === false) req += `\nHuman is an OBSERVER: never votes, never in a tally.`;
+  if (correction) req += `\n\n!! CORRECTION REQUIRED !!\n${correction}`;
+
+  req += "\n\n" + buildChitContext();
+
+  /* ---- Crisis injection at roughly the midpoint ---- */
+  if (state.enableCrisis && !state.crisisTriggered) {
+    const target = state.difficulty === "advanced" ? 25 : 18;
+    if (state.transcript.length >= target) {
+      req += "\n\nCRISIS TRIGGER: interrupt debate NOW with a dramatic breaking-news escalation on the agenda. Phase 'CRISIS BREAKING NEWS'. All later speeches must address it.";
+      state.crisisTriggered = true;
+    }
+  }
   return req;
 }
 
@@ -1622,24 +1777,39 @@ function buildTurnRequest(correction) {
 function buildChitContext() {
   const chits = state.chits || [];
   if (!chits.length) {
-    return "PRIVATE CHITS: none sent yet. An AI delegate may open one to the human delegate, or chit another AI delegate, using the 'chits' array.";
+    return "PRIVATE CHITS: none yet. Open one — AI delegations should be chitting each other constantly, and may chit the human to ASK A QUESTION.";
   }
-  let out = "PRIVATE CHITS / IM HISTORY (OFF-THE-RECORD, not spoken on the floor):\n";
-  chits.slice(-16).forEach(c => {
-    const ebTag = c.viaEB ? " (Via Executive Board)" : " (direct)";
+  let out = "PRIVATE CHITS (off the record, never spoken on the floor):\n";
+  chits.slice(-18).forEach(c => {
+    const route = c.viaEB ? "via EB" : "direct";
     const isUser = c.sender === state.userCountry;
     const who = isUser ? `${c.sender} (THE HUMAN)` : c.sender;
-    const gradeTag = isUser ? (c.graded ? " [GRADED]" : " [UNGRADED - grade this turn]") : "";
-    out += `- From ${who} to ${c.recipient}${ebTag}${gradeTag}: "${c.text}"\n`;
+    /* Only EB-routed chits from the human are gradable, so only those are
+       flagged for grading. A direct chit never reaches the Board. */
+    const gradeTag = (isUser && c.viaEB) ? (c.graded ? " [GRADED]" : " [UNGRADED - grade this turn]") : "";
+    const subTag = c.substantive ? " [SUBSTANTIVE]" : "";
+    out += `- ${who} → ${c.recipient} (${route})${subTag}${gradeTag}: "${c.text}"\n`;
   });
 
   const unanswered = chits.filter(c => c.sender === state.userCountry && !c.answered);
   if (unanswered.length) {
     const last = unanswered[unanswered.length - 1];
-    out += `\nAWAITING REPLY: the human delegate chitted ${last.recipient} and has had no answer. `
-         + `${last.recipient} should reply this turn via the 'chits' array unless staying silent is a deliberate snub that fits their persona.`;
+    out += `\nAWAITING REPLY: the human chitted ${last.recipient} with no answer. ${last.recipient} should reply this turn.\n`;
   }
-  out += "\nRemember that chits are where blocs are really built. What is agreed privately must show up publicly in sponsorships, motions and votes. Pass chits generously: react to speeches, propose joint drafting, ask the questions that would be impolitic on the floor. Route substantive drafting chits Via EB.";
+
+  /* Give the model the alignment map so it stops proposing absurd alliances
+     (Saudi Arabia offering to co-sponsor with Iran on Yemen, in one test). */
+  const blocs = {};
+  state.delegates.forEach(d => {
+    const b = d.bloc || "unaligned";
+    (blocs[b] = blocs[b] || []).push(d.country);
+  });
+  out += "\nBLOC MAP: " + Object.entries(blocs).map(([b, cs]) => `${b} = ${cs.join("/")}`).join(" ; ");
+  out += `\nCHIT RULES: (1) Route anything substantive via EB — only EB chits are seen and marked by the Board. `
+       + `(2) A chit to the human is either a QUESTION, or an offer to collaborate ONLY where real foreign policy genuinely aligns. `
+       + `Never propose collaboration between states that are actual adversaries on this agenda. `
+       + `(3) Never repeat a chit you have already sent. (4) AI-to-AI chits should be the bulk of the traffic: whip votes, split clauses, warn allies. `
+       + `(5) Set showToUser=true only for an open bloc-wide circular. (6) Set substantive=true when the chit asks a real policy or drafting question — an unanswered substantive chit costs the recipient marks.`;
   return out;
 }
 
@@ -1718,16 +1888,28 @@ const FREE_TEXT_TYPES = new Set(["speech", "question", "answer", "amendment", "p
    expectedResponseType; where it does not, or where the declaration is at odds
    with the hint, we infer it from the wording. */
 function classifyResponseType(declared, hint, phase, turnText) {
-  const valid = ["speech","question","answer","amendment","position_paper","unmod","motion","vote","rollcall","yield","choice"];
+  const valid = ["speech","question","answer","amendment","position_paper","unmod","motion",
+                 "vote","vote_procedural","vote_substantive","rollcall","yield","choice"];
   const d = String(declared || "").toLowerCase().trim();
   const blob = `${hint || ""} ${phase || ""}`.toLowerCase();
 
-  // Inference from wording. Checked first so a declaration that contradicts an
-  // unmistakable prompt ("deliver your speech") cannot put buttons on a speech.
+  /* The canonical phase is authoritative where it is decisive. These three
+     phases fully determine what the human may do, so nothing the model says
+     in expectedResponseType can override them. */
+  if (phase === PHASES.PROC_VOTE) return "vote_procedural";
+  if (phase === PHASES.SUBS_VOTE) return "vote_substantive";
+  if (phase === PHASES.ROLL_CALL) return "rollcall";
+  if (phase === PHASES.OPEN_FLOOR) return "motion";
+  if (phase === PHASES.UNMOD) return "unmod";
+
+  // Otherwise infer from the wording, so an obviously-written task
+  // ("deliver your speech") can never end up with buttons on it.
   let inferred = null;
   if (/unmoderated|unmod\b/.test(blob)) inferred = "unmod";
   else if (/position paper/.test(blob)) inferred = "position_paper";
   else if (/roll call|rollcall/.test(blob)) inferred = "rollcall";
+  else if (/procedural vot/.test(blob)) inferred = "vote_procedural";
+  else if (/substantive vot|vote on (the )?(draft )?resolution|vote on the amendment/.test(blob)) inferred = "vote_substantive";
   else if (/\bvote\b|\bvoting\b|cast your|in favour|for or against/.test(blob)) inferred = "vote";
   else if (/yield/.test(blob)) inferred = "yield";
   else if (/answer|respond to the (question|point)|reply to the delegate/.test(blob)) inferred = "answer";
@@ -1741,6 +1923,18 @@ function classifyResponseType(declared, hint, phase, turnText) {
   if (inferred) return inferred;
   if (addressesUser(turnText)) return "speech";
   return "choice";
+}
+
+/* Response types where the option buttons are the ONLY way to answer: the
+   text box is hidden entirely. Voting is a ballot, not an essay. */
+const NO_TEXTBOX_TYPES = new Set(["vote_procedural", "vote_substantive", "rollcall"]);
+
+/* The ballot for a substantive vote, filtered by the delegation's roll call
+   answer. "Present and Voting" gave up the right to abstain. */
+function substantiveBallot() {
+  if (state.userIsMember === false) return [];
+  const base = ["Yes", "No", "Yes with Rights", "No with Rights"];
+  return state.userRollCall === "Present and Voting" ? base : base.concat(["Abstain"]);
 }
 
 /* A motion button has to be something a delegate could stand up and say
@@ -1810,27 +2004,333 @@ function sanitizeUserOptions(rawOptions, type) {
 
   if (type === "rollcall") return ["Present", "Present and Voting"];
 
-  if (type === "vote") {
-    if (state.userIsMember === false) return [];       // observers do not vote
-    return state.userRollCall === "Present and Voting"
-      ? ["Yes", "No"]                                  // waived the right to abstain
-      : ["Yes", "No", "Abstain"];
+  /* Procedural votes decide how committee runs. There is no abstention on a
+     procedural vote — every delegation present must come down one way or the
+     other. */
+  if (type === "vote_procedural") {
+    if (state.userIsMember === false) return [];
+    return ["Yes", "No"];
   }
 
+  /* Substantive votes decide documents, so rights of explanation and
+     abstention come into play. */
+  if (type === "vote_substantive") return substantiveBallot();
+
+  // Legacy/ambiguous "vote": treat as substantive, which is the safer ballot.
+  if (type === "vote") {
+    if (state.userIsMember === false) return [];
+    return substantiveBallot();
+  }
+
+  /* Yields are offered in full, and the least-used one is listed first so the
+     human is nudged away from always yielding to the Chair. */
   if (type === "yield") {
-    return ["Yield to the Chair", "Yield to Points of Information", "Yield to another delegate"];
+    const preferred = underusedYield();
+    const all = ["Yield to the Chair", "Yield to Points of Information", "Yield to another delegate"];
+    return all.sort((a, b) =>
+      (b.includes(preferred) ? 1 : 0) - (a.includes(preferred) ? 1 : 0));
   }
 
   if (type === "motion") {
     const wellFormed = opts.filter(isWellFormedMotion);
-    if (wellFormed.length < 2) return defaultMotionOptions().slice(0, 6);
-    if (!wellFormed.some(o => /^no motions?/i.test(o))) wellFormed.push("No motions at this time");
-    return wellFormed.slice(0, 6);
+    const list = wellFormed.length >= 2 ? wellFormed : defaultMotionOptions();
+    /* On an open floor the human must always be able to decline, and must
+       always be able to type something the buttons did not anticipate. */
+    if (!list.some(o => /^no (motions?|points?)/i.test(o))) {
+      list.push("No points or motions at this time");
+    }
+    return list.slice(0, 6);
   }
 
   // "choice": keep what the model offered, but a single button is not a choice.
   if (opts.length < 2) return [];
   return opts.slice(0, 6);
+}
+
+/* ==================================================================
+   7c. COMMITTEE MECHANICS ENFORCED IN CODE
+   ------------------------------------------------------------------
+   Everything in this section exists because asking the model nicely did
+   not work. Each of these was a real bug in play-testing:
+
+     - the AI drifted between made-up phase labels, which broke the
+       placeholder text and the buttons;
+     - it repeated itself, sometimes looping the same sentence forever;
+     - it polled delegations one at a time during votes;
+     - it wrote motions in free prose instead of the required sentence;
+     - it never varied yields, so everyone yielded to the Chair;
+     - it could not count words, so speech timings were invented.
+
+   Doing these in JavaScript means they are simply true, every turn,
+   instead of being a rule the model may or may not remember.
+   ================================================================== */
+
+/* ---------- Canonical phase vocabulary ----------------------------
+   The phase label drives the placeholder text and which buttons appear,
+   so it cannot be free-form. The model still proposes a phase; this list
+   is what its proposal gets mapped onto. */
+const PHASES = {
+  OPENING:      "OPENING",
+  ROLL_CALL:    "ROLL CALL",
+  OPEN_FLOOR:   "OPEN FLOOR",
+  AGENDA:       "SETTING THE AGENDA",
+  POSITION:     "POSITION PAPERS",
+  GSL:          "GENERAL SPEAKERS LIST",
+  MOD:          "MODERATED CAUCUS",
+  UNMOD:        "UNMODERATED CAUCUS",
+  POI:          "POINTS OF INFORMATION",
+  YIELD:        "YIELD",
+  DRAFTING:     "DRAFTING",
+  DR_INTRO:     "DRAFT RESOLUTION INTRODUCTION",
+  AMENDMENTS:   "AMENDMENTS",
+  PROC_VOTE:    "PROCEDURAL VOTING",
+  SUBS_VOTE:    "SUBSTANTIVE VOTING",
+  CRISIS:       "CRISIS BREAKING NEWS",
+  CLOSING:      "CLOSING",
+};
+
+/* The Chair asking "are there any points or motions on the floor?" is the
+   single most important sentence in committee: it is the moment the human
+   gets to steer. Detected explicitly so it always opens the floor. */
+const OPEN_FLOOR_RE = /\b(points?\s+(or|and)\s+motions?|motions?\s+(or|and)\s+points?)\b|floor is open (for|to)\b|entertain (any )?(points?|motions?)|any (points?|motions?) on the floor/i;
+
+/* A substantive vote decides a document. A procedural vote decides how the
+   committee runs. They have different ballot options, so they are separate
+   phases. */
+const SUBSTANTIVE_VOTE_RE = /\b(draft resolution|resolution \d|dr ?\d|amendment)\b[^.]{0,60}\bvot|vot[^.]{0,40}\b(draft resolution|resolution \d|dr ?\d|amendment)\b|substantive vot/i;
+const PROCEDURAL_VOTE_RE  = /\bprocedural vot|vot[^.]{0,30}\b(motion|caucus|agenda|formal debate|close debate|adjourn)\b|\bmotion\b[^.]{0,40}\bvot/i;
+
+/* Map whatever the model called this turn onto one canonical phase.
+   Order matters: the most specific tests run first. */
+function normalizePhase(rawPhase, text, role) {
+  const p = String(rawPhase || "").toLowerCase();
+  const t = String(text || "");
+  const blob = p + " " + t.toLowerCase();
+
+  // Crisis and closing beat everything else.
+  if (/crisis|breaking news/.test(blob)) return PHASES.CRISIS;
+  if (/adjourn|committee is closed|closing remarks|final scores/.test(p)) return PHASES.CLOSING;
+
+  // Voting: decide substantive vs procedural before the generic "voting" test.
+  if (SUBSTANTIVE_VOTE_RE.test(blob)) return PHASES.SUBS_VOTE;
+  if (PROCEDURAL_VOTE_RE.test(blob))  return PHASES.PROC_VOTE;
+  if (/substantive vot/.test(p)) return PHASES.SUBS_VOTE;
+  if (/procedural vot/.test(p))  return PHASES.PROC_VOTE;
+  if (/\bvoting\b|\bvote\b/.test(p)) {
+    return /resolution|amendment/.test(blob) ? PHASES.SUBS_VOTE : PHASES.PROC_VOTE;
+  }
+
+  if (/roll call|rollcall/.test(blob)) return PHASES.ROLL_CALL;
+  if (/position paper/.test(blob))     return PHASES.POSITION;
+
+  // "Any points or motions?" — only when the Chair actually says it.
+  if (role === "chair" && OPEN_FLOOR_RE.test(t)) return PHASES.OPEN_FLOOR;
+  if (/open floor|points or motions/.test(p))    return PHASES.OPEN_FLOOR;
+
+  if (/unmoderated|unmod\b/.test(p))   return PHASES.UNMOD;
+  if (/moderated caucus/.test(p))      return PHASES.MOD;
+  if (/amendment/.test(p))             return PHASES.AMENDMENTS;
+  if (/draft resolution|introduc|presentation/.test(p)) return PHASES.DR_INTRO;
+  if (/draft|lobby/.test(p))           return PHASES.DRAFTING;
+  if (/point of information|\bpoi\b|questions?/.test(p)) return PHASES.POI;
+  if (/yield/.test(p))                 return PHASES.YIELD;
+  if (/agenda/.test(p))                return PHASES.AGENDA;
+  if (/speakers list|\bgsl\b|formal debate|general speak/.test(p)) return PHASES.GSL;
+  if (/open|welcome|call to order/.test(p)) return PHASES.OPENING;
+
+  // Nothing matched: fall back to whatever the committee was doing before.
+  const last = state && state.transcript && state.transcript.length
+    ? state.transcript[state.transcript.length - 1].phase : "";
+  return last || PHASES.OPENING;
+}
+
+/* ---------- Speech timing, computed rather than guessed --------------
+   A standard MUN speaking pace is about 130 words per minute. The model
+   was asked to do this arithmetic and got it wrong constantly, so the
+   code does it and hands the model the finished numbers. */
+const WORDS_PER_MINUTE = 130;
+
+function countWords(text) {
+  return String(text || "").trim().split(/\s+/).filter(Boolean).length;
+}
+
+/* How long is a speech allowed to run right now?
+   Reads the most recent motion that set a speaking time; otherwise the GSL
+   default of 90 seconds. */
+function currentSpeakingLimit() {
+  const turns = (state.transcript || []).slice().reverse();
+  for (const t of turns) {
+    const m = String(t.text || "").match(/speaking time\s*(?:of|to|is)?\s*(\d{1,3})\s*second/i);
+    if (m) return parseInt(m[1], 10);
+    const m2 = String(t.text || "").match(/(\d{1,3})\s*seconds?\s*(?:per speaker|speaking time)/i);
+    if (m2) return parseInt(m2[1], 10);
+  }
+  return 90;
+}
+
+/* Turn a block of speech into the numbers the Chair needs to announce. */
+function speechTiming(text, limitSeconds) {
+  const limit = limitSeconds || currentSpeakingLimit();
+  const words = countWords(text);
+  const usedSeconds = Math.round((words / WORDS_PER_MINUTE) * 60);
+  const remaining = Math.max(0, limit - usedSeconds);
+  return { words, usedSeconds, remaining, limit, overran: usedSeconds > limit };
+}
+
+/* ---------- Yield variety -------------------------------------------
+   Left alone, every delegate yields to the Chair. The code counts what has
+   been used and names the one that is overdue. */
+const YIELD_KINDS = ["the Chair", "Points of Information", "another delegate"];
+
+function yieldUsageCounts() {
+  const counts = { "the Chair": 0, "Points of Information": 0, "another delegate": 0 };
+  (state.transcript || []).forEach(t => {
+    const txt = String(t.text || "");
+    if (!/yield/i.test(txt)) return;
+    if (/yield[^.]{0,30}\b(points? of information|questions?)/i.test(txt)) counts["Points of Information"]++;
+    else if (/yield[^.]{0,30}\b(the delegate of|another delegate|delegation of)/i.test(txt)) counts["another delegate"]++;
+    else if (/yield[^.]{0,30}\bchair/i.test(txt)) counts["the Chair"]++;
+  });
+  return counts;
+}
+
+/* The yield type used least so far, so the next speaker is pushed towards it. */
+function underusedYield() {
+  const c = yieldUsageCounts();
+  return YIELD_KINDS.slice().sort((a, b) => c[a] - c[b])[0];
+}
+
+/* ---------- Repetition and loop detection ---------------------------
+   The model would sometimes emit a sentence it had already used, and in
+   two play-tests it locked into an infinite loop of the same paragraph.
+   Turns are compared against recent history and rejected when too close. */
+
+/* Reduce text to comparable word tokens: lower case, no punctuation. */
+function normalizeForCompare(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* Overlapping n-word groups. Comparing these catches near-duplicates that
+   an exact string match would miss. */
+function shingles(text, n) {
+  const words = normalizeForCompare(text).split(" ").filter(Boolean);
+  const out = new Set();
+  for (let i = 0; i + n <= words.length; i++) out.add(words.slice(i, i + n).join(" "));
+  return out;
+}
+
+/* Jaccard similarity: shared groups divided by total distinct groups. */
+function similarity(a, b) {
+  const A = shingles(a, 6), B = shingles(b, 6);
+  if (!A.size || !B.size) return 0;
+  let shared = 0;
+  A.forEach(x => { if (B.has(x)) shared++; });
+  return shared / (A.size + B.size - shared);
+}
+
+/* Is this new turn effectively something already said?
+   Compares against the last 12 turns, and more strictly against turns by the
+   same speaker, who is the one likely to loop. */
+function detectRepetition(newText, speaker) {
+  const recent = (state.transcript || []).slice(-12);
+  for (const t of recent) {
+    const sim = similarity(newText, t.text);
+    const sameSpeaker = t.speaker === speaker;
+    if (sim >= (sameSpeaker ? 0.45 : 0.62)) {
+      return `this turn repeats ${sameSpeaker ? "an earlier turn by the same speaker" : "an earlier turn"} `
+           + `(${Math.round(sim * 100)}% overlap): "${String(t.text).slice(0, 90)}..."`;
+    }
+  }
+  return null;
+}
+
+/* ---------- Motion sentence format ----------------------------------
+   Every motion an AI delegate raises must be exactly one sentence in the
+   house style. Rather than rejecting the turn and burning a request, the
+   code rewrites it where the motion body can be recovered. */
+const MOTION_SENTENCE_RE = /^The Delegate of .+ would like to raise a motion to .+\.$/;
+
+/* Pull the motion body ("suspend formal debate for...") out of loose prose. */
+function extractMotionBody(text) {
+  const t = String(text || "").replace(/\s+/g, " ").trim();
+  const patterns = [
+    /motion to ([^.!?]+)/i,
+    /moves?\s+(?:that the committee\s+|to\s+)([^.!?]+)/i,   // "moves that the committee suspend..."
+    /motions?\s+for ([^.!?]+)/i,
+  ];
+  for (const re of patterns) {
+    const m = t.match(re);
+    if (m && m[1] && m[1].trim().length > 3) return m[1].trim().replace(/[.,;]+$/, "");
+  }
+  return null;
+}
+
+/* Rewrite a delegate's motion turn into the mandated sentence.
+   Returns the corrected text, or null if no motion could be found. */
+function formatMotionTurn(country, text) {
+  if (MOTION_SENTENCE_RE.test(String(text || "").trim())) return String(text).trim();
+  const body = extractMotionBody(text);
+  if (!body) return null;
+  return `The Delegate of ${country} would like to raise a motion to ${body}.`;
+}
+
+/* Does this delegate turn appear to be raising a motion at all?
+   Deliberately narrow: "this delegation is in motion toward consensus" must
+   not trigger a rewrite, but every real way of moving a motion must. */
+function looksLikeMotion(text) {
+  return /\b(motions?\s+to\b|would like to (raise|move)\s+a motion|moves?\s+(that the committee|to)\b|motions?\s+for\b|rais(e|es|ing)\s+a motion)/i
+    .test(String(text || ""));
+}
+
+/* ---------- Roll call -------------------------------------------------
+   Roll call sets who may abstain later, so it genuinely matters. The code
+   checks it happened rather than trusting the model to remember. */
+function rollCallDone() {
+  return (state.transcript || []).some(t =>
+    (t.voteTally && (t.voteTally.votes || []).some(v => /present/i.test(v.vote)))
+    || (t.phase === PHASES.ROLL_CALL && t.role === "narrator")
+  ) && !!state.userRollCall;
+}
+
+/* ---------- Substantive chits and unanswered-chit penalties -----------
+   A chit that asks a real question about policy or a draft resolution, sent
+   via the Executive Board, is on the record. Ignoring one is a markable
+   failure, so the code finds these rather than hoping the Chair notices. */
+const SUBSTANTIVE_CHIT_RE = /\?|clause|draft|resolution|amend|fund|financ|propos|co-?sponsor|sponsor|operative|preambulator|vote|position|policy|mechanism|treaty|protocol|article/i;
+
+function isSubstantiveChit(chit) {
+  if (chit && typeof chit.substantive === "boolean") return chit.substantive;
+  const text = String((chit && chit.text) || "").trim();
+  /* Substance is about content, not length: "Vote with us on OC4." is a real
+     ask, while a long pleasantry is not. Require a policy/drafting keyword and
+     just enough text to be a sentence. */
+  return text.length >= 15 && SUBSTANTIVE_CHIT_RE.test(text);
+}
+
+/* Has `recipient` sent anything back to `sender` since this chit was passed? */
+function chitWasAnswered(chit, allChits) {
+  const idx = allChits.indexOf(chit);
+  return allChits.slice(idx + 1).some(later =>
+    sameCountry(later.sender, chit.recipient) && sameCountry(later.recipient, chit.sender)
+  );
+}
+
+/* Every substantive via-EB chit still hanging, from anyone to anyone.
+   `turnsWaited` lets the Chair say how long it has been ignored. */
+function unansweredSubstantiveChits() {
+  const chits = state.chits || [];
+  const now = (state.transcript || []).length;
+  return chits.filter(c =>
+    c.viaEB                                   // only EB-routed chits are on the record
+    && isSubstantiveChit(c)
+    && !chitWasAnswered(c, chits)
+    && (now - (c.turnIndex || 0)) >= 3        // give the recipient a few turns of grace
+    && !c.penaltyNoted                        // only flag each chit once
+  );
 }
 
 /* ==================================================================
@@ -1877,10 +2377,14 @@ function closeModal() {
 }
 
 window.showKeywordPopup = function(term) {
-  const lower = term.toLowerCase().trim();
-  const desc = KEYWORD_DEFINITIONS[lower] || KEYWORD_DEFINITIONS[lower.replace(/s$/, '')] || "A Model UN procedural term.";
+  const entry = keywordEntry(term);
+  const desc = entry ? entry.def : "A Model UN procedural term.";
   const title = term.charAt(0).toUpperCase() + term.slice(1);
-  showModal(title, desc);
+  /* Every glossary pop-up ends with a link to the full rules page, so a
+     beginner who wants more than one sentence has somewhere to go. */
+  const link = '<a class="rop-link" href="rules-of-procedure.html" target="_blank">'
+             + 'For more information, refer to the rules of procedure</a>';
+  showModal(title, escapeHtml(desc) + '<div class="rop-link-wrap">' + link + '</div>');
 };
 
 /* Inline emphasis for a single already-escaped line.
@@ -1906,8 +2410,15 @@ function formatTurnHtml(raw, role) {
   const line = s => {
     let out = formatInline(s);
     if (highlight) {
-      out = out.replace(KW_REGEX, match =>
-        `<b class="mun-keyword" onclick="window.showKeywordPopup('${escapeHtml(match)}')">${match}</b>`);
+      /* A keyword is only made clickable when the sentence it sits in supports
+         the procedural meaning (see keywordAppliesHere). The whole line is
+         passed as the context window, which is close enough to a sentence for
+         committee dialogue and avoids splitting on abbreviations. */
+      const context = s;
+      out = out.replace(KW_REGEX, match => {
+        if (!keywordAppliesHere(match, context)) return match;
+        return `<b class="mun-keyword" onclick="window.showKeywordPopup(this.textContent)">${match}</b>`;
+      });
     }
     return out;
   };
@@ -1989,6 +2500,20 @@ function getDynamicPlaceholder(hintText, currentPhase) {
   const p = (currentPhase || "").toLowerCase();
   const diff = (state && state.difficulty) ? state.difficulty : "intermediate";
   const country = (state && state.userCountry) ? state.userCountry : "your country";
+
+  /* Canonical phases are checked first: they are set by code and are more
+     reliable than reading the Chair's wording. */
+  if (currentPhase === PHASES.OPEN_FLOOR) {
+    if (diff === "beginner") return "The floor is open. Raise a point (Order, Inquiry, Personal Privilege) or propose a motion — say the motion type, its topic, total time and speaking time. Or pick 'No points or motions'...";
+    if (diff === "intermediate") return "Raise a point or move a motion — caucus, topic, total time, speaking time. Or let someone else steer...";
+    return "State your point or motion in full form...";
+  }
+  if (currentPhase === PHASES.PROC_VOTE) {
+    return "Procedural vote — select Yes or No. Abstention is not permitted.";
+  }
+  if (currentPhase === PHASES.SUBS_VOTE) {
+    return "Substantive vote — select your ballot option.";
+  }
 
   if (h.includes("position paper") || p.includes("position paper")) {
     if (diff === "beginner") return "Paste your position paper here explaining your country's official policy stance, historical background, and proposed solutions...";
@@ -2101,63 +2626,99 @@ function populateChitRecipients() {
   });
   // Traffic between other delegations is other people's mail. It is only
   // listed here if the user explicitly asked to see it at setup.
-  if (state.showChitTraffic) {
-    const ebOpt = document.createElement("option");
-    ebOpt.value = EB_LOG;
-    ebOpt.textContent = "Executive Board traffic log";
-    sel.appendChild(ebOpt);
-  }
+  const ebOpt = document.createElement("option");
+  ebOpt.value = EB_LOG;
+  ebOpt.textContent = state.showChitTraffic
+    ? "Executive Board traffic log"
+    : "Openly circulated chits";
+  sel.appendChild(ebOpt);
 
-  if (previous && ((previous === EB_LOG && state.showChitTraffic) || state.delegates.some(d => d.country === previous))) {
+  if (previous && (previous === EB_LOG || state.delegates.some(d => d.country === previous))) {
     sel.value = previous;
   }
   updateChitDropdownOptions();
   renderChitMessages();
 }
 
-/* Take chits produced by the model, whoever they are addressed to, and file
-   them. Chits from the human's own country are dropped: the human writes
-   those themselves. */
+/* Turn one model-produced chit entry into one stored chit per recipient.
+   A chit sent to five bloc members becomes five rows, so each thread reads
+   correctly and no delegation can see a message it was not sent. */
 function ingestChits(list) {
   if (!state.chits) state.chits = [];
   const selected = $("chit-recipient-select").value;
   const open = chitBoxOpen();
-  let arrivedForUser = false;
+  const turnIndex = (state.transcript || []).length;
+  let changed = false;
 
   list.forEach(c => {
     if (!c || !c.sender || !c.text) return;
-    if (sameCountry(c.sender, state.userCountry)) return;          // never ventriloquise the user
+    if (sameCountry(c.sender, state.userCountry)) return;   // the human writes their own
 
+    // Resolve the sender to the exact roster spelling.
     const sender = (state.delegates.find(d => sameCountry(d.country, c.sender)) || {}).country || c.sender;
-    const rawRecipient = c.recipient || state.userCountry;
-    const toUser = sameCountry(rawRecipient, state.userCountry);
-    const recipient = toUser
-      ? state.userCountry
-      : ((state.delegates.find(d => sameCountry(d.country, rawRecipient)) || {}).country || rawRecipient);
 
-    if (!toUser && sameCountry(sender, recipient)) return;          // a delegate chitting itself
+    /* Accept either `recipient` (one) or `recipients` (many), and dedupe. */
+    const rawList = []
+      .concat(Array.isArray(c.recipients) ? c.recipients : [])
+      .concat(c.recipient ? [c.recipient] : []);
+    if (!rawList.length) rawList.push(state.userCountry);
 
-    state.chits.push({
-      id: `c${Date.now()}${Math.floor(Math.random() * 1000)}`,
-      sender,
-      recipient,
-      text: String(c.text),
-      timestamp: new Date().toISOString(),
-      viaEB: !!c.viaEB,
-      // Unread only counts for messages actually addressed to the human, and
-      // only when they are not already looking at that thread.
-      unread: toUser ? !(open && selected === sender) : false,
+    const resolved = [];
+    rawList.forEach(r => {
+      const toUser = sameCountry(r, state.userCountry);
+      const name = toUser
+        ? state.userCountry
+        : ((state.delegates.find(d => sameCountry(d.country, r)) || {}).country || String(r));
+      if (sameCountry(name, sender)) return;                // nobody chits themselves
+      if (!resolved.some(x => sameCountry(x, name))) resolved.push(name);
     });
-    if (toUser) {
-      arrivedForUser = true;
-      // The delegate has now answered, so stop nagging the model about it.
-      state.chits.forEach(prev => {
-        if (prev.sender === state.userCountry && sameCountry(prev.recipient, sender)) prev.answered = true;
+    if (!resolved.length) return;
+
+    const text = String(c.text);
+    const viaEB = !!c.viaEB;
+
+    resolved.forEach(recipient => {
+      const toUser = sameCountry(recipient, state.userCountry);
+
+      /* Don't let a delegation send the same message twice. This was a real
+         annoyance: the AI would re-send near-identical chits every few turns. */
+      const duplicate = (state.chits || []).some(prev =>
+        prev.sender === sender && sameCountry(prev.recipient, recipient) &&
+        similarity(prev.text, text) > 0.6);
+      if (duplicate) return;
+
+      state.chits.push({
+        id: `c${Date.now()}${Math.floor(Math.random() * 1000)}`,
+        sender,
+        recipient,
+        text,
+        timestamp: new Date().toISOString(),
+        turnIndex,
+        viaEB,
+        substantive: typeof c.substantive === "boolean"
+          ? c.substantive
+          : isSubstantiveChit({ text }),
+        /* Chits between two AI delegations are private unless the senders
+           chose to let the human see them. */
+        showToUser: toUser ? true : !!c.showToUser,
+        graded: false,
+        grade: null,
+        unread: toUser ? !(open && selected === sender) : false,
       });
-    }
+      changed = true;
+
+      if (toUser) {
+        // This delegation has now replied, so stop chasing them for it.
+        state.chits.forEach(prev => {
+          if (prev.sender === state.userCountry && sameCountry(prev.recipient, sender)) {
+            prev.answered = true;
+          }
+        });
+      }
+    });
   });
 
-  if (arrivedForUser || list.length) {
+  if (changed) {
     updateChitBadge();
     renderChitMessages();
   }
@@ -2190,6 +2751,12 @@ function renderChitMessages() {
     inputRow.placeholder = isLog ? "Read-only log" : "Type a chit...";
   }
   if (sendBtn) sendBtn.disabled = isLog;
+  // Bloc fan-out only makes sense when a real delegation is selected.
+  const blocBox = $("chit-bloc-checkbox");
+  if (blocBox) {
+    blocBox.disabled = isLog;
+    if (isLog) blocBox.checked = false;
+  }
 
   if (!recipient) {
     container.innerHTML = `<div style="color:#888; font-style:italic; text-align:center; margin-top:1rem;">Select a delegate to begin private chits.</div>`;
@@ -2197,23 +2764,32 @@ function renderChitMessages() {
   }
 
   if (isLog) {
-    if (!state.showChitTraffic) {
-      container.innerHTML = `<div style="color:#888; font-style:italic; font-size:0.8rem; text-align:center; margin-top:1rem;">Traffic between other delegations is hidden for this session.</div>`;
-      return;
-    }
+    /* Two things can put another delegation's chit in this log:
+       the user opted into the full traffic log at setup, or the sending
+       delegates chose to make that particular chit open (showToUser). */
     const traffic = (state.chits || []).filter(c =>
-      c.sender !== state.userCountry && c.recipient !== state.userCountry
+      c.sender !== state.userCountry && c.recipient !== state.userCountry &&
+      (state.showChitTraffic || c.showToUser)
     );
     if (!traffic.length) {
-      container.innerHTML = `<div style="color:#888; font-style:italic; font-size:0.8rem; text-align:center; margin-top:1rem;">No chits have passed between other delegations yet. Watch here to see blocs forming before they surface on the floor.</div>`;
+      const why = state.showChitTraffic
+        ? "No chits have passed between other delegations yet. Watch here to see blocs forming before they surface on the floor."
+        : "Nothing here yet. You see another delegation's chit only when they choose to circulate it openly.";
+      container.innerHTML = `<div style="color:#888; font-style:italic; font-size:0.8rem; text-align:center; margin-top:1rem;">${why}</div>`;
       return;
     }
     traffic.forEach(c => {
       const div = document.createElement("div");
       div.className = "chit-msg traffic";
-      div.innerHTML = `<div class="sender">${escapeHtml(c.sender)} &rarr; ${escapeHtml(c.recipient)}` +
-                      (c.viaEB ? `<span class="eb-tag">(Via EB)</span>` : "") + `</div>` +
-                      `<div class="body">${formatTurnHtml(c.text, "delegate")}</div>`;
+      let html = `<div class="sender">${escapeHtml(c.sender)} &rarr; ${escapeHtml(c.recipient)}` +
+                 (c.viaEB ? `<span class="eb-tag">(Via EB)</span>` : "") +
+                 (!state.showChitTraffic && c.showToUser ? `<span class="eb-tag">(circulated openly)</span>` : "") +
+                 `</div><div class="body">${formatTurnHtml(c.text, "delegate")}</div>`;
+      // The Chair marks AI chit diplomacy too, not just the human's.
+      if (c.grade) {
+        html += `<div class="grade">Executive Board: ${escapeHtml(c.grade.score)}/10 &mdash; ${escapeHtml(c.grade.comment)}</div>`;
+      }
+      div.innerHTML = html;
       container.appendChild(div);
     });
     container.scrollTop = container.scrollHeight;
@@ -2269,23 +2845,46 @@ function setChitStatus(msg) {
 
 function sendUserChit() {
   const input = $("chit-text-input");
-  const recipient = $("chit-recipient-select").value;
+  const selected = $("chit-recipient-select").value;
   const text = input.value.trim();
   const viaEB = $("chit-via-eb-checkbox") ? $("chit-via-eb-checkbox").checked : false;
-  if (!text || !recipient || recipient === EB_LOG) return;
+  const toBloc = $("chit-bloc-checkbox") ? $("chit-bloc-checkbox").checked : false;
+  if (!text || !selected || selected === EB_LOG) return;
 
   if (!state.chits) state.chits = [];
-  state.chits.push({
-    id: `u${Date.now()}`,
-    sender: state.userCountry,
-    recipient: recipient,
-    text: text,
-    timestamp: new Date().toISOString(),
-    unread: false,
-    viaEB: viaEB,
-    answered: false,
-    graded: false,
-    grade: null,
+  const turnIndex = (state.transcript || []).length;
+
+  /* Work out who this is actually going to. "Send to entire bloc" fans the
+     same chit out to every delegation sharing the selected delegate's bloc,
+     which is how whipping a vote really works. */
+  let recipients = [selected];
+  if (toBloc) {
+    const target = state.delegates.find(d => d.country === selected);
+    const blocName = target && target.bloc ? String(target.bloc).toLowerCase() : null;
+    if (blocName) {
+      recipients = state.delegates
+        .filter(d => String(d.bloc || "").toLowerCase() === blocName)
+        .map(d => d.country);
+      if (!recipients.includes(selected)) recipients.push(selected);
+    }
+  }
+
+  recipients.forEach(r => {
+    state.chits.push({
+      id: `u${Date.now()}${Math.floor(Math.random() * 1000)}`,
+      sender: state.userCountry,
+      recipient: r,
+      text: text,
+      timestamp: new Date().toISOString(),
+      turnIndex,
+      unread: false,
+      viaEB: viaEB,
+      substantive: isSubstantiveChit({ text }),
+      showToUser: true,
+      answered: false,
+      graded: false,
+      grade: null,
+    });
   });
 
   input.value = "";
@@ -2294,10 +2893,16 @@ function sendUserChit() {
 
   /* Deliberately no API call here. Chits ride along with the next committee
      turn, so writing them costs nothing against the user's model quota. */
-  setChitStatus(viaEB
-    ? `Passed to the Executive Board for delivery to ${recipient}. A reply will come as committee proceeds.`
-    : `Sent to ${recipient}. A reply will come as committee proceeds.`);
-  setTimeout(() => setChitStatus(""), 5000);
+  const who = recipients.length > 1 ? `${recipients.length} delegations` : selected;
+  let msg = viaEB
+    ? `Passed to the Executive Board for delivery to ${who}.`
+    : `Sent to ${who}.`;
+  if (!viaEB && isSubstantiveChit({ text })) {
+    // Only EB-routed chits are marked, so warn before the marks are lost.
+    msg += " Note: sent direct, so the Executive Board will not see or mark it.";
+  }
+  setChitStatus(msg);
+  setTimeout(() => setChitStatus(""), 6000);
 }
 
 function updateChitBadge() {
@@ -2430,25 +3035,26 @@ function updateControls() {
   $("done-area").style.display    = state.sessionOver ? "" : "none";
 
   if (state.pendingUser) {
-    const hintText = state.pendingUser.hint || "The Chair awaits your response.";
-    $("user-prompt-hint").textContent = hintText;
-
     const lastTurn = state.transcript.length ? state.transcript[state.transcript.length - 1] : null;
     const currentPhase = lastTurn ? (lastTurn.phase || "") : "";
+
+    /* The phase is re-checked on EVERY render, not just when a turn arrives,
+       so resuming a session or re-rendering can never leave stale controls. */
+    const type = state.pendingUser.type
+      || classifyResponseType(null, state.pendingUser.hint, currentPhase, "");
+
+    const hintText = state.pendingUser.hint || defaultHintForPhase(currentPhase);
+    $("user-prompt-hint").textContent = hintText;
 
     const userTextElem = $("user-text");
     userTextElem.placeholder = getDynamicPlaceholder(hintText, currentPhase);
 
     const box = $("option-buttons");
     box.innerHTML = "";
-
-    /* Options were already sanitised for this response type when the turn came
-       in. Re-run the sanitiser here so a resumed session, where only the raw
-       list was stored, gets the same treatment. */
-    const type = state.pendingUser.type
-      || classifyResponseType(null, hintText, currentPhase, "");
     let options = sanitizeUserOptions(state.pendingUser.options || [], type);
 
+    /* Belt and braces on the ballot: a delegation that said "Present and
+       Voting" cannot abstain, and an observer cannot vote at all. */
     if (state.userRollCall === "Present and Voting") {
       options = options.filter(o => !/abstain/i.test(o));
     }
@@ -2462,12 +3068,15 @@ function updateControls() {
       b.addEventListener("click", () => submitUserResponse(opt));
       box.appendChild(b);
     }
-    // An empty row of buttons still takes up space and reads as a broken UI.
     box.style.display = options.length ? "flex" : "none";
 
+    /* A vote is a ballot, not an essay: for voting and roll call the text box
+       is removed entirely so the only way to answer is a real option. */
+    const hideBox = NO_TEXTBOX_TYPES.has(type) && options.length > 0;
     userTextElem.value = "";
-    userTextElem.style.display = "";
-    userTextElem.focus();
+    userTextElem.style.display = hideBox ? "none" : "";
+    $("submit-response-btn").style.display = hideBox ? "none" : "";
+    if (!hideBox) userTextElem.focus();
   }
 }
 
@@ -2482,13 +3091,17 @@ function renderScores() {
       const info = delegateInfo(s.country);
       const nameTag = (info && info.name) ? ` — ${escapeHtml(info.name)}` : "";
       const isUser = s.country === state.userCountry;
-      const chitCell = (typeof s.chitScore !== "undefined" && s.chitScore !== null)
-        ? `${escapeHtml(s.chitScore)}/10${s.chitComment ? `<br><span class="hint">${escapeHtml(s.chitComment)}</span>` : ""}`
-        : "&mdash;";
+      const small = v => (typeof v !== "undefined" && v !== null) ? `${escapeHtml(v)}/10` : "&mdash;";
+      const chitCell = small(s.chitScore) +
+        (s.chitComment ? `<br><span class="hint">${escapeHtml(s.chitComment)}</span>` : "");
+      const policyCell = small(s.policyScore) +
+        (s.policyComment ? `<br><span class="hint">${escapeHtml(s.policyComment)}</span>` : "");
       return `<tr class="${isUser ? "user-row" : ""}">
         <td>${flagTag}Delegate of ${escapeHtml(s.country)}${nameTag}${isUser ? " (you)" : ""}</td>
         <td>${escapeHtml(s.score)}</td>
+        <td>${policyCell}</td>
         <td>${chitCell}</td>
+        <td>${small(s.questionScore)}</td>
         <td>${escapeHtml(s.comment)}</td>
       </tr>`;
     }).join("");
@@ -2497,7 +3110,13 @@ function renderScores() {
     <div class="card">
       <h2>Final delegate scores</h2>
       <table class="scores">
-        <tr><th>Delegate</th><th>Score</th><th>Chit diplomacy</th><th>Chair’s comments</th></tr>
+        <tr>
+          <th>Delegate</th><th>Score</th>
+          <th title="How true the delegation stayed to its real foreign policy">Policy fidelity</th>
+          <th title="Quality of off-the-record chit diplomacy via the Executive Board">Chit diplomacy</th>
+          <th title="Quality of the questions this delegation asked others">Questions</th>
+          <th>Chair’s comments</th>
+        </tr>
         ${rows}
       </table>
     </div>`;
@@ -2553,7 +3172,11 @@ function detectImpersonation(turn) {
   return null;
 }
 
-/* Normalise whatever the model returned into a transcript entry. */
+/* Normalise whatever the model returned into a transcript entry.
+   Three things are fixed here before the turn is ever shown:
+     - the speaker is matched to the exact roster spelling;
+     - the phase is mapped onto the canonical list;
+     - a delegate raising a motion is rewritten into the house sentence. */
 function toEntry(turn) {
   let role = (turn.role === "chair" || turn.role === "narrator") ? turn.role : "delegate";
   let speaker = turn.speaker || (role === "chair" ? "Chair" : "Narrator");
@@ -2568,7 +3191,18 @@ function toEntry(turn) {
   if (role === "chair") speaker = "Chair";
   if (role === "narrator") speaker = "Narrator";
 
-  const entry = { speaker, role, phase: turn.phase || "", text: turn.text || "" };
+  let text = turn.text || "";
+
+  /* MOTION FORMAT. When an AI delegate raises a motion the message must be
+     exactly: "The Delegate of X would like to raise a motion to Y."
+     Rewriting beats rejecting: it costs no extra API call. */
+  if (role === "delegate" && looksLikeMotion(text)) {
+    const fixed = formatMotionTurn(speaker, text);
+    if (fixed) text = fixed;
+  }
+
+  const phase = normalizePhase(turn.phase, text, role);
+  const entry = { speaker, role, phase, text };
 
   if (turn.voteTally && Array.isArray(turn.voteTally.votes) && turn.voteTally.votes.length) {
     entry.voteTally = {
@@ -2579,7 +3213,56 @@ function toEntry(turn) {
         .map(v => ({ country: String(v.country), vote: String(v.vote), note: v.note ? String(v.note) : "" })),
     };
   }
+
+  /* Speech timing is computed, never trusted to the model. Stored on the turn
+     so the Chair can be handed exact numbers on the next request. */
+  if (role === "delegate" && text.length > 120 && !looksLikeMotion(text)) {
+    entry.timing = speechTiming(text);
+  }
   return entry;
+}
+
+/* Turns that must never be produced, checked before anything is displayed.
+   Returning a string here triggers one corrective retry. */
+function validateTurn(turn, entry) {
+  /* 1. Polling delegations one at a time during a vote. A vote is resolved in
+        a single narrator turn carrying a full tally. */
+  const votingPhase = entry.phase === PHASES.PROC_VOTE || entry.phase === PHASES.SUBS_VOTE;
+  if (votingPhase && entry.role === "chair" && !entry.voteTally) {
+    // The Chair may announce a vote or call on the human, but may not walk
+    // the room delegation by delegation.
+    if (/how does the delegate of|how do you vote|delegate of .+,? (your vote|please vote)/i.test(entry.text)
+        && !addressesUser(entry.text)) {
+      return "during a vote you polled an individual AI delegation. Votes are resolved in ONE narrator turn with the complete voteTally field";
+    }
+  }
+  if (votingPhase && entry.role === "delegate" && /\b(votes?|abstain)\b/i.test(entry.text) && !entry.voteTally) {
+    return "you gave an individual AI delegation its own turn to cast a vote. All AI votes go in ONE narrator turn with a full voteTally";
+  }
+
+  /* 2. Repetition and loops. */
+  const rep = detectRepetition(entry.text, entry.speaker);
+  if (rep) return rep;
+
+  /* 3. A motion that could not be put into the required sentence. */
+  if (entry.role === "delegate" && looksLikeMotion(entry.text) && !MOTION_SENTENCE_RE.test(entry.text.trim())) {
+    return `a motion was raised in the wrong form. The ONLY acceptable wording is: `
+         + `"The Delegate of ${entry.speaker} would like to raise a motion to [legitimate motion]." `
+         + `Nothing else in the message`;
+  }
+
+  /* 4. Voting before roll call.
+        Roll call decides who is allowed to abstain, so no substantive vote can
+        precede it. One procedural vote legitimately comes first — the motion to
+        enter formal debate, which is what triggers roll call in the first
+        place — so that single case is allowed through. */
+  if (votingPhase && !rollCallDone()) {
+    const openingMotion = /formal debate/i.test(entry.text) && entry.phase === PHASES.PROC_VOTE;
+    if (!openingMotion) {
+      return "the committee cannot hold this vote before roll call has been taken. Take roll call first";
+    }
+  }
+  return null;
 }
 
 async function advanceTurn(correction, attempt) {
@@ -2600,7 +3283,6 @@ async function advanceTurn(correction, attempt) {
     const offence = detectImpersonation(turn);
     if (offence) {
       if (attempt < 2) {
-        // One corrective retry, with the offending text quoted back.
         requestInFlight = false;
         nextBtn.disabled = submitBtn.disabled = false;
         nextBtn.innerHTML = oldNext;
@@ -2611,20 +3293,17 @@ async function advanceTurn(correction, attempt) {
           attempt + 1
         );
       }
-      // Still misbehaving: hand the floor to the human ourselves rather than
-      // let the AI speak for them.
       const entry = {
         speaker: "Chair",
         role: "chair",
-        phase: turn.phase || "",
+        phase: PHASES.GSL,
         text: `The Chair recognises the Delegate of ${state.userCountry}. You have the floor.`,
       };
       state.transcript.push(entry);
       renderTurn(entry);
       state.pendingUser = {
         hint: `The Chair has given you the floor, Delegate of ${state.userCountry}.`,
-        options: [],
-        type: "speech",
+        options: [], type: "speech",
       };
       setError("sim-error", "The model tried to speak for your delegation. That turn was discarded and the floor has been returned to you.");
       saveSession();
@@ -2632,24 +3311,40 @@ async function advanceTurn(correction, attempt) {
     }
 
     const entry = toEntry(turn);
+
+    /* ---- Committee-mechanics guard (repetition, votes, motions, roll call) ---- */
+    const problem = validateTurn(turn, entry);
+    if (problem && attempt < 3) {
+      requestInFlight = false;
+      nextBtn.disabled = submitBtn.disabled = false;
+      nextBtn.innerHTML = oldNext;
+      return advanceTurn(
+        `Your previous attempt was REJECTED because ${problem}. Produce a DIFFERENT turn that moves committee forward. `
+        + `Do not restate anything already in the transcript.`,
+        attempt + 1
+      );
+    }
+
     state.transcript.push(entry);
     renderTurn(entry);
 
     /* ---- Private chits passed during this turn ---- */
     const incoming = [];
     if (Array.isArray(turn.chits)) incoming.push(...turn.chits);
-    // Older single-chit field, still accepted.
     if (turn.chit && turn.chit.sender && turn.chit.text) {
       incoming.push({ ...turn.chit, recipient: turn.chit.recipient || state.userCountry });
     }
     if (incoming.length) ingestChits(incoming);
 
-    /* Chit grading rides along with the turn rather than costing its own
-       request. Grades apply to the oldest ungraded chits, in order. */
+    /* ---- Chit grading ----
+       The Executive Board only ever sees chits routed through it, so a chit
+       sent direct cannot be marked. Grades are applied to the oldest ungraded
+       EB-routed chits, in order. */
     if (Array.isArray(turn.chitGrades) && turn.chitGrades.length) {
-      const ungraded = (state.chits || []).filter(c => c.sender === state.userCountry && !c.graded);
+      const gradable = (state.chits || []).filter(c =>
+        c.sender === state.userCountry && c.viaEB && !c.graded);
       turn.chitGrades.forEach((g, idx) => {
-        const target = ungraded[idx];
+        const target = gradable[idx];
         if (!target || !g || typeof g.score === "undefined") return;
         target.graded = true;
         target.grade = { score: g.score, comment: g.comment || "" };
@@ -2662,12 +3357,16 @@ async function advanceTurn(correction, attempt) {
       state.pendingUser = null;
       state.scores = Array.isArray(turn.scores) ? turn.scores : [];
       renderScores();
-    } else if (turn.requiresUserResponse || addressesUser(entry.text)) {
+    } else if (turn.requiresUserResponse || addressesUser(entry.text) || entry.phase === PHASES.OPEN_FLOOR) {
+      /* The open floor ALWAYS belongs to the human: if the Chair asked for
+         points or motions, the human gets to answer, whatever the model set
+         requiresUserResponse to. */
       const type = classifyResponseType(turn.expectedResponseType, turn.userPromptHint, entry.phase, entry.text);
       state.pendingUser = {
-        hint: turn.userPromptHint || `The Chair awaits the Delegate of ${state.userCountry}.`,
+        hint: turn.userPromptHint || defaultHintForPhase(entry.phase),
         options: sanitizeUserOptions(turn.userResponseOptions, type),
         type,
+        noTextbox: NO_TEXTBOX_TYPES.has(type),
       };
     } else {
       state.pendingUser = null;
@@ -2687,6 +3386,18 @@ async function advanceTurn(correction, attempt) {
   }
 }
 
+/* Sensible prompt wording when the model did not supply one. */
+function defaultHintForPhase(phase) {
+  switch (phase) {
+    case PHASES.OPEN_FLOOR: return "The floor is open. Raise a point or a motion, or decline.";
+    case PHASES.PROC_VOTE:  return "Cast your vote on this procedural motion. Abstention is not permitted on procedural votes.";
+    case PHASES.SUBS_VOTE:  return "Cast your delegation's substantive vote.";
+    case PHASES.ROLL_CALL:  return "Answer the roll call.";
+    case PHASES.UNMOD:      return "The rules are suspended. Who are you lobbying, and what are you offering?";
+    default:                return `The Chair awaits the Delegate of ${state.userCountry}.`;
+  }
+}
+
 function submitUserResponse(fixedChoice) {
   if (requestInFlight) return;
   const typed = $("user-text").value.trim();
@@ -2694,17 +3405,22 @@ function submitUserResponse(fixedChoice) {
   if (!text) { setError("sim-error", "Please type a response or pick an option."); return; }
   setError("sim-error", "");
 
-  if (state.pendingUser && (state.pendingUser.options || []).includes("Present and Voting")
-      && (text === "Present" || text === "Present and Voting")) {
-    state.userRollCall = text;
+  /* Record the roll call answer: it decides whether abstention is available
+     for the rest of committee, so it is stored rather than re-read later. */
+  if ((state.pendingUser && state.pendingUser.type === "rollcall")
+      || (text === "Present" || text === "Present and Voting")) {
+    if (text === "Present" || text === "Present and Voting") state.userRollCall = text;
   }
 
   const entry = {
     speaker: state.userCountry,
     role: "user",
-    phase: state.transcript.length ? state.transcript[state.transcript.length - 1].phase : "",
+    phase: state.transcript.length ? state.transcript[state.transcript.length - 1].phase : PHASES.OPENING,
     text
   };
+  /* Time the human's speech in code too, so the Chair gets real numbers for
+     them exactly as it does for the AI delegates. */
+  if (text.length > 120) entry.timing = speechTiming(text);
   state.transcript.push(entry);
   renderTurn(entry);
   state.pendingUser = null;
@@ -2740,6 +3456,10 @@ async function createCommittee() {
     abilityGuidance = "Spread skill ratings right across 1 to 5. The committee must contain at least one visibly out-of-their-depth delegate and at least one genuinely formidable one; a room where everyone is equally competent is wrong.";
   }
 
+  /* Roster size varies so the committee does not feel formulaic. */
+  const rosterSize = 6 + Math.floor(Math.random() * 5);   // 6-10 delegations
+  const chosenCountries = pickDelegateCountries(rosterSize);
+
   const system = `You are setting up a Model United Nations simulation.
 Committee: ${state.committee.name} (${state.committee.full})
 Agenda: ${state.agenda}
@@ -2749,15 +3469,19 @@ Difficulty: ${state.difficulty.toUpperCase()}`;
   const request = `Create the committee. Choose a plausible chair name and personality description.
 ${chairGuidance}
 
-Select 5-15 AI delegates (excluding ${state.userCountry}). ${abilityGuidance}
+Use EXACTLY these delegations, in any order, and no others:
+${chosenCountries.join(", ")}
+${abilityGuidance}
 
 For EACH delegate:
-1. Invent a full authentic diplomatic name (e.g., 'Ambassador Sarah Chen', 'Delegate Mateo Silva').
+1. Invent a full authentic diplomatic name appropriate to that country (e.g., 'Ambassador Sarah Chen', 'Delegate Mateo Silva'). The CHAIR is not a delegate: the chair's name must carry NO diplomatic title (no 'Ambassador', no 'Delegate', no 'His/Her Excellency') - give a plain personal name only.
 2. Assign a primary rhetorical archetype or preferably hybrid mix from: 'The Ideological Firebrand', 'The Policy Specialist', 'The Passive-Aggressive Diplomat', 'The Pragmatic Consensus Builder', or 'The Strategic Agitator'.
 3. Mix and match these personalities with diverse opening styles (Emotional, Clinical, Quote, Anecdotal, Rhetorical Question, Direct Call-out, Decorum) and closing styles (Impactful Point, Executive Summary, Call to Unity, Brighter Future, Reflective Quote, Line-in-the-Sand, Caucus Call).
 4. Give a skill rating 1-5 and a separate procedure rating 1-5. These need not match: a delegate can be a spellbinding speaker who keeps raising the wrong kind of point, or a dull speaker with total command of the rules.
 5. Give a signature verbal habit that will recur in every speech, a narrow pet issue they steer everything back to, a likely bloc alignment, and one concrete visible weakness. Make these specific to the country and the agenda, not generic.
 6. Stances must genuinely conflict. Build in at least two delegations whose positions are irreconcilable, and at least one swing delegation both sides will court.
+7. The \`bloc\` field is used by the simulation to decide who can plausibly work together, so make it precise and use the SAME bloc label for delegations that would genuinely align. Two states that are real-world adversaries on this agenda must never share a bloc label.
+8. Every persona must reflect that country's ACTUAL foreign policy on this agenda - its real alliances, red lines and funding positions. Do not give a state a stance its government would never take.
 
 No two delegates should share an archetype, an opening style or a closing style unless the roster is larger than the number of available options.`;
 
@@ -2766,12 +3490,53 @@ No two delegates should share an archetype, an opening style or a closing style 
   if (!setup.delegates || setup.delegates.length < 3) {
     throw new Error("The AI did not return a usable delegate list. Please try again.");
   }
-  state.chairName = setup.chairName || "The Chair";
+  state.chairName = cleanChairName(setup.chairName);
   state.chairPersonality = setup.chairPersonality || "The Encouraging Mentor";
   state.delegates = setup.delegates
     .filter(d => d.country && !sameCountry(d.country, state.userCountry))
     .slice(0, 15);
   enforceDelegateVariety();
+}
+
+/* The Chair is not a delegate and holds no portfolio, so diplomatic titles are
+   wrong on them. Models kept returning "Ambassador Chen" for the Chair. */
+function cleanChairName(raw) {
+  let n = String(raw || "").trim();
+  n = n.replace(/^(ambassador|amb\.?|his excellency|her excellency|h\.?e\.?|delegate|representative|hon\.?|honou?rable|dr\.?|prof\.?|sir|madam|mr\.?|ms\.?|mrs\.?)\s+/gi, "");
+  n = n.replace(/^(chairperson|chairman|chairwoman|chair|president|director|secretary[- ]general)\s+/i, "");
+  n = n.trim();
+  if (!n) return "The Chair";
+  // Present them by their office, which is what a real committee would use.
+  return `Chairperson ${n}`;
+}
+
+/* Pick the AI delegations ourselves rather than letting the model choose.
+   Left to itself it returns the same familiar cast — China, France, the US,
+   Germany, Brazil — in nearly every session. Selecting here guarantees a
+   different room each time while keeping the committee's real membership. */
+function pickDelegateCountries(count) {
+  const pool = committeeMembers(state.committee)
+    .filter(c => !sameCountry(c, state.userCountry));
+
+  // Fisher-Yates shuffle: an unbiased random ordering of the whole pool.
+  const shuffled = pool.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  /* For committees with a fixed membership (UNSC, G7) the permanent members
+     have to be in the room, so they are seeded in first. */
+  const mustInclude = ["China", "France", "Russian Federation", "United Kingdom", "United States"];
+  const isFixed = !!(state.committee && state.committee.members);
+  const seeded = [];
+  if (isFixed && state.committee.members.length <= 20) {
+    mustInclude.forEach(c => {
+      if (pool.includes(c) && !seeded.includes(c)) seeded.push(c);
+    });
+  }
+  const rest = shuffled.filter(c => !seeded.includes(c));
+  return seeded.concat(rest).slice(0, count);
 }
 
 /* Models asked for "a varied roster" reliably return one that is varied on
@@ -3111,7 +3876,6 @@ $("chit-text-input").addEventListener("keydown", e => {
   }
 });
 $("chit-recipient-select").addEventListener("change", renderChitMessages);
-
 /* Bootstrapping application entry point */
 populateBackendSelect();
 refreshBackendUI();
