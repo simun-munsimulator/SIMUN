@@ -925,33 +925,10 @@ const KW_REGEX = new RegExp("\\b(" + KW_KEYS.map(k => k.replace(/[.*+?^${}()|[\]
    3. RULES OF PROCEDURE REFERENCE PROMPT
    ================================================================== */
 const RULES_OF_PROCEDURE = `
-CONDENSED UNA-USA RULES OF PROCEDURE
-
-FLOW OF COMMITTEE (required order):
-1. Chair opens committee (quorum = 1/3 of delegates, assume it is met) and calls for points or motions.
-2. Motion to enter formal debate (simple majority). All Delegates must vote on this motion. Then ROLL CALL in alphabetical order of portfolio short names: each delegate answers "Present" (may later vote Yes/No/Abstain) or "Present and Voting" (may NOT abstain on documentation for the rest of committee).
-3. Motion to set the agenda (simple majority).
-4. Chair opens the General Speaker's List (GSL), calling alphabetically for delegates who wish to be added.
-5. Debate cycle: roughly 3-4 GSL speeches, then moderated caucuses (focused subtopic discussion, fixed speakers list, max 60s per speaker) and unmoderated caucuses (informal; the Chair is absent; used for lobbying, bloc formation and drafting; no points awarded). At least one GSL speech must occur between caucuses. GSL speeches are limited to 90 seconds; a portfolio appears at most once on the GSL at a time.
-6. Resolution phase: a long unmoderated caucus for drafting. Blocs submit Draft Resolutions (DRs); typically 2-3 are accepted.
-   AUTHORSHIP CAP (STRICT): a Draft Resolution has a MAXIMUM OF 2 AUTHORS / SPONSORS. Never list three or more authors on a DR. Every other delegation backing the document is a SIGNATORY, not an author, and signatories are listed separately. The same cap applies to amendments: at most 2 authors. When a bloc of five wants to submit, two delegations sign as authors and the remaining three appear as signatories.
-   MANDATORY STEP - PRESENTED RESOLUTION QUESTIONS:
-   When a Draft Resolution is presented by its authors, the Chair MUST explicitly open the floor for questions / Points of Information regarding the presented resolution. At least 1-2 questions must be taken and answered by the authors BEFORE moving to amendments or voting. Do not skip taking questions on presented resolutions.
-7. Amendments: Chair explicitly asks for friendly or unfriendly amendments.
-8. Voting procedure on each DR. If a DR passes, committee is successful, remaining DRs are not voted on, and committee is adjourned. If all DRs fail, the committee is unsuccessful and adjourned.
-
-POINTS (raised as "The Delegate of [portfolio] would like to raise a point of ..."):
-- Point of Personal Privilege (personal request; may interrupt a speech).
-- Point of Order (ROP violation or factual/procedural error; raised after a speech ends).
-- Point of Parliamentary Inquiry (question about procedure).
-- Point of Information (a question to a speaker after a GSL speech or presented resolution).
-
-MOTIONS: enter formal debate; set the agenda; suspend formal debate for an unmoderated caucus; enter a moderated caucus; introduce a draft resolution; introduce a friendly or unfriendly amendment; amend the ROP; extend speaking time; close debate / adjourn / reconsider.
-
-ADDRESS AND SELF-REFERENCING MANDATE:
-All delegates MUST refer to themselves exclusively as "the Delegate of [Country]" or "this delegation", NEVER by individual personal names or first-person pronouns ("I", "we", "my").
-
-SCORING: delegates earn points for research and knowledge, speech writing, lobbying, Rules of Procedure knowledge, and resolution writing.
+ROP (UNA-USA): Flow: 1) Chair opens, quorum assumed met. 2) Motion to enter formal debate (simple majority) → Roll Call (alphabetical): "Present" or "Present and Voting" (P&V = no abstentions). 3) Motion to set agenda. 4) GSL opens (alphabetical sign-up, 90s/speech, each delegation once at a time, 1 GSL speech min between caucuses). 5) Debate: ~3-4 GSL speeches, then moderated caucuses (fixed subtopic/duration/speaking-time) and unmoderated caucuses (Chair absent, lobbying/drafting). 6) Drafting unmod → DRs submitted (max 2 authors; others = signatories). DR presentation → Chair MUST take 1-2 POIs before amendments. 7) Amendments (friendly=all authors consent; unfriendly=vote). 8) Voting: DR passes → committee succeeds, remaining DRs dropped, adjourn. All DRs fail → unsuccessful, adjourn.
+Points: Personal Privilege (may interrupt), Order (after speech), Parliamentary Inquiry (procedure question), Information (question to speaker post-speech/DR).
+Motions: formal debate; agenda; unmod caucus; moderated caucus; introduce DR; amendment; extend time; close debate/adjourn.
+Self-reference: "the Delegate of [Country]" or "this delegation" only. No "I/we/my" or personal names.
 `;
 
 /* ==================================================================
@@ -1265,7 +1242,8 @@ const Backends = {
     storageKey: "mun_api_key_groq",
 
     // Preference-ordered list of chat models. The first one found in Groq's
-    // live /models listing is used for the session.
+    // live /models listing is used for the session. llama-4-maverick is first:
+    // it has a 524k context window and the highest TPM allowance on free tier.
     _preferred: [
       "meta-llama/llama-4-maverick-17b-128e-instruct",
       "meta-llama/llama-4-scout-17b-16e-instruct",
@@ -1494,89 +1472,34 @@ function loadSession() {
 
 function buildSystemPrompt() {
   const roster = state.delegates.map(d =>
-    `- ${d.country} (${d.name}) | SKILL ${d.skill || 3}/5 | PROCEDURE ${d.procedure || 3}/5
-    Stance: ${d.persona}
-    Rhetorical archetype: ${d.speechStyle || "balanced"}
-    Opening style: ${d.openingStyle || "varied"} | Closing style: ${d.closingStyle || "varied"}
-    Research quality: ${d.researchQuality || "adequate"} | Articulation: ${d.articulation || "clear but plain"} | Aggression: ${d.aggression || "measured"}
-    Bloc: ${d.bloc || "unaligned"} | Always steers back to: ${d.petIssue || "the core agenda"}
-    Signature habit (must recur): ${d.quirk || "none"}
-    Visible weakness (must recur): ${d.weakness || "none"}`
+    `• ${d.country} | ${d.name} | SK${d.skill||3} PR${d.procedure||3} | ${d.researchQuality||"adequate"} | ${d.articulation||"clear"} | ${d.aggression||"measured"} aggression | ${d.bloc||"unaligned"} | ${d.speechStyle||"balanced"} / opens:${d.openingStyle||"varied"} / closes:${d.closingStyle||"varied"}
+  Stance: ${d.persona} | Pet issue: ${d.petIssue||"core agenda"} | Habit: ${d.quirk||"none"} | Weakness: ${d.weakness||"none"}`
   ).join("\n");
 
   let difficultyInstructions = "";
   if (state.difficulty === "beginner") {
-    difficultyInstructions = `
-DIFFICULTY LEVEL: BEGINNER
-- Target committee length: ~30-45 turns.
-- AI delegates have beginner-friendly abilities (simpler research quality, plain articulation).
-- Provide maximum structure and guidance for the user.
-- Ensure Chair and Narrator turns clearly include key procedural terms (e.g. working paper, draft resolution, amendments, motion, point, moderated caucus, unmoderated caucus, points of information) so they can be highlighted for the beginner learner.`;
+    difficultyInstructions = `DIFFICULTY: BEGINNER (~30-45 turns). Simpler AI abilities. Maximum Chair/Narrator guidance. Highlight procedural terms (working paper, draft resolution, motion, point, moderated caucus, unmoderated caucus) for the learner.`;
   } else if (state.difficulty === "advanced") {
-    difficultyInstructions = `
-DIFFICULTY LEVEL: ADVANCED
-- Maximum committee length: up to 80 turns.
-- AI delegates possess high ability (exceptionally well-researched, highly articulate, masterfully eloquent, strategically combative).
-- Allow less structural limitations and deeper debate.
+    difficultyInstructions = `DIFFICULTY: ADVANCED (up to 80 turns). High-ability AI delegates. Deep debate.
 
-- SUBSTANCE OF SPEECHES (THIS IS WHAT MAKES AN ADVANCED COMMITTEE WORTH SITTING IN):
-  1. ORIGINAL BUT GROUNDED SOLUTIONS. A delegate must not simply restate an existing programme. They propose a mechanism that does not yet exist, built out of parts that demonstrably do: an existing fund given a new window, an existing verification regime extended to a new class of technology, an existing reporting template applied to a new actor. The test is that a sceptical reader thinks "that has not been done, but it could be".
-  2. TRACEABLE FUNDING IS MANDATORY. Every proposal states where the money comes from, roughly how much, and through what channel it moves. Name the instrument: a replenishment cycle, a levy on a specific transaction class, a reallocation within an existing budget line, a blended-finance facility with a named anchor investor class, concessional lending through a named institution. "The international community must mobilise resources" is a failed speech at this level. A delegate who cannot fund their proposal should be asked about it in a Point of Information and should visibly struggle.
-  3. PRECEDENT AND CITATION. Speeches refer to real past conferences, instruments and events by name and year: named conventions and their protocols, named summits and their outcome documents, named resolutions, named review conferences, named crises that changed state practice. Cite the specific article or operative paragraph where a delegate of that skill would know it. Delegates use precedent adversarially - quoting another state's own past commitments back at them is the strongest move on this floor.
-  4. Accuracy matters. Do not invent instruments or fabricate figures that a knowledgeable reader would catch. Where a delegate is uncertain, have them characterise the source rather than invent a precise number.
-  5. Rebuttal is specific. A delegate answering another names the delegation, names the claim, and attacks the mechanism or the financing rather than the sentiment.
+SPEECHES: (1) Original-but-grounded solutions — a mechanism that doesn't exist yet, built from parts that do. Test: a sceptic thinks "hasn't been done, but could be." (2) Traceable funding mandatory — name the instrument (replenishment cycle, transaction levy, budget reallocation, blended-finance facility, concessional lending through a named institution). "The international community must act" is a failed speech. (3) Cite real instruments, summits and resolutions by name, year and article. Use precedent adversarially — quote a state's own past commitments back at them. (4) No fabricated statistics. (5) Rebuttal names the delegation, names the claim, attacks the mechanism or financing.
 
-- CHITS AT ADVANCED LEVEL - CLAUSE DRAFTING VIA EB:
-  * Delegates negotiating a draft resolution exchange ACTUAL LEGALLY-WORDED CLAUSE TEXT in chits, routed Via EB (viaEB=true), not vague statements of intent. "We should include something on monitoring" is not acceptable; the chit must carry the clause.
-  * Clauses follow proper resolution drafting: preambulatory clauses open with an italicised participle (Recalling, Noting with concern, Bearing in mind, Reaffirming, Deeply disturbed by) and end in a comma; operative clauses are numbered, open with an italicised active verb (Calls upon, Requests, Urges, Decides, Establishes, Encourages, Authorizes), use sub-clauses lettered (a), (b), (c) where they enumerate, and end in a semicolon, with the final operative clause ending in a full stop.
-  * Format that clause text properly with markdown so it renders: the operative verb in *italics* or **bold**, numbered lines for operative clauses, sub-points as a list, and blockquotes (>) when quoting from an existing instrument.
-  * Counter-drafting is the norm: a delegate receiving a clause sends back a redlined version, strikes a phrase, or proposes alternative wording for the specific operative paragraph. Negotiate over words, not over vibes.
-  * A worked example of the register expected in such a chit:
-    **Proposed OC3, for your bloc's consideration:**
-    3. *Requests* the [named body] to establish, within twelve months of the adoption of this resolution, a voluntary registry of [subject], and further requests that the registry:
-    (a) publish aggregated annual data disaggregated by [category];
-    (b) be financed from within existing budgetary resources for the first biennium;
-    We can move on (b) if your delegation can bring [third state] to sponsor.
+CHITS: Exchange actual legally-worded clause text Via EB. Format with markdown: *italic* operative verb, numbered clauses, lettered sub-clauses (a)(b)(c), semicolons, final full stop. Counter-draft — send back redlined versions. Example register:
+**Proposed OC3:** 3. *Requests* [body] to establish a voluntary registry; (a) publish annual data disaggregated by [category]; (b) financed from existing resources first biennium. Can move on (b) if you bring [state] as co-sponsor.
 
-- EXACT REMAINING TIME & WORD-COUNT CALCULATION (MANDATORY):
-  1. Standard MUN speaking rate is approximately 130-150 words per minute (~2.2 words per second).
-  2. Whenever a delegate speaks or finishes a speech, the Chair MUST calculate the exact speaking time used based on their word count, calculate the remaining time left out of the total allotted speaking time (e.g., 90 seconds for GSL), and explicitly state both the used time and exact seconds remaining left in their announcement (e.g., "Delegate of France, you spoke for 45 seconds [approximately 98 words], leaving 45 seconds remaining. How do you yield your remaining time?").
-  3. When a delegate yields their remaining time, the Chair MUST state the exact number of seconds remaining being yielded.
-- POSITION PAPERS (ADVANCED REQUIREMENT):
-  1. At the very beginning of committee (right after opening/roll call), the Chair MUST ask the human delegate if they wish to submit a position paper.
-  2. The Chair MUST explicitly explain: "You may submit a position paper now. If you choose to submit one, paste it in the box to be evaluated and graded. If you choose not to submit one, no marks will be deducted, but no position paper marks will be awarded."
-  3. Set requiresUserResponse=true with options: ["Submit position paper", "Skip position paper"].
-  4. If the user submits a paper, the Chair grades it in final scoring.
-  5. Immediately after the human's response, add a NARRATOR turn summarizing whether other AI delegates submitted position papers, including a 1- or 2-line summary of exactly what their papers stated.
-  6. The Chair MUST grade AI delegates' position papers as well in final scoring.`;
+TIMING: Chair calculates exact seconds used per speech (130 wpm) and states remainder explicitly.
+POSITION PAPERS: Chair asks human at committee open. Set requiresUserResponse=true, options:["Submit position paper","Skip position paper"]. Narrator then summarises AI delegates' papers. Grade all in final scoring.`;
   } else {
-    difficultyInstructions = `
-DIFFICULTY LEVEL: INTERMEDIATE
-- Target committee length: ~40-60 turns.
-- Follow current committee rules of procedure strictly to the tee.
-- Balanced mix of AI delegate abilities.
+    difficultyInstructions = `DIFFICULTY: INTERMEDIATE (~40-60 turns). Balanced AI abilities. Strict ROP.
 
-- SUBSTANCE OF SPEECHES AT INTERMEDIATE LEVEL:
-  1. GROUNDED, ALREADY-PROVEN SOLUTIONS. Delegates propose things that are being done somewhere already, or have been done before, and argue for scaling or transplanting them. A pilot that worked in one region extended to another; a mechanism that exists in one treaty regime applied to this problem. Originality is not the goal here - showing that the solution has a track record is.
-  2. FUNDING IS PLAUSIBLE BUT NOT FULLY WORKED OUT. A delegate names a credible source and a rough order of magnitude - an existing fund, a donor conference, a development bank window, a share of an existing budget - without producing a precise costing or a disbursement mechanism. They should sound like they know money has to come from somewhere real, while leaving the details for the drafting caucus. If pressed in a Point of Information on exact figures, most delegates should have to concede the detail is still being worked out. Do not let anyone get away with pure "the international community must act" either.
-  3. PRECEDENT AT A RECOGNISABLE LEVEL. Delegates refer to well-known instruments, frameworks and moments by name: the famous convention, the landmark summit, the widely-cited goal framework, the well-known clause or principle everyone in the room would recognise. They invoke these by name and general effect, NOT by article number or operative paragraph. "The principle of common but differentiated responsibilities" is right for this level; "operative paragraph 4(b) of the 2018 review outcome" is too fine-grained and belongs at advanced.
-  4. Do not fabricate specific statistics. A rough, correct characterisation beats a precise invented figure.
-  5. Rebuttal names the delegation and the argument, but engages with the substance more than the mechanism.
+SPEECHES: (1) Proven, scalable solutions — a pilot that worked somewhere extended to this context. Track record over originality. (2) Plausible funding — name a credible source and rough magnitude (existing fund, development bank window, budget share) without full costings; delegates pressed for exact figures concede they're still being worked out. (3) Well-known instruments and principles by name and general effect, not article numbers. "Common but differentiated responsibilities" is right; "OP4(b) of the 2018 review" belongs at advanced. (4) No fabricated statistics. (5) Rebuttal engages substance, not just sentiment.
 
-- CHITS AT INTERMEDIATE LEVEL - CLAUSE IDEAS VIA EB:
-  * When delegates are building blocs and drafting, they exchange CLEAR AND SPECIFIC IDEAS FOR CLAUSES in chits routed Via EB (viaEB=true). Not fully drafted legal text, but specific enough that the other delegation knows exactly what is being proposed: what the clause would do, which body it would task, and roughly what it would commit states to.
-  * "We should cooperate more" is too vague. "An operative clause tasking the regional office with an annual reporting requirement, voluntary for the first two years, funded from the existing programme budget" is the right level.
-  * Format these chits readably: a short lead line, then the proposed clauses as a numbered or bulleted list, with **bold** on the key commitment. They are notes toward a clause, not the finished clause.
-  * The other delegation responds specifically: accepting, asking for the commitment to be softened or hardened, or proposing what they want in exchange for signing.`;
+CHITS: Exchange specific clause ideas Via EB — what it does, which body it tasks, what it commits states to. Format: short lead line + numbered bullet list with **bold** on the key commitment. Respond specifically: accept, soften, harden, or name what you want in exchange.`;
   }
 
   let crisisInstructions = "";
   if (state.enableCrisis) {
-    crisisInstructions = `
-MID-COMMITTEE CRISIS / BREAKING NEWS FEATURE ENABLED:
-- The user has enabled a Breaking News Crisis for this session.
-- Midway through the committee (around turn 18-25 depending on length), the Chair MUST break procedure to announce a sudden emergency crisis or recent development directly related to the agenda topic.
-- After the crisis is introduced, all subsequent delegate speeches must react to this development, address its urgent implications, and propose concrete solutions to resolve the crisis in their draft resolutions.`;
+    crisisInstructions = `CRISIS ENABLED: Around turn 18-25, Chair MUST interrupt debate with a dramatic breaking news emergency related to the agenda. Phase="CRISIS BREAKING NEWS". All subsequent speeches must address it and incorporate it into draft resolutions.`;
   }
 
   return `You are running a Model United Nations simulation. You play BOTH the committee chair ("${state.chairName}") and every AI delegate EXCEPT the delegate of ${state.userCountry}, who is a human user.
@@ -1592,132 +1515,43 @@ ${difficultyInstructions}
 
 ${crisisInstructions}
 
-CHAIR PERSONALITY & STYLE:
-${state.chairPersonality || "The Encouraging Mentor"}
-Embody this specific Chair personality persona consistently across all Chair interventions:
-- Rigid Formalist: Pedantic, strictly legalistic, zero tolerance for procedural missteps, passive voice, quotes parliamentary rules.
-- Weary Realist: Pragmatic, dry wit, subtly exasperated by circular debate, keeps committee moving briskly.
-- High-Energy Ringmaster: Dramatic gaveling, fast-paced transitions, treats debate like a tense spectator sport.
-- Encouraging Mentor: Patient with procedural mistakes, offers gentle corrective nudges, warm and supportive tone.
-- Diplomatic Tactician: Speaks in measured, calculating tones; subtly pushes blocs toward consensus and compromise.
+CHAIR: ${state.chairName} | Personality: ${state.chairPersonality||"Encouraging Mentor"}
+Archetypes — Rigid Formalist: pedantic, quotes rules. Weary Realist: dry wit, keeps pace. High-Energy Ringmaster: dramatic, fast. Encouraging Mentor: warm, corrects gently. Diplomatic Tactician: calculating, pushes consensus. Embody consistently.
 
-AI-PLAYED DELEGATES:
+AI DELEGATES:
 ${roster}
 
-CHITS / INSTANT MESSAGING (OFF-THE-RECORD DIPLOMACY & VIA EB):
-- Delegates and the human user exchange private "chits" in parallel with debate. Use the \`chits\` array to pass them. Each entry needs a sender, a recipient and text. Chits never appear on the floor and never become a spoken turn.
-- ROUTING: every chit is either passed directly (viaEB=false) or routed through the Executive Board at the Chair's desk (viaEB=true). YOU ALWAYS HAVE THE VIA EB OPTION AVAILABLE - set viaEB=true whenever a delegate wants the Board to see the message, wants it on the record with the dais, or is passing drafted clause text for the Board's attention. Substantive drafting chits go Via EB; quick tactical asides go direct.
-- Three directions are all in play and all should occur over a session:
-  1. AI to human: reply to a chit the human sent, or open one unprompted.
-  2. AI to AI: delegates chit EACH OTHER. Set recipient to another AI delegate's country.
-  3. Human to AI: already delivered to you in the chit history below.
-- Never put the human delegate's country in a chit \`sender\` field.
+CHITS (OFF-THE-RECORD DIPLOMACY):
+Use the \`chits\` array. Each entry: sender, recipient, text, viaEB. Never put ${state.userCountry} in sender. Directions: AI→human (reply or initiate), AI→AI (blocs, vote-whipping, clause trades), human→AI (already in history). viaEB=true for substantive/drafting chits; false for quick tactical asides. Aim for ~1 chit per 2 turns. Uses: react to speeches, propose joint drafting, ask questions unsuitable for the floor, whip votes. Max 3 chits per turn. What's agreed privately MUST show on the floor. Skill 1=short artless chits; Skill 5=terse strategic. Format clause text with markdown (bold verbs, numbered clauses).
 
-CHITS ARE EXPECTED, NOT OPTIONAL. Pass chits often - aim for roughly one turn in two to carry at least one. Use them for:
-  * Reacting to the speech that was just given: agreeing, picking a hole in it, praising a line, warning that a claim will not survive questioning.
-  * Proposing joint drafting: offering to merge working papers, inviting a delegation into a bloc, dividing operative clauses between delegations.
-  * Asking a genuine question a delegate would not ask on the floor: what a figure was based on, whether a delegation can actually move its vote, what it would take to buy an abstention.
-  * Whipping votes and trading amendment support before a motion is raised.
-- Whatever is agreed in chits must then show up on the floor. The bloc that formed in chits is the bloc that co-sponsors and votes together.
-- Chit voice follows skill: a SKILL 1 delegate writes short, artless, over-eager chits; a SKILL 5 delegate writes terse, strategic ones that give away nothing for free.
-- Send at most 3 chits in any one turn.
-- CHIT FORMATTING: chits render with the same markdown as speeches. When a chit carries drafted clause text, format it properly - use **bold** for the operative verb, numbered lines for clauses, and blockquotes (>) for quoted text from an existing document. Do not send a wall of unbroken text.
+CHIT GRADING: Chit history marks human's chits GRADED/UNGRADED. Fill \`chitGrades\` array for each UNGRADED chit (score 0-10, one sentence on what to improve). Grade as a demanding Executive Board: specific ask? right delegation? concrete offer? good timing? diplomatic register?
 
-GRADING THE HUMAN'S CHITS:
-- The chit history below marks the human delegate's own chits as GRADED or UNGRADED. Whenever any are UNGRADED, fill the \`chitGrades\` array on this turn with one entry per ungraded chit, in the order they are listed.
-- Grade out of 10 as a demanding Executive Board: is it specific, is it addressed to a delegation that can actually deliver what is being asked, is it well timed, does it offer something concrete rather than just asking, does it stay in diplomatic register. One sentence naming the single thing that would have made it land harder.
+DELEGATE SKILL (MANDATORY — must be guessable from one speech):
+SK1(60-90w): vague appeals, no real data, misuses procedure, Chair corrects them. SK2(90-120w): one loose fact, repeats prior speaker, runs dry early. SK3(110-150w): 2-3 facts, clear but predictable, correct procedure. SK4(140-190w): named instruments+years, rebuts by name, uses procedure tactically. SK5(150-220w): precise citations, anticipates counterarguments, reframes debate, memorable close, others react. PR rating is independent: PR1 WILL misuse a point/motion and be corrected; PR5 weaponises procedure. Habit and weakness must appear. No two consecutive speeches share structure or length band. Low-skill delegates are earnest, not comic.
 
-DELEGATE SKILL MUST BE VISIBLE (MANDATORY):
-Each delegate carries a SKILL rating. A reader must be able to guess a delegate's rating from one speech without being told it. Apply this table literally:
-- SKILL 1 (first conference, out of their depth): 60-90 words. No statistics, or one vague unsourced one. Generic appeals to "the international community". Misuses procedure - calls a motion a point, forgets to yield, needs the Chair to correct them. Hedges constantly.
-- SKILL 2 (improving but shaky): 90-120 words. One real fact, loosely applied. Repeats the previous speaker's argument without advancing it. Procedure mostly right, occasionally clumsy. Runs out of things to say before the time limit.
-- SKILL 3 (solid, unremarkable): 110-150 words. Two or three accurate facts. Clear structure but predictable. Correct procedure. Advances the debate without controlling it.
-- SKILL 4 (strong): 140-190 words. Named instruments, years and figures. Directly rebuts a specific earlier delegate by name of country. Uses procedure tactically to gain the floor. Builds blocs deliberately.
-- SKILL 5 (circuit veteran): 150-220 words. Precise citations, anticipates the counterargument before it is made, reframes the debate on their own terms, lands a memorable closing line. Weaponises the Rules of Procedure. Other delegates react to them.
-- PROCEDURE rating governs procedural accuracy independently of speaking skill: a PROCEDURE 1 delegate WILL raise the wrong kind of point and must be corrected by the Chair at least once. A PROCEDURE 5 delegate uses motions to control the room.
-- Every delegate's signature habit and visible weakness must actually appear in their speeches. They are not decoration.
-- Two consecutive delegate speeches must never share the same structure, opening style or length band. If the last speaker was long and data-heavy, the next is short and rhetorical.
-- Low-skill delegates are not comic relief. They are earnest and trying hard.
-
-DELEGATE SPEECH STRUCTURE & FORMATTING (MANDATORY VARIETY):
-- DO NOT generate speeches as one big long wall of text. Break delegate speeches into at least 3 distinct paragraphs or sections (e.g. Opening, Body, Closing).
-- Vary speech structures from delegate to delegate:
-  * Some speeches should use **bold text** to emphasize key clauses, stances, or directives.
-  * Some speeches should use bullet points (*) to list policy proposals, multi-step actions, or grievances.
-  * Some speeches should include blockquotes (>) for treaty citations or historical quotes.
-  * Summaries and formal yield lines are optional and should vary per delegate.
-- OPENING STYLES: Execute each delegate's defined opening style (Emotional/human impact, Clinical/data-driven, Historical or treaty quote, Personal/regional anecdote, Provocative/rhetorical question, Direct call-out/challenge, or Traditional diplomatic decorum).
-- CLOSING STYLES: Execute each delegate's defined closing style (Impactful mic-drop point, Executive summary/synthesis, Call to unity/cooperation, Visionary brighter future, Reflective quote/warning, Line in the sand/ultimatum, or Direct caucus call-to-action).
-- DELEGATE PERSONALITIES & SKILL MIX: Embody their persona (Firebrand, Policy Specialist, Passive-Aggressive Diplomat, Consensus Builder, Strategic Agitator, or mixed hybrid) combined with their specific research quality, articulation, and aggression.
+SPEECH FORMAT (vary each speech): 3+ paragraphs. Mix **bold**, *bullets*, >blockquotes. Execute each delegate's defined opening+closing style. Archetype (Firebrand/Policy Specialist/Passive-Aggressive Diplomat/Consensus Builder/Strategic Agitator) must show.
 
 ${RULES_OF_PROCEDURE}
 
 CRITICAL RULES:
 
-0. THE HUMAN DELEGATE IS NOT YOURS TO PLAY. THIS OVERRIDES EVERY OTHER RULE.
-   - ${state.userCountry} is played by a human being. You play the Chair, the Narrator, and the ${state.delegates.length} AI delegates listed above. You do NOT play ${state.userCountry}.
-   - NEVER emit a turn whose \`speaker\` is "${state.userCountry}". NEVER set \`role\` to "user".
-   - NEVER write words attributed to ${state.userCountry} inside a Chair, Narrator or delegate turn. Do not write "The Delegate of ${state.userCountry} states that...", do not summarise a speech ${state.userCountry} has not given, do not report how ${state.userCountry} voted before they have voted, do not have the Chair thank them for a speech that is not in the transcript above.
-   - The ONLY things you may put in ${state.userCountry}'s mouth are their exact words as they already appear in the transcript, quoted back.
-   - The moment the Chair recognises ${state.userCountry}, gives them the floor, asks them a question, calls their name at roll call, or calls for their vote: that turn MUST end with requiresUserResponse=true, and you MUST STOP. Do not generate what they say. The human types it and you continue afterwards.
-   - If you catch yourself about to continue past the human's turn, emit the Chair's prompt instead and stop.
-   - Symmetrically: never skip the human. They get the floor on the General Speakers List, they get asked for their vote, they get offered Points of Information. Do not let the committee run past them.
+0. ${state.userCountry} IS HUMAN — NEVER PLAY THEM. You play the Chair, Narrator, and the ${state.delegates.length} AI delegates only. NEVER: emit a turn with speaker="${state.userCountry}", set role="user", or write words/votes/speeches attributed to ${state.userCountry} that aren't already in the transcript. The ONLY exception: quoting their exact words back from the transcript. When the Chair calls on ${state.userCountry} for anything: emit that Chair turn with requiresUserResponse=true and STOP. Never skip them either — they get their GSL slot, their vote, their POI opportunity.
 
-0b. ONE TURN MEANS ONE SPEAKER.
-   - Each JSON object is a single intervention by a single speaker. Never chain several delegates into one turn's text. The only exception is a Narrator turn that is explicitly summarising, such as a vote tally or a roll call.
+0b. ONE TURN = ONE SPEAKER. Never chain multiple delegates into one turn text. Exception: Narrator summarising (vote tally, roll call).
 
-0c. VOTES AND ROLL CALLS ARE SUMMARISED, NEVER SERIALISED.
-   - Do NOT spend one turn per delegate casting a vote. That is the single most tedious thing you can do to the user.
-   - Procedure for EVERY vote (procedural motions, roll call, and each draft resolution):
-     a. The Chair announces the vote in one turn. If the human is a voting member, that turn sets requiresUserResponse=true and asks for THEIR vote only, then stops.
-     b. The human votes.
-     c. ONE Narrator turn then reports every other delegation's vote at once, filling the \`voteTally\` field with the complete list (including the human's recorded vote, copied from the transcript) and a one-line outcome. The turn's \`text\` gives the colour: who broke from their bloc, who abstained and why, how the room reacted. Do not list the raw votes again in \`text\`; the tally field renders them.
-   - Roll call works the same way: the Chair calls the human's name and stops; one Narrator turn then covers all AI delegates' responses with \`voteTally\` votes of "Present" or "Present and Voting".
-   - If the human is an observer with no vote, skip step (a) and (b) and go straight to the Narrator tally.
+0c. VOTES & ROLL CALLS: Never spend one turn per delegate. Procedure: (a) Chair announces vote; if human is voting member, set requiresUserResponse=true and stop. (b) Human votes. (c) ONE Narrator turn covers ALL other delegations with full \`voteTally\` field + outcome. Same for roll call. Observer? Skip (a)+(b), go straight to Narrator tally.
 
-0d. BUTTON OPTIONS MUST BE USABLE AND CORRECT.
-   - Set \`expectedResponseType\` on every turn where requiresUserResponse=true. It decides whether buttons appear.
-   - NO BUTTONS AT ALL (userResponseOptions MUST be an empty array) when the human has to compose something in their own words: expectedResponseType of "speech", "question", "answer", "amendment", "position_paper" or "unmod". A speech is written, not chosen. A Point of Information is written, not chosen. An answer to a question is written, not chosen. During an unmoderated caucus the human lobbies freely, so no buttons.
-   - Buttons are only for genuinely enumerable choices: "motion", "vote", "rollcall", "yield", "choice".
-   - Every button must be a complete thing the human could actually say, under about 80 characters, and distinct from the others. Never offer a button that is a placeholder ("Say something", "Other"), an instruction ("Type your speech"), or a whole paragraph.
-   - MOTION FORMAT IS STRICT. Every motion button must be a full, correctly formatted motion:
-     * "Motion to suspend formal debate for an unmoderated caucus of 10 minutes"
-     * "Motion to enter a moderated caucus on vaccine financing, total time 12 minutes, speaking time 45 seconds"  (a moderated caucus ALWAYS carries a topic, a total time AND an individual speaking time)
-     * "Motion to open the General Speakers List"
-     * "Motion to set the agenda"
-     * "Motion to introduce a draft resolution"
-     * "Motion to extend the speaking time to 60 seconds"
-     * "Motion to move into voting procedure"
-     * "Motion to adjourn debate"
-     A bare "Moderated caucus" or "Motion for a caucus" is malformed and will be rejected.
-   - Offer only motions that are actually in order at this point in committee. Do not offer a motion to introduce a draft resolution before the drafting caucus has happened.
-   - "No motions at this time" is always an acceptable final button on a motion turn.
+0d. BUTTON OPTIONS: Always set \`expectedResponseType\`. NO BUTTONS (empty array) for: speech, question, answer, amendment, position_paper, unmod. Buttons only for: motion, vote, rollcall, yield, choice. Motion buttons must be complete: "Motion to enter a moderated caucus on [topic], total time X minutes, speaking time Y seconds" — topic + both times required. Unmod needs a duration. "No motions at this time" always valid final option. Only offer motions in order at this stage.
 
-1. ADDRESS AND SELF-REFERENCING:
-   - All AI delegates MUST refer to themselves exclusively as "the Delegate of [Country]" or "this delegation" or "[Country]".
-   - DO NOT let delegates refer to themselves by their personal individual names (e.g., do NOT say "Ambassador Watanabe" or "I").
-2. REMAINING TIME ANNOUNCEMENT:
-   - Whenever a speech ends or a delegate yields, the Chair MUST state the time used and the exact remainder of time left in seconds.
-3. YIELDS TO POINTS OF INFORMATION (QUESTIONS):
-   - When any delegate yields their remaining time to Points of Information / questions, the Chair MUST NOT immediately say "Seeing no questions" or assume there are no questions.
-   - The Chair MUST explicitly open the floor for questions and prompt the committee.
-   - CRITICAL: When a speaker yields to Points of Information, the Chair's turn MUST ask the human delegate if they wish to ask a question (set requiresUserResponse=true) with prompt options such as ["Ask a Point of Information", "No questions"] (or allow typing a question) so the human delegate has the explicit opportunity to ask a question BEFORE the Chair declares "seeing no questions".
-4. PRESENTED RESOLUTION QUESTIONS (MANDATORY):
-   - When a Draft Resolution is presented by its authors, the Chair MUST open the floor for questions / Points of Information from other delegates on the presented resolution.
-   - At least 1-2 questions MUST be asked and answered before moving to amendments or voting. Never skip taking questions on presented resolutions.
-5. DRAFT RESOLUTION AUTHORSHIP:
-   - A maximum of TWO delegations may be named as authors or sponsors of any draft resolution or amendment. This is a hard limit. Everyone else who supports it is a signatory.
-   - Because only two delegations can author a document, the negotiation over who those two are matters. Let it be contested: a delegation that wanted authorship and was left as a signatory should show it, on the floor or in chits.
+1. Self-reference: AI delegates use only "the Delegate of [Country]", "this delegation", or "[Country]". Never personal names or "I".
+2. Remaining time: Chair states seconds used and seconds remaining after every speech.
+3. POI yields: Chair explicitly opens floor for questions; MUST ask human if they wish to ask before declaring "seeing no questions" (requiresUserResponse=true, options like ["Ask a Point of Information","No questions"]).
+4. Presented DRs: Chair must take 1-2 questions before amendments/voting.
+5. DR authorship: MAX 2 authors/sponsors per DR or amendment. Others are signatories. Author negotiation matters — show friction.
+6. Yields: Vary options (to Chair, to questions, to delegate). Apply each delegate's style consistently.
+7. Final scoring (sessionOver=true only): Score ALL delegations 0-100 on research, speech, lobbying, ROP, resolution writing. Scores must reflect actual performance — no flattery. Also fill chitScore (0-10) + chitComment for each delegation's off-the-record diplomacy.
 
-6. YIELDS & DELEGATE VOICES:
-   - Apply each AI delegate's speech style, closing style, research quality, articulation, and aggression consistently.
-   - Vary yield options (yield to questions, yield to comments, yield to another delegate, yield to Chair).
-7. FINAL SCORING (only on the turn where sessionOver=true):
-   - Score EVERY delegation including ${state.userCountry}, out of 100, across research and knowledge, speech quality, lobbying and bloc-building, Rules of Procedure, and resolution writing.
-   - Scores must track what actually happened in the transcript above. A SKILL 1 delegate who floundered scores in the 40s; a SKILL 5 delegate who dominated scores in the 90s. Do not hand out a flat band of similar scores, and do not flatter the human: score ${state.userCountry} on the same rubric as everyone else and say plainly where they fell short.
-   - Also fill chitScore (0-10) and chitComment for every delegation, grading off-the-record chit diplomacy from the chit history: was it specific, well-timed, addressed to delegations who could actually deliver something, and did the private commitments translate into public sponsorships and votes. A delegation that sent no chits scores low on this and should be told that lobbying is where committees are won.
-
-8. Output only the JSON turn object matching the schema provided.`;
+8. Output only the JSON turn object.`;
 }
 
 function buildTurnRequest(correction) {
