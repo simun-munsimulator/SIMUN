@@ -223,7 +223,29 @@ body::before {
   margin: 0.5em 0 0.8em 0;
   padding-left: 1.4em;
 }
+.turn .text ol {
+  margin: 0.5em 0 0.8em 0;
+  padding-left: 1.6em;
+}
 .turn .text li { margin-bottom: 0.3em; }
+.turn .text h3, .turn .text h4, .turn .text h5, .turn .text h6 {
+  margin: 0.8em 0 0.3em 0;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--un-blue-dark);
+}
+.turn .text hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.9em 0;
+}
+.turn .text code {
+  font-family: "Courier New", monospace;
+  font-size: 0.9em;
+  background: #eef2f6;
+  padding: 0 0.25em;
+  border-radius: 3px;
+}
 
 /* Persona role color overrides */
 .turn.chair    { background: var(--chair);    border-left-color: var(--chair-border); }
@@ -350,6 +372,24 @@ body::before {
   margin-bottom: 0.2rem;
   color: var(--un-blue-dark);
 }
+/* Chits carry drafted clause text, so they get the same block formatting the
+   transcript uses, scaled down to the panel. */
+.chit-msg .body p { margin: 0 0 0.4em 0; }
+.chit-msg .body p:last-child { margin-bottom: 0; }
+.chit-msg .body ul, .chit-msg .body ol { margin: 0.3em 0; padding-left: 1.1em; }
+.chit-msg .body li { margin-bottom: 0.2em; }
+.chit-msg .body strong { color: var(--un-blue-dark); }
+.chit-msg .body blockquote {
+  border-left: 2px solid var(--un-blue-dark);
+  margin: 0.3em 0;
+  padding-left: 0.5em;
+  font-style: italic;
+}
+.chit-msg .body h3, .chit-msg .body h4, .chit-msg .body h5, .chit-msg .body h6 {
+  font-size: 0.85rem;
+  margin: 0.4em 0 0.2em 0;
+  color: var(--un-blue-dark);
+}
 .chit-msg .eb-tag {
   font-weight: normal;
   font-style: italic;
@@ -387,6 +427,56 @@ body::before {
   margin-left: 0.4rem;
   line-height: 1;
   vertical-align: middle;
+}
+
+/* Grade tag attached to a chit the user sent */
+.chit-msg .grade {
+  margin-top: 0.35rem;
+  padding-top: 0.3rem;
+  border-top: 1px dashed var(--user-border);
+  font-size: 0.72rem;
+  font-style: italic;
+  color: #6d4c00;
+}
+.chit-msg.traffic {
+  align-self: stretch;
+  max-width: 100%;
+  background: #f4f4f4;
+  border: 1px dashed #b0bec5;
+  font-size: 0.8rem;
+}
+.chit-msg.traffic .sender { color: #546e7a; }
+
+/* "Delegate is writing" indicator inside the chit panel */
+#chit-typing {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: #5a6b7a;
+  min-height: 1.1em;
+}
+
+/* ============================================================
+   VOTE TALLY TABLE (rendered inside a narrator turn)
+   ============================================================ */
+table.tally {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.6em 0 0.4em 0;
+  font-style: normal;
+  font-size: 0.88rem;
+}
+table.tally th, table.tally td {
+  border: 1px solid var(--border);
+  padding: 0.25em 0.6em;
+  text-align: left;
+}
+table.tally th { background: var(--un-blue-dark); color: #fff; font-weight: normal; }
+table.tally tr.user-row { background: var(--user); font-weight: bold; }
+.tally-summary {
+  font-style: normal;
+  font-weight: bold;
+  color: var(--un-blue-dark);
+  margin-top: 0.3em;
 }
 
 /* ============================================================
@@ -553,6 +643,15 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
         <option value="yes">Yes (Inject Breaking News Crisis)</option>
       </select>
     </div>
+    <!-- CHIT TRAFFIC VISIBILITY -->
+    <div class="field">
+      <label for="chit-traffic-select">6. Show chits passed between other delegations?</label>
+      <p class="hint">Delegates negotiate privately with each other either way. Turn this on to watch that traffic in an Executive Board log and see blocs form before they surface on the floor. In a real committee you would not see these.</p>
+      <select id="chit-traffic-select">
+        <option value="no" selected>No, only my own chits</option>
+        <option value="yes">Yes, show the Executive Board traffic log</option>
+      </select>
+    </div>
     <div id="setup-error"></div>
     <button id="start-btn">Begin</button>
     <button id="change-key-btn" class="secondary" style="margin-left:0.5rem">Change API key</button>
@@ -592,6 +691,7 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
         <span>Via EB (Executive Board)</span>
       </label>
       <div id="chit-messages"></div>
+      <div id="chit-typing"></div>
       <div class="chit-input-row">
         <input type="text" id="chit-text-input" placeholder="Type a chit..." autocomplete="off"/>
         <button id="chit-send-btn" type="button">Send</button>
@@ -834,6 +934,7 @@ FLOW OF COMMITTEE (required order):
 4. Chair opens the General Speaker's List (GSL), calling alphabetically for delegates who wish to be added.
 5. Debate cycle: roughly 3-4 GSL speeches, then moderated caucuses (focused subtopic discussion, fixed speakers list, max 60s per speaker) and unmoderated caucuses (informal; the Chair is absent; used for lobbying, bloc formation and drafting; no points awarded). At least one GSL speech must occur between caucuses. GSL speeches are limited to 90 seconds; a portfolio appears at most once on the GSL at a time.
 6. Resolution phase: a long unmoderated caucus for drafting. Blocs submit Draft Resolutions (DRs); typically 2-3 are accepted.
+   AUTHORSHIP CAP (STRICT): a Draft Resolution has a MAXIMUM OF 2 AUTHORS / SPONSORS. Never list three or more authors on a DR. Every other delegation backing the document is a SIGNATORY, not an author, and signatories are listed separately. The same cap applies to amendments: at most 2 authors. When a bloc of five wants to submit, two delegations sign as authors and the remaining three appear as signatories.
    MANDATORY STEP - PRESENTED RESOLUTION QUESTIONS:
    When a Draft Resolution is presented by its authors, the Chair MUST explicitly open the floor for questions / Points of Information regarding the presented resolution. At least 1-2 questions must be taken and answered by the authors BEFORE moving to amendments or voting. Do not skip taking questions on presented resolutions.
 7. Amendments: Chair explicitly asks for friendly or unfriendly amendments.
@@ -1141,9 +1242,19 @@ const Backends = {
   /* --- Groq: OpenAI-compatible endpoint, very fast inference --- */
   groq: Object.assign({}, backendStorage, {
     label: "Groq",
-    defaultModel: "groq/compound",
-    models: ["groq/compound", "groq/compound-mini", "llama-3.3-70b-versatile", "openai/gpt-oss-120b"],
-    modelHint: "groq/compound is an agentic system, so its JSON is requested in the prompt rather than enforced by the API; plain models are enforced more strictly.",
+    // Was groq/compound. Compound is an agentic *system*: it cannot be handed a
+    // response schema, it rewrites its own instructions as it works, and it was
+    // by far the worst offender for ignoring "never speak for the human
+    // delegate". A plain instruction-following model is the right tool here.
+    defaultModel: "openai/gpt-oss-120b",
+    models: [
+      "openai/gpt-oss-120b",
+      "moonshotai/kimi-k2-instruct",
+      "llama-3.3-70b-versatile",
+      "meta-llama/llama-4-maverick-17b-128e-instruct",
+      "groq/compound",
+    ],
+    modelHint: "openai/gpt-oss-120b follows the committee rules most reliably on Groq. Avoid groq/compound: it is an agentic system that cannot be given a response schema and regularly speaks for you.",
     keyLabel: "Groq API key",
     keyPlaceholder: "gsk_...",
     keyHint: 'Create a free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>.',
@@ -1190,8 +1301,14 @@ const SETUP_SCHEMA = {
           researchQuality: { type: "STRING", enum: ["underprepared", "adequate", "well-researched", "exceptionally well-researched"] },
           articulation: { type: "STRING", enum: ["halting and imprecise", "clear but plain", "polished and persuasive", "masterfully eloquent"] },
           aggression: { type: "STRING", description: "Assertiveness across contexts" },
+          skill: { type: "INTEGER", description: "Overall delegate skill from 1 (first conference, out of their depth) to 5 (circuit veteran, best delegate material)" },
+          procedure: { type: "INTEGER", description: "Command of Rules of Procedure, 1 (confuses points with motions) to 5 (flawless, uses procedure tactically)" },
+          quirk: { type: "STRING", description: "One signature verbal habit that recurs in their speeches, e.g. 'over-uses the phrase let us be clear', 'always cites a year and a figure', 'answers questions with a question'" },
+          petIssue: { type: "STRING", description: "The narrow sub-issue this delegate steers every intervention back to" },
+          bloc: { type: "STRING", description: "Likely bloc or alignment, e.g. 'G77 hardliner', 'Western consensus bloc', 'non-aligned swing vote'" },
+          weakness: { type: "STRING", description: "A concrete failing that shows in committee, e.g. 'cites statistics without sources', 'rambles past the speaking time', 'refuses to concede any point'" },
         },
-        required: ["country", "name", "persona", "speechStyle", "openingStyle", "closingStyle", "researchQuality", "articulation", "aggression"],
+        required: ["country", "name", "persona", "speechStyle", "openingStyle", "closingStyle", "researchQuality", "articulation", "aggression", "skill", "procedure", "quirk", "petIssue", "bloc", "weakness"],
       },
     },
   },
@@ -1207,19 +1324,62 @@ const TURN_SCHEMA = {
     text:    { type: "STRING", description: "What the speaker says (or narration)." },
     requiresUserResponse: { type: "BOOLEAN", description: "True if human delegate must respond" },
     userPromptHint: { type: "STRING", description: "One sentence telling the user what response is expected" },
+    expectedResponseType: {
+      type: "STRING",
+      enum: ["speech", "question", "answer", "amendment", "position_paper", "unmod", "motion", "vote", "rollcall", "yield", "choice"],
+      description: "What kind of response the human must give. Use 'speech' for any speech, 'question' when they ask a Point of Information, 'answer' when they reply to one, 'unmod' during unmoderated caucus. Buttons are only ever shown for motion, vote, rollcall, yield and choice.",
+    },
     userResponseOptions: {
       type: "ARRAY", items: { type: "STRING" },
-      description: "List of fixed choice options, or empty",
+      description: "Fixed choice buttons. MUST be empty for expectedResponseType speech, question, answer, amendment, position_paper and unmod. For 'motion' every entry must be a complete, correctly formatted motion.",
     },
-    chit: {
+    voteTally: {
       type: "OBJECT",
-      description: "Optional private chit / IM sent by an AI delegate to the human user (replying to a user chit or initiating an off-the-record message). Omit if no chit.",
+      description: "REQUIRED on any turn that resolves a vote or roll call. One narrator turn carries the whole result; never spend a turn per delegate.",
       properties: {
-        sender: { type: "STRING", description: "Country name of the AI delegate sending the chit" },
-        text: { type: "STRING", description: "The private chit message text" },
-        viaEB: { type: "BOOLEAN", description: "True if the chit is passed via the Executive Board / Chair desk" }
+        question: { type: "STRING", description: "What was voted on, e.g. 'Motion to enter formal debate' or 'Draft Resolution 1.1'" },
+        votes: {
+          type: "ARRAY",
+          description: "Every delegation's position, including the human delegate's already-recorded one",
+          items: {
+            type: "OBJECT",
+            properties: {
+              country: { type: "STRING" },
+              vote: { type: "STRING", description: "Yes / No / Abstain / Present / Present and Voting" },
+              note: { type: "STRING", description: "Optional very short reason or aside" },
+            },
+            required: ["country", "vote"],
+          },
+        },
+        outcome: { type: "STRING", description: "One line result, e.g. 'Adopted, 9 in favour to 4 against with 2 abstentions'" },
       },
-      required: ["sender", "text"]
+      required: ["question", "votes", "outcome"],
+    },
+    chits: {
+      type: "ARRAY",
+      description: "Optional private chits passed this turn. Sender may be any AI delegate; recipient may be the human delegate OR another AI delegate (AI-to-AI traffic). Omit or leave empty if no chits.",
+      items: {
+        type: "OBJECT",
+        properties: {
+          sender: { type: "STRING", description: "Country name of the AI delegate sending the chit" },
+          recipient: { type: "STRING", description: "Country receiving it: the human delegate's country, or another AI delegate" },
+          text: { type: "STRING", description: "The private chit message text" },
+          viaEB: { type: "BOOLEAN", description: "True if passed via the Executive Board / Chair desk" },
+        },
+        required: ["sender", "recipient", "text"],
+      },
+    },
+    chitGrades: {
+      type: "ARRAY",
+      description: "Executive Board grades for chits the human delegate has sent that are marked UNGRADED in the chit history. Grade them in the order listed. Omit if there are none.",
+      items: {
+        type: "OBJECT",
+        properties: {
+          score: { type: "NUMBER", description: "0-10 for this one chit" },
+          comment: { type: "STRING", description: "One short sentence: the single thing that would have made this chit land harder" },
+        },
+        required: ["score", "comment"],
+      },
     },
     sessionOver: { type: "BOOLEAN", description: "True only on final turn" },
     scores: {
@@ -1231,6 +1391,8 @@ const TURN_SCHEMA = {
           country: { type: "STRING" },
           score:   { type: "NUMBER", description: "0-100" },
           comment: { type: "STRING", description: "One sentence feedback" },
+          chitScore: { type: "NUMBER", description: "0-10 for off-the-record chit diplomacy: how well this delegation used private messages to build blocs, whip votes and win co-sponsors" },
+          chitComment: { type: "STRING", description: "One sentence on their chit diplomacy" },
         },
         required: ["country", "score", "comment"],
       },
@@ -1246,7 +1408,7 @@ const SESSION_STORAGE_KEY = "mun_session_v1";
 
 let state = null;
 
-function newState(committee, agenda, userCountry, difficulty, enableCrisis) {
+function newState(committee, agenda, userCountry, difficulty, enableCrisis, showChitTraffic) {
   return {
     backend: currentBackendId(),
     committee,
@@ -1254,6 +1416,7 @@ function newState(committee, agenda, userCountry, difficulty, enableCrisis) {
     userCountry,
     difficulty: difficulty || "intermediate",
     enableCrisis: !!enableCrisis,
+    showChitTraffic: !!showChitTraffic,
     crisisTriggered: false,
     userIsMember: null,
     chairName: null,
@@ -1288,13 +1451,14 @@ function loadSession() {
 
 function buildSystemPrompt() {
   const roster = state.delegates.map(d =>
-    `- ${d.country} (${d.name}): ${d.persona}
-    Rhetorical Archetype: ${d.speechStyle || "balanced"}
-    Opening Style: ${d.openingStyle || "varied"}
-    Closing Style: ${d.closingStyle || "varied"}
-    Research quality: ${d.researchQuality || "adequate"}
-    Articulation: ${d.articulation || "clear but plain"}
-    Aggression: ${d.aggression || "measured"}`
+    `- ${d.country} (${d.name}) | SKILL ${d.skill || 3}/5 | PROCEDURE ${d.procedure || 3}/5
+    Stance: ${d.persona}
+    Rhetorical archetype: ${d.speechStyle || "balanced"}
+    Opening style: ${d.openingStyle || "varied"} | Closing style: ${d.closingStyle || "varied"}
+    Research quality: ${d.researchQuality || "adequate"} | Articulation: ${d.articulation || "clear but plain"} | Aggression: ${d.aggression || "measured"}
+    Bloc: ${d.bloc || "unaligned"} | Always steers back to: ${d.petIssue || "the core agenda"}
+    Signature habit (must recur): ${d.quirk || "none"}
+    Visible weakness (must recur): ${d.weakness || "none"}`
   ).join("\n");
 
   let difficultyInstructions = "";
@@ -1311,6 +1475,26 @@ DIFFICULTY LEVEL: ADVANCED
 - Maximum committee length: up to 80 turns.
 - AI delegates possess high ability (exceptionally well-researched, highly articulate, masterfully eloquent, strategically combative).
 - Allow less structural limitations and deeper debate.
+
+- SUBSTANCE OF SPEECHES (THIS IS WHAT MAKES AN ADVANCED COMMITTEE WORTH SITTING IN):
+  1. ORIGINAL BUT GROUNDED SOLUTIONS. A delegate must not simply restate an existing programme. They propose a mechanism that does not yet exist, built out of parts that demonstrably do: an existing fund given a new window, an existing verification regime extended to a new class of technology, an existing reporting template applied to a new actor. The test is that a sceptical reader thinks "that has not been done, but it could be".
+  2. TRACEABLE FUNDING IS MANDATORY. Every proposal states where the money comes from, roughly how much, and through what channel it moves. Name the instrument: a replenishment cycle, a levy on a specific transaction class, a reallocation within an existing budget line, a blended-finance facility with a named anchor investor class, concessional lending through a named institution. "The international community must mobilise resources" is a failed speech at this level. A delegate who cannot fund their proposal should be asked about it in a Point of Information and should visibly struggle.
+  3. PRECEDENT AND CITATION. Speeches refer to real past conferences, instruments and events by name and year: named conventions and their protocols, named summits and their outcome documents, named resolutions, named review conferences, named crises that changed state practice. Cite the specific article or operative paragraph where a delegate of that skill would know it. Delegates use precedent adversarially - quoting another state's own past commitments back at them is the strongest move on this floor.
+  4. Accuracy matters. Do not invent instruments or fabricate figures that a knowledgeable reader would catch. Where a delegate is uncertain, have them characterise the source rather than invent a precise number.
+  5. Rebuttal is specific. A delegate answering another names the delegation, names the claim, and attacks the mechanism or the financing rather than the sentiment.
+
+- CHITS AT ADVANCED LEVEL - CLAUSE DRAFTING VIA EB:
+  * Delegates negotiating a draft resolution exchange ACTUAL LEGALLY-WORDED CLAUSE TEXT in chits, routed Via EB (viaEB=true), not vague statements of intent. "We should include something on monitoring" is not acceptable; the chit must carry the clause.
+  * Clauses follow proper resolution drafting: preambulatory clauses open with an italicised participle (Recalling, Noting with concern, Bearing in mind, Reaffirming, Deeply disturbed by) and end in a comma; operative clauses are numbered, open with an italicised active verb (Calls upon, Requests, Urges, Decides, Establishes, Encourages, Authorizes), use sub-clauses lettered (a), (b), (c) where they enumerate, and end in a semicolon, with the final operative clause ending in a full stop.
+  * Format that clause text properly with markdown so it renders: the operative verb in *italics* or **bold**, numbered lines for operative clauses, sub-points as a list, and blockquotes (>) when quoting from an existing instrument.
+  * Counter-drafting is the norm: a delegate receiving a clause sends back a redlined version, strikes a phrase, or proposes alternative wording for the specific operative paragraph. Negotiate over words, not over vibes.
+  * A worked example of the register expected in such a chit:
+    **Proposed OC3, for your bloc's consideration:**
+    3. *Requests* the [named body] to establish, within twelve months of the adoption of this resolution, a voluntary registry of [subject], and further requests that the registry:
+    (a) publish aggregated annual data disaggregated by [category];
+    (b) be financed from within existing budgetary resources for the first biennium;
+    We can move on (b) if your delegation can bring [third state] to sponsor.
+
 - EXACT REMAINING TIME & WORD-COUNT CALCULATION (MANDATORY):
   1. Standard MUN speaking rate is approximately 130-150 words per minute (~2.2 words per second).
   2. Whenever a delegate speaks or finishes a speech, the Chair MUST calculate the exact speaking time used based on their word count, calculate the remaining time left out of the total allotted speaking time (e.g., 90 seconds for GSL), and explicitly state both the used time and exact seconds remaining left in their announcement (e.g., "Delegate of France, you spoke for 45 seconds [approximately 98 words], leaving 45 seconds remaining. How do you yield your remaining time?").
@@ -1327,7 +1511,20 @@ DIFFICULTY LEVEL: ADVANCED
 DIFFICULTY LEVEL: INTERMEDIATE
 - Target committee length: ~40-60 turns.
 - Follow current committee rules of procedure strictly to the tee.
-- Balanced mix of AI delegate abilities.`;
+- Balanced mix of AI delegate abilities.
+
+- SUBSTANCE OF SPEECHES AT INTERMEDIATE LEVEL:
+  1. GROUNDED, ALREADY-PROVEN SOLUTIONS. Delegates propose things that are being done somewhere already, or have been done before, and argue for scaling or transplanting them. A pilot that worked in one region extended to another; a mechanism that exists in one treaty regime applied to this problem. Originality is not the goal here - showing that the solution has a track record is.
+  2. FUNDING IS PLAUSIBLE BUT NOT FULLY WORKED OUT. A delegate names a credible source and a rough order of magnitude - an existing fund, a donor conference, a development bank window, a share of an existing budget - without producing a precise costing or a disbursement mechanism. They should sound like they know money has to come from somewhere real, while leaving the details for the drafting caucus. If pressed in a Point of Information on exact figures, most delegates should have to concede the detail is still being worked out. Do not let anyone get away with pure "the international community must act" either.
+  3. PRECEDENT AT A RECOGNISABLE LEVEL. Delegates refer to well-known instruments, frameworks and moments by name: the famous convention, the landmark summit, the widely-cited goal framework, the well-known clause or principle everyone in the room would recognise. They invoke these by name and general effect, NOT by article number or operative paragraph. "The principle of common but differentiated responsibilities" is right for this level; "operative paragraph 4(b) of the 2018 review outcome" is too fine-grained and belongs at advanced.
+  4. Do not fabricate specific statistics. A rough, correct characterisation beats a precise invented figure.
+  5. Rebuttal names the delegation and the argument, but engages with the substance more than the mechanism.
+
+- CHITS AT INTERMEDIATE LEVEL - CLAUSE IDEAS VIA EB:
+  * When delegates are building blocs and drafting, they exchange CLEAR AND SPECIFIC IDEAS FOR CLAUSES in chits routed Via EB (viaEB=true). Not fully drafted legal text, but specific enough that the other delegation knows exactly what is being proposed: what the clause would do, which body it would task, and roughly what it would commit states to.
+  * "We should cooperate more" is too vague. "An operative clause tasking the regional office with an annual reporting requirement, voluntary for the first two years, funded from the existing programme budget" is the right level.
+  * Format these chits readably: a short lead line, then the proposed clauses as a numbered or bulleted list, with **bold** on the key commitment. They are notes toward a clause, not the finished clause.
+  * The other delegation responds specifically: accepting, asking for the commitment to be softened or hardened, or proposing what they want in exchange for signing.`;
   }
 
   let crisisInstructions = "";
@@ -1365,10 +1562,39 @@ AI-PLAYED DELEGATES:
 ${roster}
 
 CHITS / INSTANT MESSAGING (OFF-THE-RECORD DIPLOMACY & VIA EB):
-- Delegates and the human user can exchange private "chits" (Instant Messages) in parallel with committee debate.
-- Chits can be sent directly or routed "Via EB" (Executive Board / Chair desk).
-- If the prompt indicates that the human user sent a chit to an AI delegate (with or without 'Via EB'), that specific AI delegate MAY choose to respond to the human user using the optional \`chit\` property in your JSON output (setting viaEB=true or false as appropriate). If they choose not to respond, omit the \`chit\` field.
-- AI delegates may also occasionally initiate a private chit to the human user using the \`chit\` field (e.g., to discretely propose alliances, whip votes, request resolution co-sponsorship, or negotiate off the record).
+- Delegates and the human user exchange private "chits" in parallel with debate. Use the \`chits\` array to pass them. Each entry needs a sender, a recipient and text. Chits never appear on the floor and never become a spoken turn.
+- ROUTING: every chit is either passed directly (viaEB=false) or routed through the Executive Board at the Chair's desk (viaEB=true). YOU ALWAYS HAVE THE VIA EB OPTION AVAILABLE - set viaEB=true whenever a delegate wants the Board to see the message, wants it on the record with the dais, or is passing drafted clause text for the Board's attention. Substantive drafting chits go Via EB; quick tactical asides go direct.
+- Three directions are all in play and all should occur over a session:
+  1. AI to human: reply to a chit the human sent, or open one unprompted.
+  2. AI to AI: delegates chit EACH OTHER. Set recipient to another AI delegate's country.
+  3. Human to AI: already delivered to you in the chit history below.
+- Never put the human delegate's country in a chit \`sender\` field.
+
+CHITS ARE EXPECTED, NOT OPTIONAL. Pass chits often - aim for roughly one turn in two to carry at least one. Use them for:
+  * Reacting to the speech that was just given: agreeing, picking a hole in it, praising a line, warning that a claim will not survive questioning.
+  * Proposing joint drafting: offering to merge working papers, inviting a delegation into a bloc, dividing operative clauses between delegations.
+  * Asking a genuine question a delegate would not ask on the floor: what a figure was based on, whether a delegation can actually move its vote, what it would take to buy an abstention.
+  * Whipping votes and trading amendment support before a motion is raised.
+- Whatever is agreed in chits must then show up on the floor. The bloc that formed in chits is the bloc that co-sponsors and votes together.
+- Chit voice follows skill: a SKILL 1 delegate writes short, artless, over-eager chits; a SKILL 5 delegate writes terse, strategic ones that give away nothing for free.
+- Send at most 3 chits in any one turn.
+- CHIT FORMATTING: chits render with the same markdown as speeches. When a chit carries drafted clause text, format it properly - use **bold** for the operative verb, numbered lines for clauses, and blockquotes (>) for quoted text from an existing document. Do not send a wall of unbroken text.
+
+GRADING THE HUMAN'S CHITS:
+- The chit history below marks the human delegate's own chits as GRADED or UNGRADED. Whenever any are UNGRADED, fill the \`chitGrades\` array on this turn with one entry per ungraded chit, in the order they are listed.
+- Grade out of 10 as a demanding Executive Board: is it specific, is it addressed to a delegation that can actually deliver what is being asked, is it well timed, does it offer something concrete rather than just asking, does it stay in diplomatic register. One sentence naming the single thing that would have made it land harder.
+
+DELEGATE SKILL MUST BE VISIBLE (MANDATORY):
+Each delegate carries a SKILL rating. A reader must be able to guess a delegate's rating from one speech without being told it. Apply this table literally:
+- SKILL 1 (first conference, out of their depth): 60-90 words. No statistics, or one vague unsourced one. Generic appeals to "the international community". Misuses procedure - calls a motion a point, forgets to yield, needs the Chair to correct them. Hedges constantly.
+- SKILL 2 (improving but shaky): 90-120 words. One real fact, loosely applied. Repeats the previous speaker's argument without advancing it. Procedure mostly right, occasionally clumsy. Runs out of things to say before the time limit.
+- SKILL 3 (solid, unremarkable): 110-150 words. Two or three accurate facts. Clear structure but predictable. Correct procedure. Advances the debate without controlling it.
+- SKILL 4 (strong): 140-190 words. Named instruments, years and figures. Directly rebuts a specific earlier delegate by name of country. Uses procedure tactically to gain the floor. Builds blocs deliberately.
+- SKILL 5 (circuit veteran): 150-220 words. Precise citations, anticipates the counterargument before it is made, reframes the debate on their own terms, lands a memorable closing line. Weaponises the Rules of Procedure. Other delegates react to them.
+- PROCEDURE rating governs procedural accuracy independently of speaking skill: a PROCEDURE 1 delegate WILL raise the wrong kind of point and must be corrected by the Chair at least once. A PROCEDURE 5 delegate uses motions to control the room.
+- Every delegate's signature habit and visible weakness must actually appear in their speeches. They are not decoration.
+- Two consecutive delegate speeches must never share the same structure, opening style or length band. If the last speaker was long and data-heavy, the next is short and rhetorical.
+- Low-skill delegates are not comic relief. They are earnest and trying hard.
 
 DELEGATE SPEECH STRUCTURE & FORMATTING (MANDATORY VARIETY):
 - DO NOT generate speeches as one big long wall of text. Break delegate speeches into at least 3 distinct paragraphs or sections (e.g. Opening, Body, Closing).
@@ -1384,6 +1610,46 @@ DELEGATE SPEECH STRUCTURE & FORMATTING (MANDATORY VARIETY):
 ${RULES_OF_PROCEDURE}
 
 CRITICAL RULES:
+
+0. THE HUMAN DELEGATE IS NOT YOURS TO PLAY. THIS OVERRIDES EVERY OTHER RULE.
+   - ${state.userCountry} is played by a human being. You play the Chair, the Narrator, and the ${state.delegates.length} AI delegates listed above. You do NOT play ${state.userCountry}.
+   - NEVER emit a turn whose \`speaker\` is "${state.userCountry}". NEVER set \`role\` to "user".
+   - NEVER write words attributed to ${state.userCountry} inside a Chair, Narrator or delegate turn. Do not write "The Delegate of ${state.userCountry} states that...", do not summarise a speech ${state.userCountry} has not given, do not report how ${state.userCountry} voted before they have voted, do not have the Chair thank them for a speech that is not in the transcript above.
+   - The ONLY things you may put in ${state.userCountry}'s mouth are their exact words as they already appear in the transcript, quoted back.
+   - The moment the Chair recognises ${state.userCountry}, gives them the floor, asks them a question, calls their name at roll call, or calls for their vote: that turn MUST end with requiresUserResponse=true, and you MUST STOP. Do not generate what they say. The human types it and you continue afterwards.
+   - If you catch yourself about to continue past the human's turn, emit the Chair's prompt instead and stop.
+   - Symmetrically: never skip the human. They get the floor on the General Speakers List, they get asked for their vote, they get offered Points of Information. Do not let the committee run past them.
+
+0b. ONE TURN MEANS ONE SPEAKER.
+   - Each JSON object is a single intervention by a single speaker. Never chain several delegates into one turn's text. The only exception is a Narrator turn that is explicitly summarising, such as a vote tally or a roll call.
+
+0c. VOTES AND ROLL CALLS ARE SUMMARISED, NEVER SERIALISED.
+   - Do NOT spend one turn per delegate casting a vote. That is the single most tedious thing you can do to the user.
+   - Procedure for EVERY vote (procedural motions, roll call, and each draft resolution):
+     a. The Chair announces the vote in one turn. If the human is a voting member, that turn sets requiresUserResponse=true and asks for THEIR vote only, then stops.
+     b. The human votes.
+     c. ONE Narrator turn then reports every other delegation's vote at once, filling the \`voteTally\` field with the complete list (including the human's recorded vote, copied from the transcript) and a one-line outcome. The turn's \`text\` gives the colour: who broke from their bloc, who abstained and why, how the room reacted. Do not list the raw votes again in \`text\`; the tally field renders them.
+   - Roll call works the same way: the Chair calls the human's name and stops; one Narrator turn then covers all AI delegates' responses with \`voteTally\` votes of "Present" or "Present and Voting".
+   - If the human is an observer with no vote, skip step (a) and (b) and go straight to the Narrator tally.
+
+0d. BUTTON OPTIONS MUST BE USABLE AND CORRECT.
+   - Set \`expectedResponseType\` on every turn where requiresUserResponse=true. It decides whether buttons appear.
+   - NO BUTTONS AT ALL (userResponseOptions MUST be an empty array) when the human has to compose something in their own words: expectedResponseType of "speech", "question", "answer", "amendment", "position_paper" or "unmod". A speech is written, not chosen. A Point of Information is written, not chosen. An answer to a question is written, not chosen. During an unmoderated caucus the human lobbies freely, so no buttons.
+   - Buttons are only for genuinely enumerable choices: "motion", "vote", "rollcall", "yield", "choice".
+   - Every button must be a complete thing the human could actually say, under about 80 characters, and distinct from the others. Never offer a button that is a placeholder ("Say something", "Other"), an instruction ("Type your speech"), or a whole paragraph.
+   - MOTION FORMAT IS STRICT. Every motion button must be a full, correctly formatted motion:
+     * "Motion to suspend formal debate for an unmoderated caucus of 10 minutes"
+     * "Motion to enter a moderated caucus on vaccine financing, total time 12 minutes, speaking time 45 seconds"  (a moderated caucus ALWAYS carries a topic, a total time AND an individual speaking time)
+     * "Motion to open the General Speakers List"
+     * "Motion to set the agenda"
+     * "Motion to introduce a draft resolution"
+     * "Motion to extend the speaking time to 60 seconds"
+     * "Motion to move into voting procedure"
+     * "Motion to adjourn debate"
+     A bare "Moderated caucus" or "Motion for a caucus" is malformed and will be rejected.
+   - Offer only motions that are actually in order at this point in committee. Do not offer a motion to introduce a draft resolution before the drafting caucus has happened.
+   - "No motions at this time" is always an acceptable final button on a motion turn.
+
 1. ADDRESS AND SELF-REFERENCING:
    - All AI delegates MUST refer to themselves exclusively as "the Delegate of [Country]" or "this delegation" or "[Country]".
    - DO NOT let delegates refer to themselves by their personal individual names (e.g., do NOT say "Ambassador Watanabe" or "I").
@@ -1396,15 +1662,24 @@ CRITICAL RULES:
 4. PRESENTED RESOLUTION QUESTIONS (MANDATORY):
    - When a Draft Resolution is presented by its authors, the Chair MUST open the floor for questions / Points of Information from other delegates on the presented resolution.
    - At least 1-2 questions MUST be asked and answered before moving to amendments or voting. Never skip taking questions on presented resolutions.
-5. YIELDS & DELEGATE VOICES:
+5. DRAFT RESOLUTION AUTHORSHIP:
+   - A maximum of TWO delegations may be named as authors or sponsors of any draft resolution or amendment. This is a hard limit. Everyone else who supports it is a signatory.
+   - Because only two delegations can author a document, the negotiation over who those two are matters. Let it be contested: a delegation that wanted authorship and was left as a signatory should show it, on the floor or in chits.
+
+6. YIELDS & DELEGATE VOICES:
    - Apply each AI delegate's speech style, closing style, research quality, articulation, and aggression consistently.
    - Vary yield options (yield to questions, yield to comments, yield to another delegate, yield to Chair).
-6. Output only the JSON turn object matching the schema provided.`;
+7. FINAL SCORING (only on the turn where sessionOver=true):
+   - Score EVERY delegation including ${state.userCountry}, out of 100, across research and knowledge, speech quality, lobbying and bloc-building, Rules of Procedure, and resolution writing.
+   - Scores must track what actually happened in the transcript above. A SKILL 1 delegate who floundered scores in the 40s; a SKILL 5 delegate who dominated scores in the 90s. Do not hand out a flat band of similar scores, and do not flatter the human: score ${state.userCountry} on the same rubric as everyone else and say plainly where they fell short.
+   - Also fill chitScore (0-10) and chitComment for every delegation, grading off-the-record chit diplomacy from the chit history: was it specific, well-timed, addressed to delegations who could actually deliver something, and did the private commitments translate into public sponsorships and votes. A delegation that sent no chits scores low on this and should be told that lobbying is where committees are won.
+
+8. Output only the JSON turn object matching the schema provided.`;
 }
 
-function buildTurnRequest() {
+function buildTurnRequest(correction) {
   const lines = state.transcript.map(t => {
-    const tag = t.role === "user" ? `${t.speaker} (THE HUMAN USER)`
+    const tag = t.role === "user" ? `${t.speaker} (THE HUMAN USER - these are the human's own words)`
               : t.role === "chair" ? "Chair"
               : t.speaker;
     return `[${t.phase || ""}] ${tag}:\n${t.text}`;
@@ -1412,8 +1687,32 @@ function buildTurnRequest() {
   let req = `TRANSCRIPT SO FAR (turn ${state.transcript.length}):\n\n`
           + (lines.length ? lines.join("\n\n---\n\n") : "(none - the committee has not started)")
           + "\n\n===\nGenerate the NEXT single turn of the simulation now.";
+
+  req += `\n\nSTANDING REMINDER: ${state.userCountry} is the human. Your turn may not be spoken by them and may not narrate, summarise or quote anything they have not already said above. If the next thing that should happen is ${state.userCountry} speaking, voting or answering, then your turn is the Chair calling on them with requiresUserResponse=true, and nothing more.`;
+
+  /* Speaker rotation: the model left to itself keeps calling on the same two
+     or three favourites, which flattens the roster. Tell it who is idle. */
+  const spoken = {};
+  state.transcript.forEach(t => {
+    if (t.role === "delegate" && t.speaker) spoken[t.speaker] = (spoken[t.speaker] || 0) + 1;
+  });
+  const silent = state.delegates.filter(d => !spoken[d.country]).map(d => d.country);
+  const counts = state.delegates
+    .map(d => `${d.country} ${spoken[d.country] || 0}`)
+    .join(", ");
+  req += `\n\nFLOOR TIME SO FAR (interventions per delegate): ${counts}.`;
+  if (silent.length) {
+    req += `\nThese delegations have not spoken at all yet: ${silent.join(", ")}. Give one of them the floor unless procedure demands otherwise.`;
+  }
+
   if (state.userRollCall) {
     req += `\nReminder: the human delegate answered roll call with "${state.userRollCall}".`;
+  }
+  if (state.userIsMember === false) {
+    req += `\nReminder: the human delegate is an OBSERVER and never votes. Do not ask them to vote and do not list them in a vote tally.`;
+  }
+  if (correction) {
+    req += `\n\n!! CORRECTION REQUIRED !!\n${correction}`;
   }
   const last = state.transcript[state.transcript.length - 1];
   if (last && last.role === "user"
@@ -1425,17 +1724,7 @@ function buildTurnRequest() {
   }
 
   /* CHIT IM HISTORY INCLUSION */
-  if (state.chits && state.chits.length > 0) {
-    req += "\n\nPRIVATE CHITS / IM HISTORY (OFF-THE-RECORD):\n";
-    const recentChits = state.chits.slice(-10);
-    recentChits.forEach(c => {
-      const ebTag = c.viaEB ? " (Via Executive Board)" : "";
-      req += `- From ${c.sender} to ${c.recipient}${ebTag}: "${c.text}"\n`;
-    });
-    req += "\nNotice: If the human user sent a chit to an AI delegate recently, that delegate may optionally respond using the 'chit' JSON field this turn. AI delegates may also send a new chit to the user if appropriate.";
-  } else {
-    req += "\n\n(No private chits sent yet. AI delegates may optionally initiate a chit to the user using the 'chit' JSON field if desired.)";
-  }
+  req += "\n\n" + buildChitContext();
 
   /* MID-COMMITTEE CRISIS INJECTION LOGIC */
   if (state.enableCrisis && !state.crisisTriggered) {
@@ -1447,6 +1736,224 @@ function buildTurnRequest() {
   }
 
   return req;
+}
+
+/* Shared between the committee turn request and the standalone chit request.
+   Chits the user has sent but that no AI has seen yet are called out
+   explicitly, because burying a new message in a history list is how a chit
+   ends up silently ignored. */
+function buildChitContext() {
+  const chits = state.chits || [];
+  if (!chits.length) {
+    return "PRIVATE CHITS: none sent yet. An AI delegate may open one to the human delegate, or chit another AI delegate, using the 'chits' array.";
+  }
+  let out = "PRIVATE CHITS / IM HISTORY (OFF-THE-RECORD, not spoken on the floor):\n";
+  chits.slice(-16).forEach(c => {
+    const ebTag = c.viaEB ? " (Via Executive Board)" : " (direct)";
+    const isUser = c.sender === state.userCountry;
+    const who = isUser ? `${c.sender} (THE HUMAN)` : c.sender;
+    const gradeTag = isUser ? (c.graded ? " [GRADED]" : " [UNGRADED - grade this turn]") : "";
+    out += `- From ${who} to ${c.recipient}${ebTag}${gradeTag}: "${c.text}"\n`;
+  });
+
+  const unanswered = chits.filter(c => c.sender === state.userCountry && !c.answered);
+  if (unanswered.length) {
+    const last = unanswered[unanswered.length - 1];
+    out += `\nAWAITING REPLY: the human delegate chitted ${last.recipient} and has had no answer. `
+         + `${last.recipient} should reply this turn via the 'chits' array unless staying silent is a deliberate snub that fits their persona.`;
+  }
+  out += "\nRemember that chits are where blocs are really built. What is agreed privately must show up publicly in sponsorships, motions and votes. Pass chits generously: react to speeches, propose joint drafting, ask the questions that would be impolitic on the floor. Route substantive drafting chits Via EB.";
+  return out;
+}
+
+/* ==================================================================
+   7b. COUNTRY MATCHING & USER-OPTION SANITISATION
+   ------------------------------------------------------------------
+   Two jobs the model cannot be trusted to do on its own:
+     - recognising that "USA", "the United States" and "United States of
+       America" are the same delegation, which matters for the
+       impersonation guard below;
+     - producing button options that are sensible and correctly formatted.
+   Both are enforced here in code rather than hoped for in the prompt.
+   ================================================================== */
+
+/* Common short forms, so a model saying "UK" cannot slip past the guard. */
+const COUNTRY_ALIASES = {
+  "united states": ["us", "usa", "u s a", "united states of america", "america", "the united states"],
+  "united kingdom": ["uk", "u k", "britain", "great britain", "the united kingdom"],
+  "russian federation": ["russia"],
+  "republic of korea": ["south korea", "korea republic of", "rok"],
+  "democratic people's republic of korea": ["north korea", "dprk"],
+  "china": ["prc", "people's republic of china"],
+  "iran": ["islamic republic of iran"],
+  "viet nam": ["vietnam"],
+  "türkiye": ["turkiye", "turkey"],
+  "netherlands": ["the netherlands", "holland"],
+  "czechia": ["czech republic"],
+  "united republic of tanzania": ["tanzania"],
+  "syrian arab republic": ["syria"],
+  "lao people's democratic republic": ["laos"],
+  "côte d'ivoire": ["cote d'ivoire", "ivory coast"],
+  "democratic republic of the congo": ["drc", "dr congo"],
+  "bolivia": ["plurinational state of bolivia"],
+  "venezuela": ["bolivarian republic of venezuela"],
+  "micronesia": ["federated states of micronesia"],
+};
+
+function normCountry(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/^the\s+/, "")
+    .replace(/^delegate of\s+/, "")
+    .replace(/^delegation of\s+/, "")
+    .replace(/[^a-z\s']/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* True if two strings name the same delegation. */
+function sameCountry(a, b) {
+  const na = normCountry(a), nb = normCountry(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  for (const [canonical, aliases] of Object.entries(COUNTRY_ALIASES)) {
+    const group = [canonical, ...aliases];
+    if (group.includes(na) && group.includes(nb)) return true;
+  }
+  return false;
+}
+
+/* Does this Chair/Narrator text hand the floor to the human? Used to catch the
+   case where the model prompts the user but forgets requiresUserResponse. */
+function addressesUser(text) {
+  const t = String(text || "");
+  const country = state.userCountry.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const named = new RegExp(country, "i").test(t);
+  if (!named) return false;
+  return /you have the floor|the floor is yours|floor is now yours|you may (begin|proceed|speak|respond)|please (proceed|begin|respond|state|cast)|recognis?es the delegate|how do you (yield|vote)|your vote|what say you|are you present/i.test(t);
+}
+
+/* Response types where the human must write in their own words. Buttons are
+   never offered for these. */
+const FREE_TEXT_TYPES = new Set(["speech", "question", "answer", "amendment", "position_paper", "unmod"]);
+
+/* What kind of answer is the human being asked for? The model declares this in
+   expectedResponseType; where it does not, or where the declaration is at odds
+   with the hint, we infer it from the wording. */
+function classifyResponseType(declared, hint, phase, turnText) {
+  const valid = ["speech","question","answer","amendment","position_paper","unmod","motion","vote","rollcall","yield","choice"];
+  const d = String(declared || "").toLowerCase().trim();
+  const blob = `${hint || ""} ${phase || ""}`.toLowerCase();
+
+  // Inference from wording. Checked first so a declaration that contradicts an
+  // unmistakable prompt ("deliver your speech") cannot put buttons on a speech.
+  let inferred = null;
+  if (/unmoderated|unmod\b/.test(blob)) inferred = "unmod";
+  else if (/position paper/.test(blob)) inferred = "position_paper";
+  else if (/roll call|rollcall/.test(blob)) inferred = "rollcall";
+  else if (/\bvote\b|\bvoting\b|cast your|in favour|for or against/.test(blob)) inferred = "vote";
+  else if (/yield/.test(blob)) inferred = "yield";
+  else if (/answer|respond to the (question|point)|reply to the delegate/.test(blob)) inferred = "answer";
+  else if (/point of information|ask a question|pose a question|your question|wish to question/.test(blob)) inferred = "question";
+  else if (/amendment/.test(blob)) inferred = "amendment";
+  else if (/speech|deliver|address the committee|you have the floor|gsl|general speakers|moderated caucus/.test(blob)) inferred = "speech";
+  else if (/motion|floor is open/.test(blob)) inferred = "motion";
+
+  if (inferred && FREE_TEXT_TYPES.has(inferred)) return inferred;
+  if (valid.includes(d)) return d;
+  if (inferred) return inferred;
+  if (addressesUser(turnText)) return "speech";
+  return "choice";
+}
+
+/* A motion button has to be something a delegate could stand up and say
+   verbatim. Caucus motions are incomplete without their timings. */
+function isWellFormedMotion(option) {
+  const s = String(option).trim();
+  if (/^no (motions?|points?)/i.test(s)) return true;
+  if (/^(i (would like to )?)?(raise a )?point of (order|information|personal privilege|parliamentary inquiry|inquiry)/i.test(s)) return true;
+  if (!/^motion (to|for)\b/i.test(s)) return false;
+
+  const timeMatches = s.match(/\d+\s*(minutes?|mins?|seconds?|secs?)/gi) || [];
+  if (/unmoderated caucus/i.test(s)) return timeMatches.length >= 1;
+  if (/moderated caucus/i.test(s)) {
+    // needs a topic and both a total time and a speaking time
+    return timeMatches.length >= 2 && /\b(on|regarding|concerning|to discuss)\b\s+\S+/i.test(s);
+  }
+  if (/extend|reduce|set the speaking time/i.test(s)) return /\d+/.test(s);
+  return s.length > 12;
+}
+
+/* Fallback motions, filtered to what is actually in order right now. */
+function defaultMotionOptions() {
+  const transcriptText = state.transcript.map(t => t.text).join(" ").toLowerCase();
+  const phases = state.transcript.map(t => (t.phase || "").toLowerCase()).join(" ");
+  const seen = transcriptText + " " + phases;
+  const topic = String(state.agenda || "the agenda").split(/[,;.]/)[0].trim().slice(0, 45);
+
+  if (!/formal debate/.test(seen)) {
+    return ["Motion to enter formal debate", "No motions at this time"];
+  }
+  if (!/agenda has been set|set the agenda/.test(seen)) {
+    return ["Motion to set the agenda", "No motions at this time"];
+  }
+  if (!/speakers list|gsl/.test(seen)) {
+    return ["Motion to open the General Speakers List", "No motions at this time"];
+  }
+
+  const opts = [
+    `Motion to enter a moderated caucus on ${topic}, total time 10 minutes, speaking time 45 seconds`,
+    "Motion to suspend formal debate for an unmoderated caucus of 10 minutes",
+    "Motion to extend the speaking time to 60 seconds",
+  ];
+  if (/draft resolution|working paper/.test(seen)) {
+    opts.push("Motion to introduce a draft resolution");
+    opts.push("Motion to move into voting procedure");
+  }
+  opts.push("No motions at this time");
+  return opts;
+}
+
+/* The one place that decides which buttons the human sees. Anything the model
+   suggested is treated as a proposal, not an instruction. */
+function sanitizeUserOptions(rawOptions, type) {
+  // A correctly formatted moderated caucus motion carries a topic, a total
+  // time and a speaking time, so it runs well past the length that would be
+  // absurd on an ordinary button. The cap has to follow the type.
+  const maxLen = type === "motion" ? 140 : 90;
+  let opts = (Array.isArray(rawOptions) ? rawOptions : [])
+    .map(o => String(o).replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .filter(o => o.length <= maxLen)                   // a button is not a paragraph
+    .filter(o => !/^(other|something else|type|write|enter|your (speech|response|answer))\b/i.test(o));
+  opts = opts.filter((o, i) => opts.findIndex(x => x.toLowerCase() === o.toLowerCase()) === i);
+
+  // Writing tasks never get buttons.
+  if (FREE_TEXT_TYPES.has(type)) return [];
+
+  if (type === "rollcall") return ["Present", "Present and Voting"];
+
+  if (type === "vote") {
+    if (state.userIsMember === false) return [];       // observers do not vote
+    return state.userRollCall === "Present and Voting"
+      ? ["Yes", "No"]                                  // waived the right to abstain
+      : ["Yes", "No", "Abstain"];
+  }
+
+  if (type === "yield") {
+    return ["Yield to the Chair", "Yield to Points of Information", "Yield to another delegate"];
+  }
+
+  if (type === "motion") {
+    const wellFormed = opts.filter(isWellFormedMotion);
+    if (wellFormed.length < 2) return defaultMotionOptions().slice(0, 6);
+    if (!wellFormed.some(o => /^no motions?/i.test(o))) wellFormed.push("No motions at this time");
+    return wellFormed.slice(0, 6);
+  }
+
+  // "choice": keep what the model offered, but a single button is not a choice.
+  if (opts.length < 2) return [];
+  return opts.slice(0, 6);
 }
 
 /* ==================================================================
@@ -1499,38 +2006,104 @@ window.showKeywordPopup = function(term) {
   showModal(title, desc);
 };
 
+/* Inline emphasis for a single already-escaped line.
+   Bold runs first. The italic and underline rules require the marker to sit at
+   a word edge, so a bullet's leading "*", a multiplication sign, or an
+   identifier like operative_clause_3 is left alone instead of being eaten as
+   emphasis. That was the main cause of mangled speeches: the old italic rule
+   matched greedily from one bullet marker straight to the next one. */
+function formatInline(s) {
+  s = s.replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/__([^_\n]+?)__/g, "<strong>$1</strong>");
+  s = s.replace(/(^|[\s(\[\u2014\u2013-])\*([^*\s][^*\n]*?)\*(?=$|[\s.,;:!?)\]\u2014\u2013])/g, "$1<em>$2</em>");
+  s = s.replace(/(^|[\s(\[\u2014\u2013])_([^_\s][^_\n]*?)_(?=$|[\s.,;:!?)\]\u2014\u2013])/g, "$1<u>$2</u>");
+  s = s.replace(/`([^`\n]+?)`/g, "<code>$1</code>");
+  return s;
+}
+
+/* Markers are stripped before inline formatting so a list marker can never be
+   mistaken for an emphasis marker, and keyword highlighting runs last so it
+   only ever sees finished text. */
 function formatTurnHtml(raw, role) {
-  let html = escapeHtml(raw);
+  const highlight = (state && state.difficulty === "beginner" && (role === "chair" || role === "narrator"));
+  const line = s => {
+    let out = formatInline(s);
+    if (highlight) {
+      out = out.replace(KW_REGEX, match =>
+        `<b class="mun-keyword" onclick="window.showKeywordPopup('${escapeHtml(match)}')">${match}</b>`);
+    }
+    return out;
+  };
 
-  // Formatting conversions
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-  html = html.replace(/_(.+?)_/g, "<u>$1</u>");
+  const src = escapeHtml(String(raw == null ? "" : raw)).replace(/\r\n?/g, "\n").split("\n");
+  const out = [];
+  let i = 0;
 
-  // Highlight beginner terms in Chair/Narrator turns
-  if (state && state.difficulty === "beginner" && (role === "chair" || role === "narrator")) {
-    html = html.replace(KW_REGEX, match => `<b class="mun-keyword" onclick="window.showKeywordPopup('${escapeHtml(match)}')">${match}</b>`);
+  const BULLET = /^\s*[\*\-\u2022\u00b7]\s+(.*)$/;
+  // Operative clauses arrive as "1." or "1)" and, under advanced play, as
+  // lettered sub-clauses "a." or "i.".
+  const NUMBERED = /^\s*(?:\d{1,3}|[a-z]|[ivx]{1,4})[.)]\s+(.*)$/i;
+  const QUOTE = /^\s*&gt;\s?(.*)$/;
+  const HEADING = /^\s*(#{1,6})\s+(.*)$/;
+  const RULE = /^\s*(?:---+|\*\*\*+|___+)\s*$/;
+
+  while (i < src.length) {
+    const raw_line = src[i];
+
+    if (!raw_line.trim()) { i++; continue; }
+
+    if (RULE.test(raw_line)) { out.push("<hr>"); i++; continue; }
+
+    const h = raw_line.match(HEADING);
+    if (h) {
+      const level = Math.min(6, Math.max(3, h[1].length + 2)); // never bigger than the card
+      out.push(`<h${level}>${line(h[2].trim())}</h${level}>`);
+      i++;
+      continue;
+    }
+
+    if (BULLET.test(raw_line)) {
+      const items = [];
+      while (i < src.length && BULLET.test(src[i])) {
+        items.push(`<li>${line(src[i].match(BULLET)[1].trim())}</li>`);
+        i++;
+      }
+      out.push(`<ul>${items.join("")}</ul>`);
+      continue;
+    }
+
+    if (NUMBERED.test(raw_line)) {
+      const items = [];
+      while (i < src.length && NUMBERED.test(src[i]) && !BULLET.test(src[i])) {
+        items.push(`<li>${line(src[i].match(NUMBERED)[1].trim())}</li>`);
+        i++;
+      }
+      out.push(`<ol>${items.join("")}</ol>`);
+      continue;
+    }
+
+    if (QUOTE.test(raw_line)) {
+      const quoted = [];
+      while (i < src.length && QUOTE.test(src[i])) {
+        quoted.push(line(src[i].match(QUOTE)[1].trim()));
+        i++;
+      }
+      out.push(`<blockquote>${quoted.join("<br>")}</blockquote>`);
+      continue;
+    }
+
+    // Plain prose: gather until a blank line or the start of any other block.
+    const para = [];
+    while (i < src.length && src[i].trim()
+           && !BULLET.test(src[i]) && !NUMBERED.test(src[i])
+           && !QUOTE.test(src[i]) && !HEADING.test(src[i]) && !RULE.test(src[i])) {
+      para.push(line(src[i].trim()));
+      i++;
+    }
+    if (para.length) out.push(`<p>${para.join("<br>")}</p>`);
   }
 
-  const blocks = html.split(/\n\s*\n/);
-  const formattedBlocks = blocks.map(block => {
-    const lines = block.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
-    if (lines.length === 0) return "";
-    
-    if (lines.every(l => /^[\*\-\u2022]\s+/.test(l))) {
-      const items = lines.map(l => "<li>" + l.replace(/^[\*\-\u2022]\s+/, "") + "</li>").join("");
-      return `<ul>${items}</ul>`;
-    }
-
-    if (lines.every(l => /^&gt;\s*/.test(l))) {
-      const content = lines.map(l => l.replace(/^&gt;\s*/, "")).join("<br>");
-      return `<blockquote>${content}</blockquote>`;
-    }
-
-    return `<p>${lines.join("<br>")}</p>`;
-  });
-
-  return formattedBlocks.join("");
+  return out.join("");
 }
 
 /* Helper function for dynamic placeholders during live simulation */
@@ -1544,6 +2117,12 @@ function getDynamicPlaceholder(hintText, currentPhase) {
     if (diff === "beginner") return "Paste your position paper here explaining your country's official policy stance, historical background, and proposed solutions...";
     if (diff === "intermediate") return "Unleash your foreign policy manifesto (or just paste what ChatGPT wrote)...";
     return "Submit policy paper statement...";
+  }
+
+  if (h.includes("unmoderated") || p.includes("unmod")) {
+    if (diff === "beginner") return "The formal rules are suspended. Say who you are approaching, what you are offering them, and what you want in return...";
+    if (diff === "intermediate") return "Work the room: who are you cornering, and what deal are you offering?";
+    return "State your lobbying move...";
   }
 
   if (h.includes("roll call") || p.includes("roll call")) {
@@ -1622,6 +2201,16 @@ function updateCrisisVisibility() {
    9. CHIT IM POPUP LOGIC & RENDERERS
    ================================================================== */
 
+/* Pseudo-recipient for the read-only view of chits passing between AI
+   delegates. The Executive Board sees everything routed through it, so this is
+   the log the board would be holding. */
+const EB_LOG = "__eb_log__";
+
+function chitBoxOpen() {
+  const box = $("chit-box");
+  return box && !box.classList.contains("collapsed");
+}
+
 function populateChitRecipients() {
   const sel = $("chit-recipient-select");
   if (!sel || !state || !state.delegates) return;
@@ -1633,11 +2222,68 @@ function populateChitRecipients() {
     opt.textContent = `Delegate of ${d.country}`;
     sel.appendChild(opt);
   });
-  if (previous && state.delegates.some(d => d.country === previous)) {
+  // Traffic between other delegations is other people's mail. It is only
+  // listed here if the user explicitly asked to see it at setup.
+  if (state.showChitTraffic) {
+    const ebOpt = document.createElement("option");
+    ebOpt.value = EB_LOG;
+    ebOpt.textContent = "Executive Board traffic log";
+    sel.appendChild(ebOpt);
+  }
+
+  if (previous && ((previous === EB_LOG && state.showChitTraffic) || state.delegates.some(d => d.country === previous))) {
     sel.value = previous;
   }
   updateChitDropdownOptions();
   renderChitMessages();
+}
+
+/* Take chits produced by the model, whoever they are addressed to, and file
+   them. Chits from the human's own country are dropped: the human writes
+   those themselves. */
+function ingestChits(list) {
+  if (!state.chits) state.chits = [];
+  const selected = $("chit-recipient-select").value;
+  const open = chitBoxOpen();
+  let arrivedForUser = false;
+
+  list.forEach(c => {
+    if (!c || !c.sender || !c.text) return;
+    if (sameCountry(c.sender, state.userCountry)) return;          // never ventriloquise the user
+
+    const sender = (state.delegates.find(d => sameCountry(d.country, c.sender)) || {}).country || c.sender;
+    const rawRecipient = c.recipient || state.userCountry;
+    const toUser = sameCountry(rawRecipient, state.userCountry);
+    const recipient = toUser
+      ? state.userCountry
+      : ((state.delegates.find(d => sameCountry(d.country, rawRecipient)) || {}).country || rawRecipient);
+
+    if (!toUser && sameCountry(sender, recipient)) return;          // a delegate chitting itself
+
+    state.chits.push({
+      id: `c${Date.now()}${Math.floor(Math.random() * 1000)}`,
+      sender,
+      recipient,
+      text: String(c.text),
+      timestamp: new Date().toISOString(),
+      viaEB: !!c.viaEB,
+      // Unread only counts for messages actually addressed to the human, and
+      // only when they are not already looking at that thread.
+      unread: toUser ? !(open && selected === sender) : false,
+    });
+    if (toUser) {
+      arrivedForUser = true;
+      // The delegate has now answered, so stop nagging the model about it.
+      state.chits.forEach(prev => {
+        if (prev.sender === state.userCountry && sameCountry(prev.recipient, sender)) prev.answered = true;
+      });
+    }
+  });
+
+  if (arrivedForUser || list.length) {
+    updateChitBadge();
+    renderChitMessages();
+  }
 }
 
 function updateChitDropdownOptions() {
@@ -1657,13 +2303,49 @@ function renderChitMessages() {
   if (!container || !state) return;
   container.innerHTML = "";
   const recipient = $("chit-recipient-select").value;
+  const inputRow = $("chit-text-input");
+  const sendBtn = $("chit-send-btn");
+  const isLog = recipient === EB_LOG;
+
+  // The traffic log is read-only: it is other delegations' mail.
+  if (inputRow) {
+    inputRow.disabled = isLog;
+    inputRow.placeholder = isLog ? "Read-only log" : "Type a chit...";
+  }
+  if (sendBtn) sendBtn.disabled = isLog;
+
   if (!recipient) {
     container.innerHTML = `<div style="color:#888; font-style:italic; text-align:center; margin-top:1rem;">Select a delegate to begin private chits.</div>`;
     return;
   }
 
-  // Clear unread status for messages from this recipient when viewed
-  if (state.chits) {
+  if (isLog) {
+    if (!state.showChitTraffic) {
+      container.innerHTML = `<div style="color:#888; font-style:italic; font-size:0.8rem; text-align:center; margin-top:1rem;">Traffic between other delegations is hidden for this session.</div>`;
+      return;
+    }
+    const traffic = (state.chits || []).filter(c =>
+      c.sender !== state.userCountry && c.recipient !== state.userCountry
+    );
+    if (!traffic.length) {
+      container.innerHTML = `<div style="color:#888; font-style:italic; font-size:0.8rem; text-align:center; margin-top:1rem;">No chits have passed between other delegations yet. Watch here to see blocs forming before they surface on the floor.</div>`;
+      return;
+    }
+    traffic.forEach(c => {
+      const div = document.createElement("div");
+      div.className = "chit-msg traffic";
+      div.innerHTML = `<div class="sender">${escapeHtml(c.sender)} &rarr; ${escapeHtml(c.recipient)}` +
+                      (c.viaEB ? `<span class="eb-tag">(Via EB)</span>` : "") + `</div>` +
+                      `<div class="body">${formatTurnHtml(c.text, "delegate")}</div>`;
+      container.appendChild(div);
+    });
+    container.scrollTop = container.scrollHeight;
+    return;
+  }
+
+  // Only clear unread flags when the panel is actually open and on screen.
+  // Clearing them while collapsed was wiping the badge before it was ever seen.
+  if (state.chits && chitBoxOpen()) {
     let changed = false;
     state.chits.forEach(c => {
       if (c.sender === recipient && c.recipient === state.userCountry && c.unread) {
@@ -1692,11 +2374,20 @@ function renderChitMessages() {
     const viaEbTag = c.viaEB ? `<span class="eb-tag">(Via EB)</span>` : "";
     const div = document.createElement("div");
     div.className = `chit-msg ${isSent ? "sent" : "received"}`;
-    div.innerHTML = `<div class="sender">${isSent ? "You" : escapeHtml(c.sender)}${viaEbTag}</div>` +
-                    `<div>${escapeHtml(c.text)}</div>`;
+    let html = `<div class="sender">${isSent ? "You" : escapeHtml(c.sender)}${viaEbTag}</div>` +
+               `<div class="body">${formatTurnHtml(c.text, "delegate")}</div>`;
+    if (isSent && c.grade) {
+      html += `<div class="grade">Executive Board: ${escapeHtml(c.grade.score)}/10 &mdash; ${escapeHtml(c.grade.comment)}</div>`;
+    }
+    div.innerHTML = html;
     container.appendChild(div);
   });
   container.scrollTop = container.scrollHeight;
+}
+
+function setChitStatus(msg) {
+  const el = $("chit-typing");
+  if (el) el.textContent = msg || "";
 }
 
 function sendUserChit() {
@@ -1704,21 +2395,32 @@ function sendUserChit() {
   const recipient = $("chit-recipient-select").value;
   const text = input.value.trim();
   const viaEB = $("chit-via-eb-checkbox") ? $("chit-via-eb-checkbox").checked : false;
-  if (!text || !recipient) return;
+  if (!text || !recipient || recipient === EB_LOG) return;
 
   if (!state.chits) state.chits = [];
   state.chits.push({
+    id: `u${Date.now()}`,
     sender: state.userCountry,
     recipient: recipient,
     text: text,
     timestamp: new Date().toISOString(),
     unread: false,
-    viaEB: viaEB
+    viaEB: viaEB,
+    answered: false,
+    graded: false,
+    grade: null,
   });
 
   input.value = "";
   renderChitMessages();
   saveSession();
+
+  /* Deliberately no API call here. Chits ride along with the next committee
+     turn, so writing them costs nothing against the user's model quota. */
+  setChitStatus(viaEB
+    ? `Passed to the Executive Board for delivery to ${recipient}. A reply will come as committee proceeds.`
+    : `Sent to ${recipient}. A reply will come as committee proceeds.`);
+  setTimeout(() => setChitStatus(""), 5000);
 }
 
 function updateChitBadge() {
@@ -1782,6 +2484,7 @@ function renderTurn(t) {
   text.innerHTML = formatTurnHtml(t.text, t.role);
   div.appendChild(who);
   div.appendChild(text);
+  if (t.voteTally) div.appendChild(buildTallyTable(t.voteTally));
   $("transcript").appendChild(div);
   div.scrollIntoView({ behavior: "smooth", block: "end" });
 
@@ -1803,6 +2506,40 @@ function renderTurn(t) {
       }, 300);
     }
   }
+}
+
+/* One narrator turn carries a whole vote. This draws it as a table so the
+   result is readable at a glance instead of buried in a paragraph. */
+function buildTallyTable(tally) {
+  const wrap = document.createElement("div");
+  const counts = { yes: 0, no: 0, abstain: 0 };
+  const rows = tally.votes.map(v => {
+    const key = String(v.vote).toLowerCase();
+    if (key.startsWith("yes") || key.startsWith("for") || key.startsWith("in favour")) counts.yes++;
+    else if (key.startsWith("no") || key.startsWith("against")) counts.no++;
+    else if (key.startsWith("abstain")) counts.abstain++;
+
+    const code = COUNTRY_CODES[v.country];
+    const flag = code ? `<span class="flag-icon" style="margin-right:0.4em">${codeToFlagEmoji(code)}</span>` : "";
+    const isUser = sameCountry(v.country, state.userCountry);
+    return `<tr class="${isUser ? "user-row" : ""}">
+      <td>${flag}${escapeHtml(v.country)}${isUser ? " (you)" : ""}</td>
+      <td>${escapeHtml(v.vote)}</td>
+      <td>${escapeHtml(v.note || "")}</td>
+    </tr>`;
+  }).join("");
+
+  const showCounts = counts.yes + counts.no + counts.abstain > 0;
+  wrap.innerHTML =
+    `<table class="tally">
+       <tr><th colspan="3">${escapeHtml(tally.question || "Vote")}</th></tr>
+       <tr><th>Delegation</th><th>Vote</th><th>Note</th></tr>
+       ${rows}
+     </table>` +
+    `<div class="tally-summary">${escapeHtml(tally.outcome || "")}` +
+    (showCounts ? ` <span style="font-weight:normal">(${counts.yes} in favour, ${counts.no} against, ${counts.abstain} abstaining)</span>` : "") +
+    `</div>`;
+  return wrap;
 }
 
 function renderFullTranscript() {
@@ -1827,7 +2564,13 @@ function updateControls() {
 
     const box = $("option-buttons");
     box.innerHTML = "";
-    let options = state.pendingUser.options || [];
+
+    /* Options were already sanitised for this response type when the turn came
+       in. Re-run the sanitiser here so a resumed session, where only the raw
+       list was stored, gets the same treatment. */
+    const type = state.pendingUser.type
+      || classifyResponseType(null, hintText, currentPhase, "");
+    let options = sanitizeUserOptions(state.pendingUser.options || [], type);
 
     if (state.userRollCall === "Present and Voting") {
       options = options.filter(o => !/abstain/i.test(o));
@@ -1842,9 +2585,12 @@ function updateControls() {
       b.addEventListener("click", () => submitUserResponse(opt));
       box.appendChild(b);
     }
+    // An empty row of buttons still takes up space and reads as a broken UI.
+    box.style.display = options.length ? "flex" : "none";
+
     userTextElem.value = "";
     userTextElem.style.display = "";
-    if (options.length === 0) userTextElem.focus();
+    userTextElem.focus();
   }
 }
 
@@ -1859,9 +2605,13 @@ function renderScores() {
       const info = delegateInfo(s.country);
       const nameTag = (info && info.name) ? ` — ${escapeHtml(info.name)}` : "";
       const isUser = s.country === state.userCountry;
+      const chitCell = (typeof s.chitScore !== "undefined" && s.chitScore !== null)
+        ? `${escapeHtml(s.chitScore)}/10${s.chitComment ? `<br><span class="hint">${escapeHtml(s.chitComment)}</span>` : ""}`
+        : "&mdash;";
       return `<tr class="${isUser ? "user-row" : ""}">
         <td>${flagTag}Delegate of ${escapeHtml(s.country)}${nameTag}${isUser ? " (you)" : ""}</td>
         <td>${escapeHtml(s.score)}</td>
+        <td>${chitCell}</td>
         <td>${escapeHtml(s.comment)}</td>
       </tr>`;
     }).join("");
@@ -1870,7 +2620,7 @@ function renderScores() {
     <div class="card">
       <h2>Final delegate scores</h2>
       <table class="scores">
-        <tr><th>Delegate</th><th>Score</th><th>Chair’s comments</th></tr>
+        <tr><th>Delegate</th><th>Score</th><th>Chit diplomacy</th><th>Chair’s comments</th></tr>
         ${rows}
       </table>
     </div>`;
@@ -1894,7 +2644,68 @@ function renderHeader() {
 
 let requestInFlight = false;
 
-async function advanceTurn() {
+/* Did the model just try to play the human's delegation?
+   Three ways it happens, all caught here:
+     1. the turn's speaker IS the user's country;
+     2. the turn claims role "user";
+     3. a Chair or Narrator turn puts fresh words in the user's mouth. */
+function detectImpersonation(turn) {
+  const speaker = turn.speaker || "";
+  const text = String(turn.text || "");
+  const user = state.userCountry;
+
+  if (turn.role === "user") return "role was set to 'user'";
+  if (sameCountry(speaker, user) && turn.role !== "chair" && turn.role !== "narrator") {
+    return `the turn was spoken by ${user}`;
+  }
+
+  // A Chair or Narrator turn reporting a speech, vote or statement by the user
+  // that does not exist in the transcript yet.
+  const esc = user.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const ventriloquism = new RegExp(
+    `(the )?(delegate|delegation|representative) of ${esc}\\b[^.!?]{0,60}\\b(states|said|says|argues|argued|declares|declared|notes|noted|votes|voted|responds|responded|replies|replied|asks|asked|thanks the|has delivered|delivered|yields|yielded)\\b`,
+    "i"
+  );
+  if (ventriloquism.test(text)) {
+    // Allowed only if the user genuinely spoke in the last two turns.
+    const recent = state.transcript.slice(-2);
+    if (!recent.some(t => t.role === "user")) {
+      return `a ${turn.role} turn narrated words or actions for ${user} that the human never gave`;
+    }
+  }
+  return null;
+}
+
+/* Normalise whatever the model returned into a transcript entry. */
+function toEntry(turn) {
+  let role = (turn.role === "chair" || turn.role === "narrator") ? turn.role : "delegate";
+  let speaker = turn.speaker || (role === "chair" ? "Chair" : "Narrator");
+
+  // A "delegate" who is not on the roster is almost always the narrator or the
+  // secretariat wearing the wrong label.
+  if (role === "delegate") {
+    const match = state.delegates.find(d => sameCountry(d.country, speaker));
+    if (match) speaker = match.country;
+    else if (/narrator|secretariat|committee|executive board|eb\b/i.test(speaker)) role = "narrator";
+  }
+  if (role === "chair") speaker = "Chair";
+  if (role === "narrator") speaker = "Narrator";
+
+  const entry = { speaker, role, phase: turn.phase || "", text: turn.text || "" };
+
+  if (turn.voteTally && Array.isArray(turn.voteTally.votes) && turn.voteTally.votes.length) {
+    entry.voteTally = {
+      question: turn.voteTally.question || "",
+      outcome: turn.voteTally.outcome || "",
+      votes: turn.voteTally.votes
+        .filter(v => v && v.country && v.vote)
+        .map(v => ({ country: String(v.country), vote: String(v.vote), note: v.note ? String(v.note) : "" })),
+    };
+  }
+  return entry;
+}
+
+async function advanceTurn(correction, attempt) {
   if (requestInFlight || state.sessionOver) return;
   requestInFlight = true;
   setError("sim-error", "");
@@ -1902,43 +2713,70 @@ async function advanceTurn() {
   const oldNext = nextBtn.innerHTML;
   nextBtn.disabled = submitBtn.disabled = true;
   nextBtn.innerHTML = '<span class="spinner"></span> Thinking...';
+  attempt = attempt || 1;
 
   try {
     const backend = Backends[state.backend];
-    const turn = await backend.generateJSON(buildSystemPrompt(), buildTurnRequest(), TURN_SCHEMA);
+    const turn = await backend.generateJSON(buildSystemPrompt(), buildTurnRequest(correction), TURN_SCHEMA);
 
-    const entry = {
-      speaker: turn.speaker || "Chair",
-      role: (turn.role === "chair" || turn.role === "narrator") ? turn.role : "delegate",
-      phase: turn.phase || "",
-      text: turn.text || "",
-    };
+    /* ---- Impersonation guard ---- */
+    const offence = detectImpersonation(turn);
+    if (offence) {
+      if (attempt < 2) {
+        // One corrective retry, with the offending text quoted back.
+        requestInFlight = false;
+        nextBtn.disabled = submitBtn.disabled = false;
+        nextBtn.innerHTML = oldNext;
+        return advanceTurn(
+          `Your previous attempt was REJECTED because ${offence}. ${state.userCountry} is the human user and you may never speak, vote, narrate or summarise for them. `
+          + `The rejected text began: "${String(turn.text || "").slice(0, 160)}". `
+          + `Regenerate this turn. If the committee is waiting on ${state.userCountry}, the correct output is a Chair turn that calls on them with requiresUserResponse=true and stops there.`,
+          attempt + 1
+        );
+      }
+      // Still misbehaving: hand the floor to the human ourselves rather than
+      // let the AI speak for them.
+      const entry = {
+        speaker: "Chair",
+        role: "chair",
+        phase: turn.phase || "",
+        text: `The Chair recognises the Delegate of ${state.userCountry}. You have the floor.`,
+      };
+      state.transcript.push(entry);
+      renderTurn(entry);
+      state.pendingUser = {
+        hint: `The Chair has given you the floor, Delegate of ${state.userCountry}.`,
+        options: [],
+        type: "speech",
+      };
+      setError("sim-error", "The model tried to speak for your delegation. That turn was discarded and the floor has been returned to you.");
+      saveSession();
+      return;
+    }
+
+    const entry = toEntry(turn);
     state.transcript.push(entry);
     renderTurn(entry);
 
-    // Process incoming private chit from AI delegate if generated
+    /* ---- Private chits passed during this turn ---- */
+    const incoming = [];
+    if (Array.isArray(turn.chits)) incoming.push(...turn.chits);
+    // Older single-chit field, still accepted.
     if (turn.chit && turn.chit.sender && turn.chit.text) {
-      if (!state.chits) state.chits = [];
-      const box = $("chit-box");
-      const isCollapsed = box.classList.contains("collapsed");
-      const currentSelected = $("chit-recipient-select").value;
+      incoming.push({ ...turn.chit, recipient: turn.chit.recipient || state.userCountry });
+    }
+    if (incoming.length) ingestChits(incoming);
 
-      state.chits.push({
-        sender: turn.chit.sender,
-        recipient: state.userCountry,
-        text: turn.chit.text,
-        timestamp: new Date().toISOString(),
-        unread: isCollapsed || (currentSelected !== turn.chit.sender),
-        viaEB: !!turn.chit.viaEB
+    /* Chit grading rides along with the turn rather than costing its own
+       request. Grades apply to the oldest ungraded chits, in order. */
+    if (Array.isArray(turn.chitGrades) && turn.chitGrades.length) {
+      const ungraded = (state.chits || []).filter(c => c.sender === state.userCountry && !c.graded);
+      turn.chitGrades.forEach((g, idx) => {
+        const target = ungraded[idx];
+        if (!target || !g || typeof g.score === "undefined") return;
+        target.graded = true;
+        target.grade = { score: g.score, comment: g.comment || "" };
       });
-
-      if (turn.chit.sender && state.delegates.some(d => d.country === turn.chit.sender)) {
-        if (isCollapsed) {
-          $("chit-recipient-select").value = turn.chit.sender;
-        }
-      }
-
-      updateChitBadge();
       renderChitMessages();
     }
 
@@ -1947,10 +2785,12 @@ async function advanceTurn() {
       state.pendingUser = null;
       state.scores = Array.isArray(turn.scores) ? turn.scores : [];
       renderScores();
-    } else if (turn.requiresUserResponse) {
+    } else if (turn.requiresUserResponse || addressesUser(entry.text)) {
+      const type = classifyResponseType(turn.expectedResponseType, turn.userPromptHint, entry.phase, entry.text);
       state.pendingUser = {
-        hint: turn.userPromptHint || "",
-        options: Array.isArray(turn.userResponseOptions) ? turn.userResponseOptions : [],
+        hint: turn.userPromptHint || `The Chair awaits the Delegate of ${state.userCountry}.`,
+        options: sanitizeUserOptions(turn.userResponseOptions, type),
+        type,
       };
     } else {
       state.pendingUser = null;
@@ -2016,11 +2856,11 @@ async function createCommittee() {
 
   let abilityGuidance = "";
   if (state.difficulty === "beginner") {
-    abilityGuidance = "Make delegates generally simpler in capability, with researchQuality 'underprepared' or 'adequate', articulation 'halting and imprecise' or 'clear but plain', and lower aggression.";
+    abilityGuidance = "Skill ratings should sit mostly between 1 and 3, with at most one delegate at 4. Research quality 'underprepared' or 'adequate', articulation 'halting and imprecise' or 'clear but plain', lower aggression.";
   } else if (state.difficulty === "advanced") {
-    abilityGuidance = "Make delegates highly skilled and challenging, with researchQuality 'well-researched' or 'exceptionally well-researched', articulation 'polished and persuasive' or 'masterfully eloquent', and assertive aggression.";
+    abilityGuidance = "Skill ratings should sit mostly between 3 and 5, with at least two delegates at 5. Research quality 'well-researched' or 'exceptionally well-researched', articulation 'polished and persuasive' or 'masterfully eloquent', assertive aggression.";
   } else {
-    abilityGuidance = "Distribute researchQuality, articulation, and aggression evenly across all standard levels.";
+    abilityGuidance = "Spread skill ratings right across 1 to 5. The committee must contain at least one visibly out-of-their-depth delegate and at least one genuinely formidable one; a room where everyone is equally competent is wrong.";
   }
 
   const system = `You are setting up a Model United Nations simulation.
@@ -2037,7 +2877,12 @@ Select 5-15 AI delegates (excluding ${state.userCountry}). ${abilityGuidance}
 For EACH delegate:
 1. Invent a full authentic diplomatic name (e.g., 'Ambassador Sarah Chen', 'Delegate Mateo Silva').
 2. Assign a primary rhetorical archetype or preferably hybrid mix from: 'The Ideological Firebrand', 'The Policy Specialist', 'The Passive-Aggressive Diplomat', 'The Pragmatic Consensus Builder', or 'The Strategic Agitator'.
-3. Mix and match these personalities with diverse opening styles (Emotional, Clinical, Quote, Anecdotal, Rhetorical Question, Direct Call-out, Decorum) and closing styles (Impactful Point, Executive Summary, Call to Unity, Brighter Future, Reflective Quote, Line-in-the-Sand, Caucus Call).`;
+3. Mix and match these personalities with diverse opening styles (Emotional, Clinical, Quote, Anecdotal, Rhetorical Question, Direct Call-out, Decorum) and closing styles (Impactful Point, Executive Summary, Call to Unity, Brighter Future, Reflective Quote, Line-in-the-Sand, Caucus Call).
+4. Give a skill rating 1-5 and a separate procedure rating 1-5. These need not match: a delegate can be a spellbinding speaker who keeps raising the wrong kind of point, or a dull speaker with total command of the rules.
+5. Give a signature verbal habit that will recur in every speech, a narrow pet issue they steer everything back to, a likely bloc alignment, and one concrete visible weakness. Make these specific to the country and the agenda, not generic.
+6. Stances must genuinely conflict. Build in at least two delegations whose positions are irreconcilable, and at least one swing delegation both sides will court.
+
+No two delegates should share an archetype, an opening style or a closing style unless the roster is larger than the number of available options.`;
 
   const setup = await backend.generateJSON(system, request, SETUP_SCHEMA);
 
@@ -2046,7 +2891,57 @@ For EACH delegate:
   }
   state.chairName = setup.chairName || "The Chair";
   state.chairPersonality = setup.chairPersonality || "The Encouraging Mentor";
-  state.delegates = setup.delegates.filter(d => d.country && d.country !== state.userCountry).slice(0, 15);
+  state.delegates = setup.delegates
+    .filter(d => d.country && !sameCountry(d.country, state.userCountry))
+    .slice(0, 15);
+  enforceDelegateVariety();
+}
+
+/* Models asked for "a varied roster" reliably return one that is varied on
+   paper and flat in practice: eight delegates all rated 4, all "polished and
+   persuasive". The spread is therefore imposed here rather than requested.
+   Anything the model filled in sensibly is kept; only gaps and flatness are
+   overwritten. */
+function enforceDelegateVariety() {
+  const n = state.delegates.length;
+  if (!n) return;
+
+  const ladders = {
+    beginner:     [1, 2, 1, 3, 2, 1, 2, 3, 1, 2, 3, 2, 1, 4, 2],
+    intermediate: [2, 4, 1, 3, 5, 2, 3, 4, 1, 3, 2, 5, 3, 2, 4],
+    advanced:     [3, 5, 4, 3, 5, 4, 2, 5, 3, 4, 5, 3, 4, 5, 4],
+  };
+  const ladder = ladders[state.difficulty] || ladders.intermediate;
+
+  const clamp = v => Math.max(1, Math.min(5, Math.round(Number(v) || 0)));
+  const skills = state.delegates.map(d => clamp(d.skill));
+  const distinct = new Set(skills).size;
+  const spread = Math.max(...skills) - Math.min(...skills);
+
+  // Flat roster: fewer than three distinct ratings, or a range of one.
+  const isFlat = n >= 4 && (distinct < 3 || spread < 2);
+
+  const RESEARCH = ["underprepared", "underprepared", "adequate", "well-researched", "exceptionally well-researched"];
+  const ARTICULATION = ["halting and imprecise", "halting and imprecise", "clear but plain", "polished and persuasive", "masterfully eloquent"];
+
+  state.delegates.forEach((d, i) => {
+    d.skill = isFlat || !d.skill ? ladder[i % ladder.length] : clamp(d.skill);
+    // Procedure is deliberately decoupled from speaking skill so the room
+    // contains eloquent rule-breakers and plodding rules lawyers.
+    d.procedure = d.procedure ? clamp(d.procedure)
+                              : clamp(d.skill + [1, -1, 0, 2, -2][i % 5]);
+
+    if (isFlat || !d.researchQuality) d.researchQuality = RESEARCH[d.skill - 1];
+    if (isFlat || !d.articulation)    d.articulation    = ARTICULATION[d.skill - 1];
+
+    if (!d.quirk)    d.quirk    = "opens every intervention by thanking the Chair at length";
+    if (!d.petIssue) d.petIssue = "financing and who pays for it";
+    if (!d.bloc)     d.bloc     = "unaligned";
+    if (!d.weakness) d.weakness = d.skill <= 2
+      ? "cites figures without sources and cannot answer follow-up questions"
+      : "will not concede a point even when the evidence has moved";
+    if (!d.aggression) d.aggression = ["reserved", "measured", "assertive", "combative", "measured"][i % 5];
+  });
 }
 
 /* ==================================================================
@@ -2062,10 +2957,36 @@ function exportTranscript() {
     const code = (t.role !== "chair" && t.role !== "narrator") ? COUNTRY_CODES[t.speaker] : null;
     const flagTag = code ? `${codeToFlagEmoji(code)} ` : "";
     const cls = t.role === "user" ? "user" : t.role;
+    let tallyHtml = "";
+    if (t.voteTally) {
+      const rows = t.voteTally.votes.map(v =>
+        `<tr><td>${escapeHtml(v.country)}</td><td>${escapeHtml(v.vote)}</td><td>${escapeHtml(v.note || "")}</td></tr>`
+      ).join("");
+      tallyHtml = `<table class="tally"><tr><th colspan="3">${escapeHtml(t.voteTally.question || "Vote")}</th></tr>` +
+                  `<tr><th>Delegation</th><th>Vote</th><th>Note</th></tr>${rows}</table>` +
+                  `<p><strong>${escapeHtml(t.voteTally.outcome || "")}</strong></p>`;
+    }
     return `<div class="turn ${cls}"><div class="who">${flagTag}${escapeHtml(who)}` +
            (t.phase ? ` <span class="phase">${escapeHtml(t.phase)}</span>` : "") +
-           `</div><div class="text">${formatTurnHtml(t.text, t.role)}</div></div>`;
+           `</div><div class="text">${formatTurnHtml(t.text, t.role)}</div>${tallyHtml}</div>`;
   }).join("\n");
+
+  /* Chits are half the diplomacy, so the export keeps them, split into the
+     user's own threads and the traffic between other delegations. */
+  const chits = state.chits || [];
+  const mine = chits.filter(c => c.sender === state.userCountry || c.recipient === state.userCountry);
+  const traffic = state.showChitTraffic
+    ? chits.filter(c => c.sender !== state.userCountry && c.recipient !== state.userCountry)
+    : [];
+  const chitRow = c =>
+    `<div class="chit"><strong>${escapeHtml(c.sender)} &rarr; ${escapeHtml(c.recipient)}</strong>` +
+    (c.viaEB ? " <em>(via EB)</em>" : "") + formatTurnHtml(c.text, "delegate") +
+    (c.grade ? `<br><em>Executive Board: ${escapeHtml(c.grade.score)}/10 &mdash; ${escapeHtml(c.grade.comment)}</em>` : "") +
+    `</div>`;
+  const chitsHtml = chits.length
+    ? `<h2>Private chits</h2>${mine.map(chitRow).join("")}` +
+      (traffic.length ? `<h3>Traffic between other delegations</h3>${traffic.map(chitRow).join("")}` : "")
+    : "";
 
   const doc = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"/>
@@ -2080,11 +3001,16 @@ function exportTranscript() {
  .who{font-weight:bold;margin-bottom:.3rem}
  blockquote{border-left:3px solid #021c6f;margin:.5em 0;padding-left:.8em;font-style:italic}
  ul{margin:.5em 0;padding-left:1.4em}
+ table.tally{border-collapse:collapse;width:100%;margin:.6em 0;font-size:.9rem}
+ table.tally th,table.tally td{border:1px solid #d7dee5;padding:.25em .6em;text-align:left}
+ table.tally th{background:#021c6f;color:#fff;font-weight:normal}
+ .chit{border:1px solid #d7dee5;border-radius:6px;padding:.5em .8em;margin:.4em 0;background:#f9fbfd;font-size:.9rem}
 </style></head><body>
 <h1>Model United Nations — Session Transcript</h1>
 <p><strong>Committee:</strong> ${escapeHtml(state.committee.name)} (${escapeHtml(state.difficulty.toUpperCase())})<br>
 <strong>Agenda:</strong> ${escapeHtml(state.agenda)}</p>
 ${turnsHtml}
+${chitsHtml}
 </body></html>`;
 
   const blob = new Blob([doc], { type: "text/html" });
@@ -2247,6 +3173,7 @@ $("start-btn").addEventListener("click", async () => {
   const userCountry = $("country-select").value;
   const difficulty = $("difficulty-select").value;
   const enableCrisis = (difficulty !== "beginner") && ($("crisis-select").value === "yes");
+  const showChitTraffic = $("chit-traffic-select").value === "yes";
 
   if (!agenda) { setError("setup-error", "Please enter an agenda for the meeting."); return; }
   setError("setup-error", "");
@@ -2254,7 +3181,7 @@ $("start-btn").addEventListener("click", async () => {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Creating committee...';
 
-  state = newState(committee, agenda, userCountry, difficulty, enableCrisis);
+  state = newState(committee, agenda, userCountry, difficulty, enableCrisis, showChitTraffic);
   state.userIsMember = isCommitteeMember(committee, userCountry);
 
   try {
