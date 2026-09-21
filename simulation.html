@@ -59,6 +59,15 @@ button.secondary {
 }
 button.secondary:hover { background: #eef7fb; }
 
+/* Ballot buttons: colour-coded so a vote can't be misclicked in a hurry,
+   the way a paper ballot with a Yes/No box would be. */
+button.vote-yes { background: #2e7d32; border-color: #1b5e20; }
+button.vote-yes:hover { background: #1b5e20; }
+button.vote-no { background: #c62828; border-color: #8e0000; }
+button.vote-no:hover { background: #8e0000; }
+button.vote-abstain, button.vote-present { background: #607d8b; border-color: #37474f; }
+button.vote-abstain:hover, button.vote-present:hover { background: #37474f; }
+
 /* Form inputs & dropdowns */
 input[type=text], input[type=password], textarea, select {
   font-family: Georgia, "Times New Roman", serif;
@@ -729,7 +738,11 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
       <div id="respond-area" style="display:none">
         <div id="user-prompt-hint"></div>
         <div id="option-buttons"></div>
+        <div id="speech-suggest-row" style="display:none; margin-bottom:0.4rem;">
+          <a href="#" id="speech-suggest-link" class="rop-link" style="font-size:0.9rem;">💡 See speech suggestions</a>
+        </div>
         <textarea id="user-text" placeholder="Type your response, motion, point, or speech here..."></textarea>
+        <div id="word-count-hint" class="hint" style="display:none; margin:-0.4rem 0 0.6rem;"></div>
         <button id="submit-response-btn">Submit response</button>
       </div>
 
@@ -1515,6 +1528,7 @@ const TURN_SCHEMA = {
         required: ["score", "comment"],
       },
     },
+    summary: { type: "STRING", description: "REQUIRED. One short factual sentence: who did/said what this turn. Earlier turns are shown to you as this summary only (not the full text) to save tokens, so make it complete enough to preserve continuity — name any commitment, vote intent, or fact that later turns must remember." },
     sessionOver: { type: "BOOLEAN", description: "True only on final turn" },
     scores: {
       type: "ARRAY",
@@ -1586,7 +1600,27 @@ function loadSession() {
    7. DYNAMIC PROMPT BUILDERS
    ================================================================== */
 
+/* buildSystemPrompt() is a pure function of things that are all fixed at
+   committee creation (committee, agenda, roster, chair, difficulty) — none
+   of them change turn-to-turn. Rebuilding and re-concatenating this large
+   string from scratch before every single turn was wasted work, and it
+   also meant the text could never be guaranteed byte-identical between
+   calls, which matters because several providers (Anthropic, OpenAI) cache
+   an identical system prompt server-side and charge/latency less on a
+   cache hit. Caching it here, keyed on the `state` object reference so a
+   brand-new committee always recomputes, is a free win either way. */
+let _systemPromptCache = { forState: null, text: null };
+
 function buildSystemPrompt() {
+  if (_systemPromptCache.forState === state && _systemPromptCache.text) {
+    return _systemPromptCache.text;
+  }
+  const text = buildSystemPromptUncached();
+  _systemPromptCache = { forState: state, text };
+  return text;
+}
+
+function buildSystemPromptUncached() {
   const roster = state.delegates.map(d =>
     `• ${d.country} | ${d.name} | SK${d.skill||3} PR${d.procedure||3} | ${d.researchQuality||"adequate"} | ${d.articulation||"clear"} | ${d.aggression||"measured"} aggression | ${d.bloc||"unaligned"} | ${d.speechStyle||"balanced"} / opens:${d.openingStyle||"varied"} / closes:${d.closingStyle||"varied"}
   Stance: ${d.persona} | Pet issue: ${d.petIssue||"core agenda"} | Habit: ${d.quirk||"none"} | Weakness: ${d.weakness||"none"}`
@@ -1668,6 +1702,8 @@ CRITICAL RULES:
 
 0g. BUTTONS. Set \`expectedResponseType\` always. NO buttons for speech, question, answer, amendment, position_paper, unmod. Buttons only for motion, vote, rollcall, yield, choice.
 
+0h. ALWAYS set \`summary\`: one factual sentence on this turn. Turns older than the last ${RECENT_FULL_TURNS} are shown to you as this summary alone, not the full text, to hold down token cost — so the summary must carry any commitment, stance, or fact a later turn will need.
+
 1. Delegates say "the Delegate of [Country]" or "this delegation". Never "I", never personal names.
 2. The Chair states seconds used and seconds remaining after every speech — exact figures are supplied to you each turn.
 3. YIELDS MUST VARY. Do not let delegates keep yielding to the Chair. Rotate between the Chair, Points of Information, and another delegate. The turn request names which is overdue.
@@ -1679,14 +1715,30 @@ CRITICAL RULES:
 8. Output only the JSON turn object.`;
 }
 
+/* How many of the most recent turns are sent verbatim. Everything older is
+   compressed to its one-line `summary` instead of full text — this is the
+   token-cost reduction: a 60-turn committee would otherwise resend every
+   speech in full on every single request. Turns carrying a voteTally or an
+   unresolved chit reference are still worth keeping full text for a little
+   longer, but the vote/chit DATA itself already survives in voteTally /
+   state.chits regardless of what happens to the prose, so summarising is
+   safe. */
+const RECENT_FULL_TURNS = 5;
+
 function buildTurnRequest(correction) {
-  const lines = state.transcript.map(t => {
+  const total = state.transcript.length;
+  const lines = state.transcript.map((t, i) => {
     const tag = t.role === "user" ? `${t.speaker} (THE HUMAN USER - these are the human's own words)`
               : t.role === "chair" ? "Chair"
               : t.speaker;
-    return `[${t.phase || ""}] ${tag}:\n${t.text}`;
+    const isRecent = i >= total - RECENT_FULL_TURNS;
+    if (isRecent) return `[${t.phase || ""}] ${tag}:\n${t.text}`;
+    // Older turn: summary only, to save tokens.
+    return `[${t.phase || ""}] ${tag} (summary): ${t.summary || summarizeEntry(t)}`;
   });
-  let req = `TRANSCRIPT (turn ${state.transcript.length}):\n\n`
+  let req = `TRANSCRIPT (turn ${state.transcript.length}`
+          + (total > RECENT_FULL_TURNS ? `; turns before the last ${RECENT_FULL_TURNS} are condensed to one-line summaries to save tokens — treat each summary as ground truth` : "")
+          + `):\n\n`
           + (lines.length ? lines.join("\n\n---\n\n") : "(none - committee has not started)")
           + "\n\n===\nGenerate the NEXT single turn now.";
 
@@ -1809,7 +1861,8 @@ function buildChitContext() {
        + `(2) A chit to the human is either a QUESTION, or an offer to collaborate ONLY where real foreign policy genuinely aligns. `
        + `Never propose collaboration between states that are actual adversaries on this agenda. `
        + `(3) Never repeat a chit you have already sent. (4) AI-to-AI chits should be the bulk of the traffic: whip votes, split clauses, warn allies. `
-       + `(5) Set showToUser=true only for an open bloc-wide circular. (6) Set substantive=true when the chit asks a real policy or drafting question — an unanswered substantive chit costs the recipient marks.`;
+       + `(5) Set showToUser=true only for an open bloc-wide circular. (6) Set substantive=true when the chit asks a real policy or drafting question — an unanswered substantive chit costs the recipient marks. `
+       + `(7) PRIVACY: a chit is private to its sender and its named recipient(s) only. You can see the whole log to keep the story straight, but no delegation may reference, reply to, or act on a chit's CONTENT unless it was actually sent to them — a delegate who was not on a chit does not know what it said. Double-check sender/recipient(s) match who you intend before adding a chit; never address a chit to the wrong country.`;
   return out;
 }
 
@@ -2154,6 +2207,17 @@ function countWords(text) {
   return String(text || "").trim().split(/\s+/).filter(Boolean).length;
 }
 
+/* Code-side fallback summary, used whenever the model omits `summary` (or a
+   turn was rewritten/corrected in code, e.g. a fixed motion sentence). Never
+   trust the model to always remember this field; the transcript-compression
+   in buildTurnRequest depends on every turn having SOME summary. */
+function summarizeEntry(entry) {
+  const text = String(entry.text || "").replace(/\s+/g, " ").trim();
+  const words = text.split(" ");
+  const short = words.slice(0, 24).join(" ") + (words.length > 24 ? "…" : "");
+  return `${entry.speaker}: ${short}`;
+}
+
 /* How long is a speech allowed to run right now?
    Reads the most recent motion that set a speaking time; otherwise the GSL
    default of 90 seconds. */
@@ -2175,6 +2239,22 @@ function speechTiming(text, limitSeconds) {
   const usedSeconds = Math.round((words / WORDS_PER_MINUTE) * 60);
   const remaining = Math.max(0, limit - usedSeconds);
   return { words, usedSeconds, remaining, limit, overran: usedSeconds > limit };
+}
+
+/* Live word/timing readout under the textbox while the human is drafting a
+   speech — the same arithmetic speechTiming() already does for the Chair's
+   post-speech announcement, just surfaced before they submit instead of
+   after. Cheap (runs on every keystroke) since it is pure arithmetic on the
+   current textarea value, no re-render of anything else. */
+function updateWordCountHint() {
+  const hint = $("word-count-hint");
+  if (!hint || hint.style.display === "none") return;
+  const text = $("user-text").value;
+  if (!text.trim()) { hint.textContent = ""; return; }
+  const tm = speechTiming(text);
+  hint.textContent = `${tm.words} words \u2248 ${tm.usedSeconds}s of your ${tm.limit}s`
+    + (tm.overran ? ` \u2014 over by ${tm.usedSeconds - tm.limit}s` : ` (${tm.remaining}s left)`);
+  hint.style.color = tm.overran ? "#b71c1c" : "#5a6b7a";
 }
 
 /* ---------- Yield variety -------------------------------------------
@@ -2341,6 +2421,54 @@ function delegateInfo(country) {
   return state.delegates.find(d => d.country === country) || null;
 }
 
+/* ==================================================================
+   BEGINNER SPEECH-SUGGESTION HELPER
+   ------------------------------------------------------------------
+   Built entirely in code from data already on hand (no extra API call,
+   so it is instant and cannot go stale or hallucinate). Draws on the
+   human's past chits, questions/answers and speeches, and on the most
+   recent AI speech worth engaging with; falls back to a generic
+   portfolio/agenda prompt only when there is no history yet to draw on.
+   ================================================================== */
+function buildSpeechSuggestions() {
+  const mine = state.userCountry;
+  const bullets = [];
+
+  const myChits = (state.chits || []).filter(c =>
+    c.sender === mine || c.recipient === mine || (Array.isArray(c.recipients) && c.recipients.includes(mine)));
+  if (myChits.length) {
+    const c = myChits[myChits.length - 1];
+    const other = c.sender === mine ? c.recipient : c.sender;
+    const snippet = String(c.text || "").slice(0, 100);
+    bullets.push(`Follow up on your chit exchange with ${other}: "${snippet}${c.text.length > 100 ? "…" : ""}" — bring it onto the floor if it strengthens your case.`);
+  }
+
+  const myQuestions = state.transcript.filter(t => t.role === "user" && /\?/.test(t.text || ""));
+  if (myQuestions.length) {
+    const q = myQuestions[myQuestions.length - 1];
+    bullets.push(`Revisit the question you already raised: "${q.text.slice(0, 100)}${q.text.length > 100 ? "…" : ""}" — call it out if it still hasn't been answered.`);
+  }
+
+  const mySpeeches = state.transcript.filter(t => t.role === "user" && (t.text || "").length > 120);
+  if (mySpeeches.length) {
+    const s = mySpeeches[mySpeeches.length - 1];
+    bullets.push(`Stay consistent with your own last speech: "${s.text.slice(0, 100)}…" — extend the argument rather than repeat it.`);
+  }
+
+  const lastAiSpeech = [...state.transcript].reverse().find(t => t.role === "delegate" && (t.text || "").length > 120);
+  if (lastAiSpeech) {
+    bullets.push(`Respond directly to ${lastAiSpeech.speaker}'s last point: "${lastAiSpeech.text.slice(0, 100)}…" — agree, rebut, or build on it by name.`);
+  }
+
+  if (!bullets.length) {
+    bullets.push(`Open with ${mine}'s real foreign-policy position on "${state.agenda}" — what does your government actually say about this issue?`);
+    bullets.push(`Name one concrete instrument, precedent or figure ${mine} would genuinely cite on this agenda.`);
+    bullets.push(`State the outcome ${mine} wants from this committee, and which delegations it is likely to align with or clash with.`);
+  }
+
+  return bullets.slice(0, 4);
+}
+
 function showScreen(name) {
   for (const s of ["screen-key", "screen-setup", "screen-sim"]) {
     $(s).style.display = (s === `screen-${name}`) ? "" : "none";
@@ -2406,7 +2534,13 @@ function formatInline(s) {
    mistaken for an emphasis marker, and keyword highlighting runs last so it
    only ever sees finished text. */
 function formatTurnHtml(raw, role) {
-  const highlight = (state && state.difficulty === "beginner" && (role === "chair" || role === "narrator"));
+  /* Beginner highlighting applies to every speaker, not just the Chair and
+     Narrator: delegates constantly use the same procedural vocabulary
+     ("raises a point of order", "moves for a moderated caucus"), and a
+     beginner needs the same glossary help there. keywordAppliesHere()'s
+     sentence-context check still keeps ordinary English (e.g. "the floor
+     is covered in") from lighting up. */
+  const highlight = !!(state && state.difficulty === "beginner");
   const line = s => {
     let out = formatInline(s);
     if (highlight) {
@@ -3049,6 +3183,19 @@ function updateControls() {
     const userTextElem = $("user-text");
     userTextElem.placeholder = getDynamicPlaceholder(hintText, currentPhase);
 
+    /* Beginner-only speech-suggestion helper, above the textbox, and only
+       when the human is actually about to write a speech (not a vote,
+       motion, question, etc.) — see buildSpeechSuggestions(). */
+    const suggestRow = $("speech-suggest-row");
+    if (suggestRow) suggestRow.style.display = (state.difficulty === "beginner" && type === "speech") ? "" : "none";
+
+    /* Live word/timing counter for speeches, computed the same way the
+       Chair's own timing arithmetic is (see speechTiming/countWords) so the
+       human gets the identical real-time feedback an AI delegate's speech
+       is judged against, instead of finding out only after they submit. */
+    const wcHint = $("word-count-hint");
+    if (wcHint) wcHint.style.display = (type === "speech") ? "" : "none";
+
     const box = $("option-buttons");
     box.innerHTML = "";
     let options = sanitizeUserOptions(state.pendingUser.options || [], type);
@@ -3065,6 +3212,14 @@ function updateControls() {
     for (const opt of options) {
       const b = document.createElement("button");
       b.textContent = opt;
+      /* Colour-code ballot buttons so Yes/No/Abstain read at a glance. */
+      if (NO_TEXTBOX_TYPES.has(type)) {
+        const lower = opt.trim().toLowerCase();
+        if (lower.startsWith("yes")) b.classList.add("vote-yes");
+        else if (lower.startsWith("no")) b.classList.add("vote-no");
+        else if (lower.includes("abstain")) b.classList.add("vote-abstain");
+        else if (lower.includes("present")) b.classList.add("vote-present");
+      }
       b.addEventListener("click", () => submitUserResponse(opt));
       box.appendChild(b);
     }
@@ -3077,6 +3232,7 @@ function updateControls() {
     userTextElem.style.display = hideBox ? "none" : "";
     $("submit-response-btn").style.display = hideBox ? "none" : "";
     if (!hideBox) userTextElem.focus();
+    updateWordCountHint();
   }
 }
 
@@ -3203,6 +3359,7 @@ function toEntry(turn) {
 
   const phase = normalizePhase(turn.phase, text, role);
   const entry = { speaker, role, phase, text };
+  entry.summary = (turn.summary ? String(turn.summary).trim().slice(0, 240) : "") || summarizeEntry(entry);
 
   if (turn.voteTally && Array.isArray(turn.voteTally.votes) && turn.voteTally.votes.length) {
     entry.voteTally = {
@@ -3299,6 +3456,7 @@ async function advanceTurn(correction, attempt) {
         phase: PHASES.GSL,
         text: `The Chair recognises the Delegate of ${state.userCountry}. You have the floor.`,
       };
+      entry.summary = summarizeEntry(entry);
       state.transcript.push(entry);
       renderTurn(entry);
       state.pendingUser = {
@@ -3421,6 +3579,7 @@ function submitUserResponse(fixedChoice) {
   /* Time the human's speech in code too, so the Chair gets real numbers for
      them exactly as it does for the AI delegates. */
   if (text.length > 120) entry.timing = speechTiming(text);
+  entry.summary = summarizeEntry(entry);
   state.transcript.push(entry);
   renderTurn(entry);
   state.pendingUser = null;
@@ -3853,7 +4012,17 @@ $("submit-response-btn").addEventListener("click", () => submitUserResponse(null
 $("user-text").addEventListener("keydown", e => {
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitUserResponse(null);
 });
+$("user-text").addEventListener("input", updateWordCountHint);
 $("export-btn").addEventListener("click", exportTranscript);
+$("speech-suggest-link").addEventListener("click", (e) => {
+  e.preventDefault();
+  const bullets = buildSpeechSuggestions();
+  const html = '<ul style="margin:0;padding-left:1.2em;">'
+    + bullets.map(b => `<li style="margin-bottom:0.6em;">${escapeHtml(b)}</li>`).join("")
+    + '</ul>';
+  showModal("Speech suggestions", html);
+});
+
 $("new-session-btn").addEventListener("click", () => {
   if (!confirm("Discard this session and start a new one?")) return;
   clearSession();
