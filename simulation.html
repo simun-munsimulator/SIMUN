@@ -1093,7 +1093,7 @@ const DEFAULT_BACKEND = "gemini";
 
 /* The response schemas in section 5 are written in Gemini's dialect of
    OpenAPI, which uses UPPER-CASE type names ("OBJECT", "STRING", ...).
-   Anthropic, OpenAI and Groq all want ordinary JSON Schema, which is the
+   Anthropic and OpenAI both want ordinary JSON Schema, which is the
    same shape with lower-case type names. Rather than maintain two copies
    of every schema, we convert on the fly. */
 function toJsonSchema(node) {
@@ -1114,12 +1114,20 @@ function toJsonSchema(node) {
       out[key] = value;
     }
   }
+  // Anthropic's structured-output validator (and strict OpenAI JSON-schema
+  // mode) both reject an "object" schema unless additionalProperties is
+  // explicitly false, at every nesting level, not just the root. Set it
+  // here rather than in each SCHEMA literal so every backend gets it for
+  // free and it can never be forgotten on a future schema edit.
+  if (out.type === "object" && !("additionalProperties" in out)) {
+    out.additionalProperties = false;
+  }
   return out;
 }
 
-/* Most providers can be told to return strict JSON, but some (notably
-   Groq's agentic "compound" systems) cannot, and may wrap the answer in
-   prose or a ```json fence. This digs the JSON object back out. */
+/* Most providers can be told to return strict JSON, but a model can still
+   occasionally wrap the answer in prose or a ```json fence. This digs the
+   JSON object back out as a safety net. */
 function extractJSON(text) {
   const trimmed = String(text).trim();
   try { return JSON.parse(trimmed); } catch (e) { /* not bare JSON, keep trying */ }
@@ -1172,17 +1180,17 @@ const backendStorage = {
   },
 };
 
-/* OpenAI and Groq both speak OpenAI's "chat completions" wire format, so
-   they share this one request function. `structured` says how hard the
-   API can be made to return JSON:
+/* OpenAI-compatible "chat completions" wire format. `structured` says how
+   hard the API can be made to return JSON:
      "schema" - the API validates the reply against our JSON Schema
      "object" - the API only guarantees *some* valid JSON object
      "prompt" - the API guarantees nothing, so we ask in the prompt
-   For the last two we also paste the schema into the system prompt. */
+   For the last two we also paste the schema into the system prompt. Only
+   "schema" is used today (OpenAI), but the function stays generic so a
+   future OpenAI-compatible backend can plug in without rewriting it. */
 async function chatCompletionsJSON({ label, url, apiKey, model, system, userText, schema, structured }) {
   const jsonSchema = toJsonSchema(schema);
-  // max_tokens: Groq requires this field and 400s without it on several models.
-  // 4096 is enough for any single MUN turn and stays within free-tier limits.
+  // 4096 tokens is enough for any single MUN turn.
   const body = { model, messages: [], max_tokens: 4096, temperature: 0.9 };
   let systemPrompt = system;
 
@@ -1338,84 +1346,6 @@ const Backends = {
     },
   }),
 
-  /* --- Groq: OpenAI-compatible endpoint, very fast inference --- */
-  groq: Object.assign({}, backendStorage, {
-    label: "Groq",
-    // Groq rotates model availability frequently. The generateJSON method
-    // walks a preference list and uses the first model that responds to a
-    // /models lookup, so the app never silently 400 because a model was
-    // retired. You can still type any model name in the model box to override.
-    defaultModel: "auto",
-    models: [
-      "auto (recommended — picks the best available model for you)",
-      "meta-llama/llama-4-maverick-17b-128e-instruct",
-      "meta-llama/llama-4-scout-17b-16e-instruct",
-      "moonshotai/kimi-k2-instruct",
-      "llama-3.3-70b-versatile",
-      "openai/gpt-oss-120b",
-      "groq/compound",
-    ],
-    modelHint: "Leave as 'auto' and the app will pick the best available Groq model automatically. You can also type any Groq model ID directly. Avoid groq/compound — it cannot accept a JSON schema and will speak for your delegation.",
-    keyLabel: "Groq API key",
-    keyPlaceholder: "gsk_...",
-    keyHint: 'Create a free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>.',
-    storageKey: "mun_api_key_groq",
-
-    // Preference-ordered list of chat models. The first one found in Groq's
-    // live /models listing is used for the session. llama-4-maverick is first:
-    // it has a 524k context window and the highest TPM allowance on free tier.
-    _preferred: [
-      "meta-llama/llama-4-maverick-17b-128e-instruct",
-      "meta-llama/llama-4-scout-17b-16e-instruct",
-      "moonshotai/kimi-k2-instruct",
-      "llama-3.3-70b-versatile",
-      "openai/gpt-oss-120b",
-    ],
-    _resolvedModel: null,   // cached after the first /models call this session
-
-    async resolveModel() {
-      const chosen = this.getModel();
-      // User picked an explicit model (anything other than "auto").
-      if (chosen && chosen !== "auto") return chosen;
-      // Return cached result to avoid a /models round-trip on every turn.
-      if (this._resolvedModel) return this._resolvedModel;
-
-      try {
-        const resp = await fetch("https://api.groq.com/openai/v1/models", {
-          headers: { "Authorization": `Bearer ${this.getKey()}` },
-        });
-        if (resp.ok) {
-          const data = await resp.json();
-          const available = new Set((data.data || []).map(m => m.id));
-          for (const m of this._preferred) {
-            if (available.has(m)) {
-              this._resolvedModel = m;
-              return m;
-            }
-          }
-        }
-      } catch (e) { /* network error — fall through to the first preference */ }
-
-      // Could not reach /models; use the first preference and let the chat
-      // call surface any 400 with its own error message.
-      this._resolvedModel = this._preferred[0];
-      return this._resolvedModel;
-    },
-
-    async generateJSON(system, userText, schema) {
-      const model = await this.resolveModel();
-      // Compound models are agentic systems and do not accept response_format.
-      const structured = /compound/i.test(model) ? "prompt" : "object";
-      return chatCompletionsJSON({
-        label: `Groq (${model})`,
-        url: "https://api.groq.com/openai/v1/chat/completions",
-        apiKey: this.getKey(),
-        model,
-        system, userText, schema,
-        structured,
-      });
-    },
-  }),
 };
 
 /* ==================================================================
