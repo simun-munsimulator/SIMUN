@@ -1507,6 +1507,8 @@ function newState(committee, agenda, userCountry, difficulty, enableCrisis, show
     chits: [], // Array of private chit messages { id, timestamp, sender, recipient, text, unread, viaEB }
     pendingUser: null,
     userRollCall: null,
+    gslJoinOffered: false,
+    userOnGSL: null,
     resolutionPhasePopupShown: false,
     sessionOver: false,
     scores: null,
@@ -1691,22 +1693,57 @@ function buildTurnRequest(correction) {
     req += `\nROLL CALL NOT YET COMPLETE. No vote of any kind may happen until the Chair has taken roll call and the human has answered it.`;
   }
 
+  /* ---- GSL sign-up, forced in code so it can't be quietly skipped ----
+     Whether to join the Speakers List was previously left entirely to the
+     model's own initiative per the ROP text, and with a shortened
+     transcript window it was easy for that one-time ask to fall through
+     the cracks. This keeps nudging every turn, once the GSL has actually
+     opened, until either the human is asked (and answers) or they've
+     already spoken on it anyway. */
+  const gslOpened = state.transcript.some(t => t.phase === PHASES.GSL);
+  const userAlreadyInGSL = state.transcript.some(t => t.role === "user" && t.phase === PHASES.GSL);
+  if (gslOpened && !state.gslJoinOffered && !userAlreadyInGSL && state.userIsMember !== false) {
+    req += `\n\nGSL SIGN-UP OWED: The General Speakers List is open but ${state.userCountry} has not yet been asked whether to add their name to it. `
+         + `The Chair's NEXT turn MUST ask them directly: requiresUserResponse=true, expectedResponseType="choice", userResponseOptions=["Add me to the Speakers List","Not at this time"]. Do this before giving any more AI delegates the floor.`;
+  }
+
   /* ---- Exact speech timing, calculated in code ----
      The model cannot count words reliably, so it is handed the finished
-     arithmetic and told what the Chair must now say. */
+     arithmetic and told what the Chair must now say. Two bugs lived here
+     before: (1) the whole block was skipped whenever the speech text
+     itself contained the word "yield" — but a real MUN speech routinely
+     ENDS with the speaker's own yield ("...and I yield to the Chair"), so
+     that check was silencing the timing announcement on most ordinary
+     speeches. (2) it fired on POI answers too (any reply over 120 chars),
+     which is why delegates were being asked to yield again right after
+     answering a question — an answer to a Point of Information is not a
+     new speech and was never given its own speaking-time slot to yield
+     from. Both are fixed below: a self-stated yield in the text still gets
+     the timing line (just not a second "how do you yield" prompt), and a
+     POI answer is excluded from the block entirely. */
+  const prevTurn = state.transcript[state.transcript.length - 2];
+  const looksLikePoiAnswer = !!(prevTurn
+    && /\?\s*$/.test(String(prevTurn.text || "").trim())
+    && prevTurn.speaker !== (lastTurn ? lastTurn.speaker : null)
+    && !/you have the floor|the floor is yours|recognis?es the delegate/i.test(String(prevTurn.text || "")));
   if (lastTurn && (lastTurn.role === "delegate" || lastTurn.role === "user")
       && lastTurn.text && lastTurn.text.length > 120
       && !looksLikeMotion(lastTurn.text)
-      && !/yield/i.test(lastTurn.text)) {
+      && !looksLikePoiAnswer) {
     const tm = lastTurn.timing || speechTiming(lastTurn.text);
     const who = lastTurn.role === "user" ? state.userCountry : lastTurn.speaker;
+    const selfYielded = /\byield/i.test(lastTurn.text);
     req += `\n\nSPEECH TIMING (already calculated - use these exact numbers, do not recompute): `
-         + `${who} spoke ${tm.words} words = ${tm.usedSeconds}s of the ${tm.limit}s limit. `
-         + (tm.overran
-            ? `They OVERRAN by ${tm.usedSeconds - tm.limit}s; the Chair must cut them off and note it.`
-            : `${tm.remaining}s REMAIN. The Chair's next turn MUST state "${tm.usedSeconds} seconds used, ${tm.remaining} seconds remaining" and ASK HOW THEY YIELD.`);
-    if (lastTurn.role === "user" && tm.remaining > 0) {
-      req += ` Since this was the human, set requiresUserResponse=true, expectedResponseType="yield".`;
+         + `${who} spoke ${tm.words} words = ${tm.usedSeconds}s of the ${tm.limit}s limit. `;
+    if (tm.overran) {
+      req += `They OVERRAN by ${tm.usedSeconds - tm.limit}s; the Chair must cut them off and note it.`;
+    } else if (selfYielded) {
+      req += `The speaker already stated their own yield in that speech. The Chair's NEXT turn MUST still open by stating "${tm.usedSeconds} seconds used, ${tm.remaining} seconds remaining" before acting on the yield that was already given — do NOT ask how they yield again, they already said.`;
+    } else {
+      req += `${tm.remaining}s REMAIN. The Chair's next turn MUST state "${tm.usedSeconds} seconds used, ${tm.remaining} seconds remaining" and ASK HOW THEY YIELD.`;
+      if (lastTurn.role === "user" && tm.remaining > 0) {
+        req += ` Since this was the human, set requiresUserResponse=true, expectedResponseType="yield".`;
+      }
     }
   }
 
@@ -1885,6 +1922,17 @@ function classifyResponseType(declared, hint, phase, turnText) {
   if (phase === PHASES.OPEN_FLOOR) return "motion";
   if (phase === PHASES.UNMOD) return "unmod";
 
+  /* Trust a valid, explicit declaration from the model before falling back
+     to keyword-matching the phase/hint text. This used to run the other
+     way around, and it was a real bug: `blob` includes the PHASE STRING,
+     so any turn merely tagged with a GSL-ish phase (which is most of a
+     committee's runtime) had its blob match "general speakers" and get
+     silently rewritten to "speech" — even when the model had correctly
+     declared "yield", "choice" or "motion". That hid the response buttons
+     and was a direct cause of delegates/Chair turns breaking procedure
+     (e.g. a yield prompt during GSL losing its Yield buttons entirely). */
+  if (valid.includes(d)) return d;
+
   // Otherwise infer from the wording, so an obviously-written task
   // ("deliver your speech") can never end up with buttons on it.
   let inferred = null;
@@ -1901,8 +1949,6 @@ function classifyResponseType(declared, hint, phase, turnText) {
   else if (/speech|deliver|address the committee|you have the floor|gsl|general speakers|moderated caucus/.test(blob)) inferred = "speech";
   else if (/motion|floor is open/.test(blob)) inferred = "motion";
 
-  if (inferred && FREE_TEXT_TYPES.has(inferred)) return inferred;
-  if (valid.includes(d)) return d;
   if (inferred) return inferred;
   if (addressesUser(turnText)) return "speech";
   return "choice";
@@ -3349,6 +3395,15 @@ function validateTurn(turn, entry) {
       return "the committee cannot hold this vote before roll call has been taken. Take roll call first";
     }
   }
+
+  /* 5. Roll call asked again after the human already answered it. This was
+        happening because the model would lose track over a long committee
+        and re-poll the human; it is now rejected outright rather than left
+        to a prompt reminder, since a reminder can be missed but a rejected
+        turn cannot ship. */
+  if (state.userRollCall && entry.phase === PHASES.ROLL_CALL && addressesUser(entry.text)) {
+    return `roll call was already answered by the human as "${state.userRollCall}". Do not ask them for roll call again — move on with the next procedural step instead (e.g. a narrator line covering any remaining AI delegations, then proceed).`;
+  }
   return null;
 }
 
@@ -3498,6 +3553,13 @@ function submitUserResponse(fixedChoice) {
   if ((state.pendingUser && state.pendingUser.type === "rollcall")
       || (text === "Present" || text === "Present and Voting")) {
     if (text === "Present" || text === "Present and Voting") state.userRollCall = text;
+  }
+
+  /* Record the GSL sign-up answer the same way, so the code-level nudge in
+     buildTurnRequest stops firing once it's actually been asked. */
+  if (text === "Add me to the Speakers List") { state.gslJoinOffered = true; state.userOnGSL = true; }
+  else if (text === "Not at this time" && state.pendingUser && /Speakers List/i.test((state.pendingUser.options || []).join(" "))) {
+    state.gslJoinOffered = true; state.userOnGSL = false;
   }
 
   const entry = {
