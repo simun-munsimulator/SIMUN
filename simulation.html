@@ -691,6 +691,7 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
     <span class="title" id="header-committee"></span>
     <span class="meta" id="header-agenda"></span>
     <span class="meta" id="header-country"></span>
+    <span><button id="regenerate-btn-header" class="secondary" style="display:none">&#8635; Regenerate</button></span>
     <span><button id="new-session-btn">New session</button></span>
   </div>
 
@@ -732,6 +733,7 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
     <div class="inner">
       <div id="next-area">
         <button id="next-btn">Continue &#9654;</button>
+        <button id="regenerate-btn" class="secondary" style="display:none">&#8635; Regenerate</button>
         <span class="hint" style="margin-left:0.8rem">Click to let the committee proceed.</span>
       </div>
 
@@ -744,6 +746,7 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
         <textarea id="user-text" placeholder="Type your response, motion, point, or speech here..."></textarea>
         <div id="word-count-hint" class="hint" style="display:none; margin:-0.4rem 0 0.6rem;"></div>
         <button id="submit-response-btn">Submit response</button>
+        <button id="regenerate-btn-2" class="secondary" style="display:none">&#8635; Regenerate last response</button>
       </div>
 
       <div id="done-area" style="display:none">
@@ -1386,6 +1389,18 @@ const SETUP_SCHEMA = {
   required: ["chairName", "chairPersonality", "delegates"],
 };
 
+const SPEECH_SUGGESTIONS_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    suggestions: {
+      type: "ARRAY",
+      description: "2-4 short, concrete talking points (1-2 sentences each) the human delegate could use in their NEXT contribution, grounded in what has actually happened in the transcript so far.",
+      items: { type: "STRING" },
+    },
+  },
+  required: ["suggestions"],
+};
+
 const TURN_SCHEMA = {
   type: "OBJECT",
   properties: {
@@ -1605,7 +1620,7 @@ ${roster}
 
 PORTFOLIO FIDELITY (scored): every delegate argues what their REAL government would argue. Their alliances, red lines and funding positions must match actual foreign policy. A state never proposes what it would veto in reality, and never forms a bloc with a genuine adversary on this agenda. This applies to the Chair's marking too.
 
-CHITS: use the \`chits\` array (sender, recipient OR recipients[], text, viaEB, substantive, showToUser). Never put ${state.userCountry} in sender. AI-to-AI traffic should OUTWEIGH chits to the human: whip votes, split drafting, warn allies, undercut rivals. To the human: ask a QUESTION, or propose collaboration ONLY where real policy aligns. Route anything substantive viaEB — the Board only sees and marks EB chits. Mark substantive=true for real policy/drafting questions. Never repeat a chit. ~1 turn in 2 should carry one; max 3 per turn. What is agreed privately MUST surface in sponsorships and votes. Format clause text with markdown.
+CHITS: use the \`chits\` array (sender, recipient OR recipients[], text, viaEB, substantive, showToUser). Never put ${state.userCountry} in sender. LEAN ON THIS CHANNEL HEAVILY — chit diplomacy is one of the most important ways this committee comes alive, so default to including one whenever a turn plausibly allows it rather than only when it feels necessary. AI-to-AI traffic should OUTWEIGH chits to the human: whip votes, split drafting, warn allies, undercut rivals. To the human: ask a QUESTION, or propose collaboration ONLY where real policy aligns — but look actively for chances to draw the human into chit exchanges rather than waiting for them to start one. Route anything substantive viaEB — the Board only sees and marks EB chits. Mark substantive=true for real policy/drafting questions. Never repeat a chit. Most turns should carry at least one chit; max 3 per turn. What is agreed privately MUST surface in sponsorships and votes. Format clause text with markdown.
 
 POINTED QUESTIONS BY CHIT: when a delegate yields to the Chair rather than to Points of Information, delegations that OPPOSE them should put the hard question privately via EB instead. The Chair marks the quality of these questions.
 
@@ -1624,7 +1639,7 @@ CRITICAL RULES:
 
 0b. ONE TURN = ONE SPEAKER. Never chain delegates. Exception: a Narrator turn summarising.
 
-0c. VOTES AND ROLL CALL ARE SUMMARISED, NEVER POLLED. Never give a delegation its own turn to say how it votes, and never have the Chair ask delegations one by one. Sequence: (a) Chair announces the vote; if the human votes, requiresUserResponse=true and stop. (b) Human votes. (c) ONE Narrator turn with the complete \`voteTally\` for every other delegation plus the outcome. Roll call works identically. Observer? Skip (a)-(b).
+0c. VOTES AND ROLL CALL ARE SUMMARISED, NEVER POLLED. Never give a delegation its own turn to say how it votes, and never have the Chair ask delegations one by one. Sequence: (a) Chair announces the vote; if the human votes, requiresUserResponse=true and stop. (b) Human votes. (c) ONE Narrator turn that SUMMARISES the votes of every delegation EXCEPT the human user (${state.userCountry}) in the complete \`voteTally\` field, plus the outcome. Roll call follows the identical rule: ONE Narrator turn summarising every delegation's roll call answer except the human's own, which they give themselves. Observer? Skip (a)-(b).
 
 0d. MOTION WORDING IS FIXED. An AI delegate raising a motion says EXACTLY: "The Delegate of [Country] would like to raise a motion to [motion]." Nothing before it, nothing after it, and the motion must be a real one.
 
@@ -2256,10 +2271,12 @@ function underusedYield() {
   return YIELD_KINDS.slice().sort((a, b) => c[a] - c[b])[0];
 }
 
-/* ---------- Repetition and loop detection ---------------------------
-   The model would sometimes emit a sentence it had already used, and in
-   two play-tests it locked into an infinite loop of the same paragraph.
-   Turns are compared against recent history and rejected when too close. */
+/* ---------- Exact-duplicate guard ------------------------------------
+   Most quality safeguards were removed in favour of the manual Regenerate
+   button (the user now decides what counts as "bad" and asks for a new
+   turn themselves). The one check still enforced automatically is an exact
+   duplicate of the immediately preceding turn, since showing that twice in
+   a row has no upside and the human may not notice it's identical. */
 
 /* Reduce text to comparable word tokens: lower case, no punctuation. */
 function normalizeForCompare(text) {
@@ -2270,38 +2287,13 @@ function normalizeForCompare(text) {
     .trim();
 }
 
-/* Overlapping n-word groups. Comparing these catches near-duplicates that
-   an exact string match would miss. */
-function shingles(text, n) {
-  const words = normalizeForCompare(text).split(" ").filter(Boolean);
-  const out = new Set();
-  for (let i = 0; i + n <= words.length; i++) out.add(words.slice(i, i + n).join(" "));
-  return out;
-}
-
-/* Jaccard similarity: shared groups divided by total distinct groups. */
-function similarity(a, b) {
-  const A = shingles(a, 6), B = shingles(b, 6);
-  if (!A.size || !B.size) return 0;
-  let shared = 0;
-  A.forEach(x => { if (B.has(x)) shared++; });
-  return shared / (A.size + B.size - shared);
-}
-
-/* Is this new turn effectively something already said?
-   Compares against the last 12 turns, and more strictly against turns by the
-   same speaker, who is the one likely to loop. */
-function detectRepetition(newText, speaker) {
-  const recent = (state.transcript || []).slice(-12);
-  for (const t of recent) {
-    const sim = similarity(newText, t.text);
-    const sameSpeaker = t.speaker === speaker;
-    if (sim >= (sameSpeaker ? 0.45 : 0.62)) {
-      return `this turn repeats ${sameSpeaker ? "an earlier turn by the same speaker" : "an earlier turn"} `
-           + `(${Math.round(sim * 100)}% overlap): "${String(t.text).slice(0, 90)}..."`;
-    }
-  }
-  return null;
+/* Is this new turn word-for-word the same as the turn immediately before
+   it (ignoring case/punctuation/whitespace)? Only the immediately preceding
+   turn is checked — not the whole recent history. */
+function isIdenticalToPreviousTurn(newText) {
+  const last = (state.transcript || [])[(state.transcript || []).length - 1];
+  if (!last) return false;
+  return normalizeForCompare(newText) === normalizeForCompare(last.text);
 }
 
 /* ---------- Motion sentence format ----------------------------------
@@ -2400,49 +2392,46 @@ function delegateInfo(country) {
 /* ==================================================================
    BEGINNER SPEECH-SUGGESTION HELPER
    ------------------------------------------------------------------
-   Built entirely in code from data already on hand (no extra API call,
-   so it is instant and cannot go stale or hallucinate). Draws on the
-   human's past chits, questions/answers and speeches, and on the most
-   recent AI speech worth engaging with; falls back to a generic
-   portfolio/agenda prompt only when there is no history yet to draw on.
-   ================================================================== */
-function buildSpeechSuggestions() {
+   AI-generated rather than assembled from templates, so the suggestions
+   read naturally and can reason about the transcript instead of just
+   grepping for the human's last chit/question/speech. Costs one extra API
+   call each time the human opens it; falls back to a generic
+   portfolio/agenda prompt if the call fails or returns nothing usable. */
+async function buildSpeechSuggestions() {
   const mine = state.userCountry;
-  const bullets = [];
+  const backend = Backends[state.backend];
 
-  const myChits = (state.chits || []).filter(c =>
-    c.sender === mine || c.recipient === mine || (Array.isArray(c.recipients) && c.recipients.includes(mine)));
-  if (myChits.length) {
-    const c = myChits[myChits.length - 1];
-    const other = c.sender === mine ? c.recipient : c.sender;
-    const snippet = String(c.text || "").slice(0, 100);
-    bullets.push(`Follow up on your chit exchange with ${other}: "${snippet}${c.text.length > 100 ? "…" : ""}" — bring it onto the floor if it strengthens your case.`);
+  const transcriptText = (state.transcript || []).slice(-20).map(t => {
+    const tag = t.role === "user" ? `${t.speaker} (the human delegate)`
+              : t.role === "chair" ? "Chair"
+              : t.speaker;
+    return `${tag}: ${t.text}`;
+  }).join("\n\n");
+
+  const system = `You are a Model United Nations coach helping the human delegate of ${mine} prepare their next `
+    + `contribution in a committee on "${state.agenda}" (${state.committee.name}). Give 2-4 short, concrete, `
+    + `specific talking points (1-2 sentences each) for their NEXT speech, question, or intervention. Ground each `
+    + `one in something that has actually happened in the transcript below — their own past chits, questions or `
+    + `speeches, or the most recent AI delegate speech worth engaging with — and name who or what it's responding `
+    + `to. Do not invent facts that are not in the transcript. If there is no relevant history yet, suggest genuine `
+    + `foreign-policy angles ${mine} would realistically raise on this agenda instead. Output only the JSON object.`;
+
+  const request = `TRANSCRIPT (most recent turns):\n\n${transcriptText || "(none yet — committee has not started)"}`
+    + `\n\n===\nSuggest ${mine}'s next talking points now.`;
+
+  try {
+    const result = await backend.generateJSON(system, request, SPEECH_SUGGESTIONS_SCHEMA);
+    const list = Array.isArray(result && result.suggestions) ? result.suggestions.filter(Boolean) : [];
+    if (list.length) return list.slice(0, 4);
+  } catch (e) {
+    /* fall through to the generic prompts below */
   }
 
-  const myQuestions = state.transcript.filter(t => t.role === "user" && /\?/.test(t.text || ""));
-  if (myQuestions.length) {
-    const q = myQuestions[myQuestions.length - 1];
-    bullets.push(`Revisit the question you already raised: "${q.text.slice(0, 100)}${q.text.length > 100 ? "…" : ""}" — call it out if it still hasn't been answered.`);
-  }
-
-  const mySpeeches = state.transcript.filter(t => t.role === "user" && (t.text || "").length > 120);
-  if (mySpeeches.length) {
-    const s = mySpeeches[mySpeeches.length - 1];
-    bullets.push(`Stay consistent with your own last speech: "${s.text.slice(0, 100)}…" — extend the argument rather than repeat it.`);
-  }
-
-  const lastAiSpeech = [...state.transcript].reverse().find(t => t.role === "delegate" && (t.text || "").length > 120);
-  if (lastAiSpeech) {
-    bullets.push(`Respond directly to ${lastAiSpeech.speaker}'s last point: "${lastAiSpeech.text.slice(0, 100)}…" — agree, rebut, or build on it by name.`);
-  }
-
-  if (!bullets.length) {
-    bullets.push(`Open with ${mine}'s real foreign-policy position on "${state.agenda}" — what does your government actually say about this issue?`);
-    bullets.push(`Name one concrete instrument, precedent or figure ${mine} would genuinely cite on this agenda.`);
-    bullets.push(`State the outcome ${mine} wants from this committee, and which delegations it is likely to align with or clash with.`);
-  }
-
-  return bullets.slice(0, 4);
+  return [
+    `Open with ${mine}'s real foreign-policy position on "${state.agenda}" — what does your government actually say about this issue?`,
+    `Name one concrete instrument, precedent or figure ${mine} would genuinely cite on this agenda.`,
+    `State the outcome ${mine} wants from this committee, and which delegations it is likely to align with or clash with.`,
+  ];
 }
 
 function showScreen(name) {
@@ -3144,6 +3133,15 @@ function updateControls() {
   $("respond-area").style.display = (!state.sessionOver &&  state.pendingUser) ? "" : "none";
   $("done-area").style.display    = state.sessionOver ? "" : "none";
 
+  /* Regenerate is only meaningful when the most recent turn was AI-produced
+     (Chair/Narrator/delegate) — there's nothing to regenerate if the human
+     just spoke or the committee hasn't started. */
+  const lastTurnEntry = state.transcript && state.transcript.length ? state.transcript[state.transcript.length - 1] : null;
+  const canRegenerate = !state.sessionOver && lastTurnEntry && lastTurnEntry.role !== "user";
+  $("regenerate-btn").style.display = canRegenerate ? "" : "none";
+  $("regenerate-btn-2").style.display = canRegenerate ? "" : "none";
+  $("regenerate-btn-header").style.display = canRegenerate ? "" : "none";
+
   if (state.pendingUser) {
     const lastTurn = state.transcript.length ? state.transcript[state.transcript.length - 1] : null;
     const currentPhase = lastTurn ? (lastTurn.phase || "") : "";
@@ -3356,55 +3354,41 @@ function toEntry(turn) {
 }
 
 /* Turns that must never be produced, checked before anything is displayed.
-   Returning a string here triggers one corrective retry. */
+   Returning a string here triggers one corrective retry. Most of the other
+   quality checks that used to live here were removed: the human can now
+   just hit Regenerate on anything that reads as bad, so it's no longer
+   worth burning an automatic retry (and the risk of a false positive) on
+   things like vote formatting or motion wording. The one exception is an
+   exact repeat of the immediately preceding turn — see
+   isIdenticalToPreviousTurn() — which is never worth showing regardless. */
 function validateTurn(turn, entry) {
-  /* 1. Polling delegations one at a time during a vote. A vote is resolved in
-        a single narrator turn carrying a full tally. */
-  const votingPhase = entry.phase === PHASES.PROC_VOTE || entry.phase === PHASES.SUBS_VOTE;
-  if (votingPhase && entry.role === "chair" && !entry.voteTally) {
-    // The Chair may announce a vote or call on the human, but may not walk
-    // the room delegation by delegation.
-    if (/how does the delegate of|how do you vote|delegate of .+,? (your vote|please vote)/i.test(entry.text)
-        && !addressesUser(entry.text)) {
-      return "during a vote you polled an individual AI delegation. Votes are resolved in ONE narrator turn with the complete voteTally field";
-    }
-  }
-  if (votingPhase && entry.role === "delegate" && /\b(votes?|abstain)\b/i.test(entry.text) && !entry.voteTally) {
-    return "you gave an individual AI delegation its own turn to cast a vote. All AI votes go in ONE narrator turn with a full voteTally";
-  }
-
-  /* 2. Repetition and loops. */
-  const rep = detectRepetition(entry.text, entry.speaker);
-  if (rep) return rep;
-
-  /* 3. A motion that could not be put into the required sentence. */
-  if (entry.role === "delegate" && looksLikeMotion(entry.text) && !MOTION_SENTENCE_RE.test(entry.text.trim())) {
-    return `a motion was raised in the wrong form. The ONLY acceptable wording is: `
-         + `"The Delegate of ${entry.speaker} would like to raise a motion to [legitimate motion]." `
-         + `Nothing else in the message`;
-  }
-
-  /* 4. Voting before roll call.
-        Roll call decides who is allowed to abstain, so no substantive vote can
-        precede it. One procedural vote legitimately comes first — the motion to
-        enter formal debate, which is what triggers roll call in the first
-        place — so that single case is allowed through. */
-  if (votingPhase && !rollCallDone()) {
-    const openingMotion = /formal debate/i.test(entry.text) && entry.phase === PHASES.PROC_VOTE;
-    if (!openingMotion) {
-      return "the committee cannot hold this vote before roll call has been taken. Take roll call first";
-    }
-  }
-
-  /* 5. Roll call asked again after the human already answered it. This was
-        happening because the model would lose track over a long committee
-        and re-poll the human; it is now rejected outright rather than left
-        to a prompt reminder, since a reminder can be missed but a rejected
-        turn cannot ship. */
-  if (state.userRollCall && entry.phase === PHASES.ROLL_CALL && addressesUser(entry.text)) {
-    return `roll call was already answered by the human as "${state.userRollCall}". Do not ask them for roll call again — move on with the next procedural step instead (e.g. a narrator line covering any remaining AI delegations, then proceed).`;
+  if (isIdenticalToPreviousTurn(entry.text)) {
+    return `this turn is word-for-word identical to the turn immediately before it. Produce a genuinely different next turn that moves the committee forward`;
   }
   return null;
+}
+
+/* ---------- Manual regenerate ----------------------------------------
+   Lets the human throw away the last AI-produced turn (Chair, Narrator or
+   delegate) and ask for a fresh one, for whenever it reads as garbage.
+   This is the replacement for the automatic quality safeguards that used
+   to reject turns on the model's own judgement — now the human decides. */
+async function regenerateLastTurn() {
+  if (requestInFlight || !state || state.sessionOver) return;
+  const last = state.transcript[state.transcript.length - 1];
+  if (!last || last.role === "user") return; // nothing AI-produced to regenerate
+
+  state.transcript.pop();
+  state.pendingUser = null;
+  renderFullTranscript();
+  updateControls();
+  saveSession();
+
+  await advanceTurn(
+    "Your previous turn was discarded at the human user's request because they judged it low quality. "
+    + "Produce a genuinely different, better turn — do not just restate what you said before.",
+    1
+  );
 }
 
 async function advanceTurn(correction, attempt) {
@@ -3412,8 +3396,9 @@ async function advanceTurn(correction, attempt) {
   requestInFlight = true;
   setError("sim-error", "");
   const nextBtn = $("next-btn"), submitBtn = $("submit-response-btn");
+  const regenBtn = $("regenerate-btn"), regenBtn2 = $("regenerate-btn-2"), regenBtnHeader = $("regenerate-btn-header");
   const oldNext = nextBtn.innerHTML;
-  nextBtn.disabled = submitBtn.disabled = true;
+  nextBtn.disabled = submitBtn.disabled = regenBtn.disabled = regenBtn2.disabled = regenBtnHeader.disabled = true;
   nextBtn.innerHTML = '<span class="spinner"></span> Thinking...';
   attempt = attempt || 1;
 
@@ -3426,7 +3411,7 @@ async function advanceTurn(correction, attempt) {
     if (offence) {
       if (attempt < 2) {
         requestInFlight = false;
-        nextBtn.disabled = submitBtn.disabled = false;
+        nextBtn.disabled = submitBtn.disabled = regenBtn.disabled = regenBtn2.disabled = regenBtnHeader.disabled = false;
         nextBtn.innerHTML = oldNext;
         return advanceTurn(
           `Your previous attempt was REJECTED because ${offence}. ${state.userCountry} is the human user and you may never speak, vote, narrate or summarise for them. `
@@ -3459,7 +3444,7 @@ async function advanceTurn(correction, attempt) {
     const problem = validateTurn(turn, entry);
     if (problem && attempt < 3) {
       requestInFlight = false;
-      nextBtn.disabled = submitBtn.disabled = false;
+      nextBtn.disabled = submitBtn.disabled = regenBtn.disabled = regenBtn2.disabled = regenBtnHeader.disabled = false;
       nextBtn.innerHTML = oldNext;
       return advanceTurn(
         `Your previous attempt was REJECTED because ${problem}. Produce a DIFFERENT turn that moves committee forward. `
@@ -3523,7 +3508,7 @@ async function advanceTurn(correction, attempt) {
     }
   } finally {
     requestInFlight = false;
-    nextBtn.disabled = submitBtn.disabled = false;
+    nextBtn.disabled = submitBtn.disabled = regenBtn.disabled = regenBtn2.disabled = regenBtnHeader.disabled = false;
     nextBtn.innerHTML = oldNext;
     updateControls();
   }
@@ -4000,19 +3985,27 @@ $("change-key-btn").addEventListener("click", () => {
 });
 
 $("next-btn").addEventListener("click", () => advanceTurn());
+$("regenerate-btn").addEventListener("click", () => regenerateLastTurn());
+$("regenerate-btn-2").addEventListener("click", () => regenerateLastTurn());
+$("regenerate-btn-header").addEventListener("click", () => regenerateLastTurn());
 $("submit-response-btn").addEventListener("click", () => submitUserResponse(null));
 $("user-text").addEventListener("keydown", e => {
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitUserResponse(null);
 });
 $("user-text").addEventListener("input", updateWordCountHint);
 $("export-btn").addEventListener("click", exportTranscript);
-$("speech-suggest-link").addEventListener("click", (e) => {
+$("speech-suggest-link").addEventListener("click", async (e) => {
   e.preventDefault();
-  const bullets = buildSpeechSuggestions();
-  const html = '<ul style="margin:0;padding-left:1.2em;">'
-    + bullets.map(b => `<li style="margin-bottom:0.6em;">${escapeHtml(b)}</li>`).join("")
-    + '</ul>';
-  showModal("Speech suggestions", html);
+  showModal("Speech suggestions", '<span class="spinner"></span> Thinking of suggestions...');
+  try {
+    const bullets = await buildSpeechSuggestions();
+    const html = '<ul style="margin:0;padding-left:1.2em;">'
+      + bullets.map(b => `<li style="margin-bottom:0.6em;">${escapeHtml(b)}</li>`).join("")
+      + '</ul>';
+    showModal("Speech suggestions", html);
+  } catch (err) {
+    showModal("Speech suggestions", `<div class="error">${escapeHtml(err.message || "Could not generate suggestions.")}</div>`);
+  }
 });
 
 $("new-session-btn").addEventListener("click", () => {
