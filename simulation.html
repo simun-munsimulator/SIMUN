@@ -2165,6 +2165,15 @@ function normalizePhase(rawPhase, text, role) {
   if (/crisis|breaking news/.test(blob)) return PHASES.CRISIS;
   if (/adjourn|committee is closed|closing remarks|final scores/.test(p)) return PHASES.CLOSING;
 
+  // Roll call has to be checked before the voting tests below: a roll-call
+  // turn routinely mentions "vote"/"voting" in passing (explaining "Present
+  // and Voting", or noting the roll call precedes the motion-to-enter-formal-
+  // debate vote), and the voting regexes match against the full turn text
+  // (`blob`), not just the phase tag — so without this ordering a roll call
+  // turn gets misread as a procedural vote and the human is shown a Yes/No/
+  // Abstain ballot instead of Present/Present and Voting buttons.
+  if (/roll call|rollcall/.test(blob)) return PHASES.ROLL_CALL;
+
   // Voting: decide substantive vs procedural before the generic "voting" test.
   if (SUBSTANTIVE_VOTE_RE.test(blob)) return PHASES.SUBS_VOTE;
   if (PROCEDURAL_VOTE_RE.test(blob))  return PHASES.PROC_VOTE;
@@ -2174,7 +2183,6 @@ function normalizePhase(rawPhase, text, role) {
     return /resolution|amendment/.test(blob) ? PHASES.SUBS_VOTE : PHASES.PROC_VOTE;
   }
 
-  if (/roll call|rollcall/.test(blob)) return PHASES.ROLL_CALL;
   if (/position paper/.test(blob))     return PHASES.POSITION;
 
   // "Any points or motions?" — only when the Chair actually says it.
