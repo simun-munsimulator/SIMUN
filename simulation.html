@@ -183,6 +183,19 @@ body::before {
   border-radius: 6px;
   padding: 0.8rem 1.1rem;
   margin: 0.7rem 0;
+  position: relative;
+}
+
+/* Regenerate control pinned to the top-right corner of whichever turn is
+   currently the most recent AI-produced one. */
+.turn-regen-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.8rem;
+  font-size: 0.78rem;
+  padding: 0.25em 0.7em;
+  border-radius: 4px;
+  z-index: 1;
 }
 
 .turn .who {
@@ -691,7 +704,6 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
     <span class="title" id="header-committee"></span>
     <span class="meta" id="header-agenda"></span>
     <span class="meta" id="header-country"></span>
-    <span><button id="regenerate-btn-header" class="secondary" style="display:none">&#8635; Regenerate</button></span>
     <span><button id="new-session-btn">New session</button></span>
   </div>
 
@@ -733,7 +745,6 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
     <div class="inner">
       <div id="next-area">
         <button id="next-btn">Continue &#9654;</button>
-        <button id="regenerate-btn" class="secondary" style="display:none">&#8635; Regenerate</button>
         <span class="hint" style="margin-left:0.8rem">Click to let the committee proceed.</span>
       </div>
 
@@ -746,7 +757,6 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
         <textarea id="user-text" placeholder="Type your response, motion, point, or speech here..."></textarea>
         <div id="word-count-hint" class="hint" style="display:none; margin:-0.4rem 0 0.6rem;"></div>
         <button id="submit-response-btn">Submit response</button>
-        <button id="regenerate-btn-2" class="secondary" style="display:none">&#8635; Regenerate last response</button>
       </div>
 
       <div id="done-area" style="display:none">
@@ -3128,19 +3138,39 @@ function renderFullTranscript() {
   state.transcript.forEach(renderTurn);
 }
 
+/* Pins the Regenerate control to the top-right corner of the latest turn's
+   card, rather than in the fixed controls bar, so it sits right on the
+   message it would replace. Only meaningful when the most recent turn was
+   AI-produced (Chair/Narrator/delegate) — nothing to regenerate if the
+   human just spoke or the committee hasn't started. Safe to call after
+   every render/state change; it just repositions itself each time. */
+function placeRegenerateButton() {
+  const old = document.querySelector(".turn-regen-btn");
+  if (old) old.remove();
+
+  if (!state || state.sessionOver) return;
+  const lastEntry = state.transcript && state.transcript.length ? state.transcript[state.transcript.length - 1] : null;
+  if (!lastEntry || lastEntry.role === "user") return;
+
+  const turnDivs = $("transcript").children;
+  const lastDiv = turnDivs.length ? turnDivs[turnDivs.length - 1] : null;
+  if (!lastDiv) return;
+
+  const btn = document.createElement("button");
+  btn.className = "secondary turn-regen-btn";
+  btn.id = "regenerate-btn";
+  btn.textContent = "\u21BB Regenerate";
+  btn.disabled = requestInFlight;
+  btn.addEventListener("click", () => regenerateLastTurn());
+  lastDiv.appendChild(btn);
+}
+
 function updateControls() {
   $("next-area").style.display    = (!state.sessionOver && !state.pendingUser) ? "" : "none";
   $("respond-area").style.display = (!state.sessionOver &&  state.pendingUser) ? "" : "none";
   $("done-area").style.display    = state.sessionOver ? "" : "none";
 
-  /* Regenerate is only meaningful when the most recent turn was AI-produced
-     (Chair/Narrator/delegate) — there's nothing to regenerate if the human
-     just spoke or the committee hasn't started. */
-  const lastTurnEntry = state.transcript && state.transcript.length ? state.transcript[state.transcript.length - 1] : null;
-  const canRegenerate = !state.sessionOver && lastTurnEntry && lastTurnEntry.role !== "user";
-  $("regenerate-btn").style.display = canRegenerate ? "" : "none";
-  $("regenerate-btn-2").style.display = canRegenerate ? "" : "none";
-  $("regenerate-btn-header").style.display = canRegenerate ? "" : "none";
+  placeRegenerateButton();
 
   if (state.pendingUser) {
     const lastTurn = state.transcript.length ? state.transcript[state.transcript.length - 1] : null;
@@ -3396,10 +3426,14 @@ async function advanceTurn(correction, attempt) {
   requestInFlight = true;
   setError("sim-error", "");
   const nextBtn = $("next-btn"), submitBtn = $("submit-response-btn");
-  const regenBtn = $("regenerate-btn"), regenBtn2 = $("regenerate-btn-2"), regenBtnHeader = $("regenerate-btn-header");
   const oldNext = nextBtn.innerHTML;
-  nextBtn.disabled = submitBtn.disabled = regenBtn.disabled = regenBtn2.disabled = regenBtnHeader.disabled = true;
+  nextBtn.disabled = submitBtn.disabled = true;
   nextBtn.innerHTML = '<span class="spinner"></span> Thinking...';
+  // The regenerate control lives on the latest turn's card and is removed
+  // for the duration of the request; placeRegenerateButton() (called via
+  // updateControls in the finally block below) puts a fresh one back.
+  const oldRegen = document.querySelector(".turn-regen-btn");
+  if (oldRegen) oldRegen.remove();
   attempt = attempt || 1;
 
   try {
@@ -3411,7 +3445,7 @@ async function advanceTurn(correction, attempt) {
     if (offence) {
       if (attempt < 2) {
         requestInFlight = false;
-        nextBtn.disabled = submitBtn.disabled = regenBtn.disabled = regenBtn2.disabled = regenBtnHeader.disabled = false;
+        nextBtn.disabled = submitBtn.disabled = false;
         nextBtn.innerHTML = oldNext;
         return advanceTurn(
           `Your previous attempt was REJECTED because ${offence}. ${state.userCountry} is the human user and you may never speak, vote, narrate or summarise for them. `
@@ -3444,7 +3478,7 @@ async function advanceTurn(correction, attempt) {
     const problem = validateTurn(turn, entry);
     if (problem && attempt < 3) {
       requestInFlight = false;
-      nextBtn.disabled = submitBtn.disabled = regenBtn.disabled = regenBtn2.disabled = regenBtnHeader.disabled = false;
+      nextBtn.disabled = submitBtn.disabled = false;
       nextBtn.innerHTML = oldNext;
       return advanceTurn(
         `Your previous attempt was REJECTED because ${problem}. Produce a DIFFERENT turn that moves committee forward. `
@@ -3508,7 +3542,7 @@ async function advanceTurn(correction, attempt) {
     }
   } finally {
     requestInFlight = false;
-    nextBtn.disabled = submitBtn.disabled = regenBtn.disabled = regenBtn2.disabled = regenBtnHeader.disabled = false;
+    nextBtn.disabled = submitBtn.disabled = false;
     nextBtn.innerHTML = oldNext;
     updateControls();
   }
@@ -3985,9 +4019,6 @@ $("change-key-btn").addEventListener("click", () => {
 });
 
 $("next-btn").addEventListener("click", () => advanceTurn());
-$("regenerate-btn").addEventListener("click", () => regenerateLastTurn());
-$("regenerate-btn-2").addEventListener("click", () => regenerateLastTurn());
-$("regenerate-btn-header").addEventListener("click", () => regenerateLastTurn());
 $("submit-response-btn").addEventListener("click", () => submitUserResponse(null));
 $("user-text").addEventListener("keydown", e => {
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) submitUserResponse(null);
