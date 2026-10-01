@@ -2353,7 +2353,7 @@ window.showKeywordPopup = function(term) {
   const title = term.charAt(0).toUpperCase() + term.slice(1);
   /* Every glossary pop-up ends with a link to the full rules page, so a
      beginner who wants more than one sentence has somewhere to go. */
-  const link = '<a class="rop-link" href="rules-of-procedure.html" target="_blank">'
+  const link = '<a class="rop-link" href="rules_of_procedure.html" target="_blank">'
              + 'For more information, refer to the rules of procedure</a>';
   showModal(title, escapeHtml(desc) + '<div class="rop-link-wrap">' + link + '</div>');
 };
