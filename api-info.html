@@ -139,10 +139,10 @@
     <div class="pageContent">
       <h2>What Is an API Key, and Why Does SIMUN Need One?</h2>
       <div class="contentBlock">
-        <p>SIMUN runs on a <strong>bring-your-own-key</strong> system. Instead of us charging you for every delegate and chair speech the AI generates on our server, you use your own API key and pay the AI company directly, for exactly what your committee session uses. There's no middleman markup or hidden charges, just the real cost of the AI work your simulation uses. As I show you below, it doesn’t amount to very much.</p>
-        <p>If you've used AI only through a website or app (like chatting with Claude, Gemini, or ChatGPT in your browser), an "API key" may sound like a hurdle. But it isn’t.</p>
-        <p><strong>An API key</strong> (Application Programming Interface) allows one piece of software to talk to another. SIMUN supports several AI models of varying cost and sophistication. Once you provide SIMUN with your chosen API key, it uses this to unlock your access to your AI model to run the AI simulation. The AI model you use then directly charges you for your AI usage for every turn you play on SIMUN. If you use a paid AI model then SIMUN displays the amount you have spent, while if you use a free model like the lowest tier of Gemini then every turn on SIMUN uses up one of your daily quota of requests.</p>
-        <p>Like a password, an <strong> API key</strong> is a string of letters and numbers <code>sk-ant-xxxxxxxx</code> that proves the request, and the bill for it, belongs to you. SIMUN uses your key only to run your simulation and never stores or shares it. You too should never share it with anyone or post it publicly.</p>
+        <p>SIMUN runs on a <strong>bring-your-own-key</strong> system. Instead of us charging you for every delegate and chair speech the AI generates on our server, you use your own API key and pay the AI company directly. There's no middleman markup or hidden charges, just the real cost of the AI work your simulation uses, which isn't much.</p>
+        <p>You may have only used AI through a website or chatbot like Claude, Gemini, or ChatGPT, so an "API key" may sound uncomfortably technical. But getting one is so simple. The videos on the left guide you through it in a few easy steps.</p>
+        <p><strong>An API key</strong> (Application Programming Interface) allows one software to talk to another. SIMUN supports several AI models of varying cost and sophistication. Once you provide SIMUN with your chosen API key, it uses this to to run the AI simulation. The AI model directly charges you for every turn you play on SIMUN. If you use a paid AI model then SIMUN displays the amount you have spent, while if you use a free model like the lowest tier of Gemini, then every turn on SIMUN uses up one of your daily quota of requests.</p>
+        <p>Like a password, an <strong> API key</strong> is a string of letters and numbers <code>sk-ant-xxxxxxxx</code> that proves the request, and the bill for it, belongs to you. SIMUN uses your key only to run your simulation. It never stores or shares it. Like any other password, you too should never share it with anyone or post it publicly.</p>
       </div>
     </div>
   </div>
@@ -154,12 +154,12 @@
     <div class="pageContent">
       <h2>So What Will a Committee Session Actually Cost Me?</h2>
       <div class="contentBlock">
-        <p>AI credits are deducted for each turn during the simulation, but the amount for each turn is tiny and there are many turns per MUN session. So the real question is, how much would it cost to play an entire MUN session right up to the conclusion where the best delegate is announced.</p>
+        <p>AI credits are deducted for each turn during the simulation, but the amount for each turn is tiny and there are many turns per MUN session. So the real question is, how much does it cost to play an entire MUN session right up to the conclusion where the best delegate is announced.</p>
         <div class="calloutBox">
-          A full SIMUN committee session run end-to-end on Claude Sonnet 5 came out to about <strong>$2 total</strong>. 
+          When I tested it out, a full SIMUN committee session  run end-to-end on <strong>Claude Sonnet 5</strong> came out to about <strong>$2 total</strong> which is less than Rs. 200. 
         </div>
-        <p>API billing works like a prepaid phone plan. You load a small amount of credit onto your key, and it ticks down as SIMUN uses the model on your behalf. Providers typically suggest starting with around $5 of credit, which at roughly $2 a session means you can comfortably run a committee two times over, or try a different topic or replay a session with a different approach.</p>
-        <p>For the price of a Strabucks coffee that vanishes in under thirty minutes, you can enjoy a full day of diplomatic intrigue.</p>
+        <p>API billing works like a prepaid phone plan. You load a small amount of credit onto your key, and it ticks down as SIMUN uses the model on your behalf. Providers typically suggest starting with around $5 of credit, which at roughly $2 a session means you can comfortably run a committee two times over, try a different topic, or replay a session with a different approach.</p>
+        <p>For the price of a Starbucks coffee that vanishes in under thirty minutes, you can enjoy a full day of diplomatic intrigue.</p>
       </div>
     </div>
   </div>
@@ -172,7 +172,7 @@
     <div class="pageContent">
       <h2>Getting an Anthropic (Claude) API Key</h2>
       <div class="contentBlock">
-        <p>Anthropic is the company behind the Claude family of AI models. Their developer platform is called the <strong>Claude Console</strong> (also reachable at <em>platform.claude.com</em>, which redirects to the same place).</p>
+        <p>Anthropic is the company behind Claude. Their developer platform is called the <strong>Claude Console</strong>.</p>
         <ol class="stepList">
           <li>Go to <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> and sign up with your email, Google account, or single sign-on.</li>
           <li>Once logged in, open the <strong>API Keys</strong> section from the left-hand menu.</li>
@@ -181,7 +181,7 @@
           <li>Open <strong>Plans &amp; Billing</strong> and add a payment method, then add a small amount of credit (Anthropic suggests starting around $5) so the key is active and ready to use.</li>
         </ol>
         <div class="calloutBox">
-          Keys always start with <code>sk-ant-</code>. If you lose a key, you can't recover it, just delete it in the Console and create a new one.
+           Keys always start with <code>sk-ant-</code>. If you lose a key, you can't recover it, just delete it in the Console and create a new one.
         </div>
 
         <h3 style="color:var(--un-blue-dark); font-size:clamp(1.3rem, 1.5vw + 1rem, 1.9rem); margin-top:2rem;">Which Claude Model Should I Use for a Committee Session?</h3>
