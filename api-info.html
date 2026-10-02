@@ -1,0 +1,469 @@
+<?xml version='1.0' encoding='utf-8'?>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+  <head>
+    <link rel="stylesheet" href="design.css"/>
+    <title>SIMUN - How to Get an API Key</title>
+    <!-- Favicon Icon -->
+    <link rel="icon" type="image/png" href="logo2.png"/>
+    <style>
+    /* Page-specific additions, layered on top of design.css */
+    .iconWrap {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .iconWrap svg {
+      width: 78%;
+      max-width: 320px;
+      height: auto;
+      display: block;
+    }
+    .providerLabel {
+      text-align: center;
+      font-size: clamp(0.9rem, 0.5vw + 0.7rem, 1.2rem);
+      color: var(--note);
+      margin-top: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .stepList {
+      counter-reset: step;
+      list-style: none;
+      padding-left: 0;
+      margin: 1.2rem 0;
+      color: #000;
+    }
+    .stepList li {
+      position: relative;
+      padding-left: 3rem;
+      margin-bottom: 1.1rem;
+      font-size: clamp(1rem, 1vw + 0.7rem, 1.3rem);
+      line-height: 1.5;
+    }
+    .stepList li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: -0.1em;
+      width: 1.9rem;
+      height: 1.9rem;
+      border-radius: 50%;
+      background: var(--un-blue);
+      color: #fff;
+      font-family: Georgia, serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .calloutBox {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 6px solid var(--un-blue);
+      border-radius: 6px;
+      padding: 1rem 1.3rem;
+      margin: 1.3rem 0;
+      font-size: clamp(0.95rem, 0.5vw + 0.75rem, 1.15rem);
+      color: #000;
+    }
+    .calloutBox.warn {
+      border-left-color: #e0a100;
+    }
+    .calloutBox strong {
+      color: var(--un-blue-dark);
+    }
+    .modelLadder {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin: 1.2rem 0;
+    }
+    .modelRung {
+      display: flex;
+      align-items: baseline;
+      gap: 0.8rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.7rem 1rem;
+    }
+    .modelRung .tag {
+      flex: 0 0 auto;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--un-blue);
+      color: #fff;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .modelRung p { margin: 0; font-size: clamp(0.95rem, 0.5vw + 0.75rem, 1.15rem); color: #000; }
+    .linkRow {
+      margin-top: 1rem;
+      font-size: clamp(0.9rem, 0.4vw + 0.75rem, 1.1rem);
+    }
+    .linkRow a { color: var(--un-blue-dark); }
+  </style>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  </head>
+  <body class="stepsPage">
+  <div id="header">
+    <span><a href="index.html"><img src="logo2.png"/></a></span>
+    <span><a href="index.html" class="nameHomepageLink"><p class="title">SI<span style="color:var(--un-blue-dark)">M</span>UN</p></a></span>
+    <span class="dropdown">
+      <button class="menu">Resource Material</button>
+      <span class="dropdown-content">
+        <a href="rules_of_procedure.html">Rules Of Procedure</a>
+        <a href="sample_position_paper.html">Sample Position Paper</a>
+        <a href="draft_resolution_template.html">Draft Resolution Template</a>
+        <a href="sample_speeches.html">Sample Speeches</a>
+        <a href="get-api-key.html">How to Get an API Key</a>
+      </span>
+    </span>
+    <span><a class="menu" href="how-it-works.html">How it Works</a></span>
+    <span><a class="menu" href="what-is-mun.html">What is MUN?</a></span>
+    <span><a class="menu" href="faq.html">FAQ</a></span>
+    <span><a class="menu" href="contact.html">Contact</a></span>
+    <span><button><a href="simulation.html" class="newSession">Start a Session</a></button></span>
+  </div>
+
+  <!-- ===================== INTRO: WHAT IS AN API ===================== -->
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="iconWrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="140" fill="#e2edf9"/>
+          <rect x="40" y="120" width="90" height="60" rx="10" fill="#25c1ff"/>
+          <rect x="170" y="120" width="90" height="60" rx="10" fill="#021c6f"/>
+          <rect x="128" y="142" width="44" height="16" rx="8" fill="#ffffff"/>
+          <circle cx="70" cy="150" r="7" fill="#ffffff"/>
+          <circle cx="100" cy="150" r="7" fill="#ffffff"/>
+          <circle cx="200" cy="150" r="7" fill="#ffffff"/>
+          <circle cx="230" cy="150" r="7" fill="#ffffff"/>
+        </svg>
+      </div>
+      <p class="providerLabel">You &amp; the AI model</p>
+    </div>
+    <div class="pageContent">
+      <h2>What Is an API Key, and Why Does SIMUN Need One?</h2>
+      <div class="contentBlock">
+        <p>SIMUN runs on a <strong>bring-your-own-key</strong> system. Instead of us charging you for every delegate and chair speech the AI generates on our server, you use your own API key and pay the AI company directly, for exactly what your committee session uses. There's no middleman markup or hidden charges, just the real cost of the AI work your simulation uses. As I show you below, it doesn’t amount to very much.</p>
+        <p>If you've used AI only through a website or app (like chatting with Claude, Gemini, or ChatGPT in your browser), an "API key" may sound like a hurdle. But it isn’t.</p>
+        <p><strong>An API key</strong> (Application Programming Interface) allows one piece of software to talk to another. SIMUN supports several AI models of varying cost and sophistication. Once you provide SIMUN with your chosen API key, it uses this to unlock your access to your AI model to run the AI simulation. The AI model you use then directly charges you for your AI usage for every turn you play on SIMUN. If you use a paid AI model then SIMUN displays the amount you have spent, while if you use a free model like the lowest tier of Gemini then every turn on SIMUN uses up one of your daily quota of requests.</p>
+        <p>Like a password, an <strong> API key</strong> is a string of letters and numbers <code>sk-ant-xxxxxxxx</code> that proves the request, and the bill for it, belongs to you. SIMUN uses your key only to run your simulation and never stores or shares it. You too should never share it with anyone or post it publicly.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="iconWrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="140" fill="#e2edf9"/>
+          <path d="M150 60 L170 120 L235 120 L182 158 L202 220 L150 182 L98 220 L118 158 L65 120 L130 120 Z" fill="#021c6f"/>
+          <circle cx="150" cy="150" r="22" fill="#25c1ff"/>
+        </svg>
+      </div>
+      <p class="providerLabel">How a request is billed</p>
+    </div>
+    <div class="pageContent">
+      <h2>So What Will a Committee Session Actually Cost Me?</h2>
+      <div class="contentBlock">
+        <p>AI credits are deducted for each turn during the simulation, but the amount for each turn is tiny and there are many turns per MUN session. So the real question is, how much would it cost to play an entire MUN session right up to the conclusion where the best delegate is announced.</p>
+        <div class="calloutBox">
+          A full SIMUN committee session run end-to-end on Claude Sonnet 5 came out to about <strong>$2 total</strong>. 
+        </div>
+        <p>API billing works like a prepaid phone plan. You load a small amount of credit onto your key, and it ticks down as SIMUN uses the model on your behalf. Providers typically suggest starting with around $5 of credit, which at roughly $2 a session means you can comfortably run a committee two times over, or try a different topic or replay a session with a different approach.</p>
+        <p>For the price of a Strabucks coffee that vanishes in under thirty minutes, you can enjoy a full day of diplomatic intrigue.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ANTHROPIC / CLAUDE ===================== -->
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="iconWrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="140" fill="#fbe9df"/>
+          <g fill="#cc6a35">
+            <rect x="140" y="60" width="20" height="90" rx="6"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(30 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(60 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(90 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(120 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(150 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(180 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(210 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(240 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(270 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(300 150 150)"/>
+            <rect x="140" y="60" width="20" height="90" rx="6" transform="rotate(330 150 150)"/>
+          </g>
+        </svg>
+      </div>
+      <p class="providerLabel">Anthropic · Claude</p>
+    </div>
+    <div class="pageContent">
+      <h2>Getting an Anthropic (Claude) API Key</h2>
+      <div class="contentBlock">
+        <p>Anthropic is the company behind the Claude family of AI models. Their developer platform is called the <strong>Claude Console</strong> (also reachable at <em>platform.claude.com</em>, which redirects to the same place).</p>
+        <ol class="stepList">
+          <li>Go to <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> and sign up with your email, Google account, or single sign-on.</li>
+          <li>Once logged in, open the <strong>API Keys</strong> section from the left-hand menu.</li>
+          <li>Click <strong>Create Key</strong>, give it a short descriptive name (e.g. "my project"), and confirm.</li>
+          <li>Copy the key immediately and store it somewhere safe (for security reasons, Anthropic will only show you the full key once).</li>
+          <li>Open <strong>Plans &amp; Billing</strong> and add a payment method, then add a small amount of credit (Anthropic suggests starting around $5) so the key is active and ready to use.</li>
+        </ol>
+        <div class="calloutBox">
+          Keys always start with <code>sk-ant-</code>. If you lose a key, you can't recover it, just delete it in the Console and create a new one.
+        </div>
+
+        <h3 style="color:var(--un-blue-dark); font-size:clamp(1.3rem, 1.5vw + 1rem, 1.9rem); margin-top:2rem;">Which Claude Model Should I Use for a Committee Session?</h3>
+        <p>Claude comes in three main tiers. All of them are paid but the price difference between tiers is large, so picking the right one matters a lot for your budget.</p>
+        <div class="modelLadder">
+          <div class="modelRung">
+            <span class="tag">Haiku</span>
+            <p><strong>Cheapest and fastest.</strong> Fine for exploring the interface or a throwaway test, but too unspohisticated for a meaningful complete session.</p>
+          </div>
+          <div class="modelRung">
+            <span class="tag">Sonnet</span>
+            <p><strong>The best value for money.</strong> Delegates hold consistent positions, respond meaningfully, and the chair enforces the ROP at a reasonable price of about $2 for the entire committee.</p>
+          </div>
+          <div class="modelRung">
+            <span class="tag">Opus</span>
+            <p><strong>Capable, witha hefty price tag.</strong> Costs 2-3 times more than Sonner. Allows for the sparpest possible debate, but for most practice and learning purposes it's overkill.</p>
+          </div>
+        </div>
+        <p>A simple rule of thumb: use Haiku only to confirm your key is working, run Sonnet for realistic debate and only reach for Opus if you want the best quality available and have the budget for it.</p>
+        <div class="linkRow">
+          Learn more: <a href="https://docs.claude.com" target="_blank" rel="noopener">docs.claude.com</a> (developer documentation) ·
+          <a href="https://www.anthropic.com/pricing" target="_blank" rel="noopener">anthropic.com/pricing</a> (prices fluctuate, so check this official page rather than trusting older guides)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== GOOGLE GEMINI ===================== -->
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="iconWrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="140" fill="#e4f0ff"/>
+          <path d="M150 50 C150 110 110 150 50 150 C110 150 150 190 150 250 C150 190 190 150 250 150 C190 150 150 110 150 50 Z" fill="#3b78ff"/>
+        </svg>
+      </div>
+      <p class="providerLabel">Google · Gemini</p>
+    </div>
+    <div class="pageContent">
+      <h2>Getting a Google Gemini API Key</h2>
+      <div class="contentBlock">
+        <p>Google's AI models are called <strong>Gemini</strong>. The only platfrom supported by SIMUN that provides a free key is <strong>Google AI Studio</strong>.</p>
+        <ol class="stepList">
+          <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> and sign in with your Google account.</li>
+          <li>Click <strong>Create API key</strong>.</li>
+          <li>Choose to create it in a new project (AI Studio will set this up automatically for you) or an existing Google Cloud project if you already have one.</li>
+          <li>Your key appears on screen — copy it. Unlike Anthropic and OpenAI, Google lets you come back and view the key again later from the AI Studio dashboard if you lose it.</li>
+        </ol>
+        <div class="calloutBox warn">
+          <strong>A warning about the free tier.</strong> Google offers a free quota, but it is strictly throttled and enormously popular worldwide, so you'll regularly encounter a <strong>"503 overloadd error"</strong> and <strong>"409 quota exceeded"</strong> errors well before you reach your nominal limit. Those failed requests can still eat into your daily allowance, meaning the free tier practically amounts to nothing.
+        </div>
+
+        <h3 style="color:var(--un-blue-dark); font-size:clamp(1.3rem, 1.5vw + 1rem, 1.9rem); margin-top:2rem;">Which Gemini Model Should I Use for a Committee Session?</h3>
+        <div class="modelLadder">
+          <div class="modelRung">
+            <span class="tag">Flash-Lite</span>
+            <p><strong>Cheapest tier.</strong> Fast and inexpensive; usable for a bare-bones test run, but delegates can feel a little flat.</p>
+          </div>
+          <div class="modelRung">
+            <span class="tag">Flash</span>
+            <p><strong>The balanced default.</strong> Once you've added billing, Flash is a reasonable mid-tier pick provided you're using a paid key</p>
+          </div>
+          <div class="modelRung">
+            <span class="tag">Pro</span>
+            <p><strong>Most capable, paid only.</strong> No free option and noticibly more expensive than Flash. Reserve it for high-stakes practice.</p>
+          </div>
+        </div>
+        <div class="linkRow">
+          Learn more: <a href="https://ai.google.dev/gemini-api/docs" target="_blank" rel="noopener">ai.google.dev/gemini-api/docs</a> (developer documentation) ·
+          <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">ai.google.dev/gemini-api/docs/pricing</a> (current prices and free-tier limits)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== OPENAI / CHATGPT ===================== -->
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="iconWrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="140" fill="#eaeaea"/>
+          <circle cx="150" cy="150" r="80" fill="none" stroke="#10a37f" stroke-width="18"/>
+          <circle cx="150" cy="150" r="40" fill="#10a37f"/>
+        </svg>
+      </div>
+      <p class="providerLabel">OpenAI · ChatGPT</p>
+    </div>
+    <div class="pageContent">
+      <h2>Getting an OpenAI (ChatGPT) API Key</h2>
+      <div class="contentBlock">
+        <p>OpenAI makes the GPT models behind ChatGPT. Their developer site, the <strong>OpenAI Platform</strong>, is a completely separate system from ChatGPT.com — so a ChatGPT Plus subscription does not give you API access or credit, and API usage has to be paid for separately.</p>
+        <ol class="stepList">
+          <li>Go to <a href="https://platform.openai.com" target="_blank" rel="noopener">platform.openai.com</a> and sign in (or sign up) with your email, Google, or Microsoft account.</li>
+          <li>If this is your first time, OpenAI will ask you to create an "organization" and a "project" — just follow the prompts and accept the defaults if you're not sure.</li>
+          <li>Open the <strong>API keys</strong> page, directly at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.</li>
+          <li>Click <strong>Create new secret key</strong>, name it, and create it.</li>
+          <li>Copy the key right away — like Anthropic, OpenAI only displays the full key once.</li>
+          <li>Open <strong>Billing</strong> in the Platform and add a payment method and some credit if you see an "insufficient quota" error when you try to use the key.</li>
+        </ol>
+        <div class="calloutBox">
+          Keys typically start with <code>sk-proj-</code>. Treat it like a password: never paste it into code you publish publicly or share in a chat.
+        </div>
+
+        <h3 style="color:var(--un-blue-dark); font-size:clamp(1.3rem, 1.5vw + 1rem, 1.9rem); margin-top:2rem;">Which OpenAI Model Should I Use for a Committee Session?</h3>
+        <p>OpenAI's current line-up follows a similar "small, medium, large" pattern to Claude's and Gemini's, just with different names.</p>
+        <div class="modelLadder">
+          <div class="modelRung">
+            <span class="tag">Nano</span>
+            <p><strong>Cheapest, fastest.</strong> Built for simple, high-volume, low-stakes tasks. Not sufficient for an immersive MUN experience.</p>
+          </div>
+          <div class="modelRung">
+            <span class="tag">Mini</span>
+            <p><strong>A solid middle ground.</strong> Noticeably better reasoning than Nano for a moderate price increase. Good for fun or low-stakes experiments.</p>
+          </div>
+          <div class="modelRung">
+            <span class="tag">Standard</span>
+            <p><strong>The full-size flagship model</strong> (and its slower "thinking" variants, which take a while). Best quality and the best choice for a tough and realistic challenge.</p>
+          </div>
+        </div>
+        <p>OpenAI renames and re-releases these fairly often (you may see version numbers attached, like GPT-5 or newer), but the nano / mini / full-size pattern — and the price ladder that goes with it — tends to stay the same.</p>
+        <div class="linkRow">
+          Learn more: <a href="https://platform.openai.com/docs" target="_blank" rel="noopener">platform.openai.com/docs</a> (developer documentation) ·
+          <a href="https://platform.openai.com/docs/pricing" target="_blank" rel="noopener">platform.openai.com/docs/pricing</a> (current, exact prices)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== COMPARISON TABLE ===================== -->
+  <div class="pageRow">
+    <div class="imageContainer">
+      <div class="iconWrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="140" fill="#e2edf9"/>
+          <rect x="70" y="170" width="35" height="70" fill="#25c1ff"/>
+          <rect x="132" y="130" width="35" height="110" fill="#021c6f"/>
+          <rect x="194" y="90" width="35" height="150" fill="#3b95fc"/>
+        </svg>
+      </div>
+      <p class="providerLabel">Side-by-side</p>
+    </div>
+    <div class="pageContent">
+      <h2>Quick Comparison</h2>
+      <div class="contentBlock">
+        <p>Here's the short version, to help you decide where to start. "Session cost" is for a full SIMUN committee on each provider's recommended mid-tier model.</p>
+        <table>
+          <tbody><tr>
+            <th>Provider</th>
+            <th>Where to get a key</th>
+            <th>Free tier?</th>
+            <th>Cheapest → Most capable</th>
+            <th>Full session cost</th>
+          </tr>
+          <tr>
+            <td><a href="https://console.anthropic.com" class="tableHyperlink" target="_blank" rel="noopener">Anthropic (Claude)</a></td>
+            <td>console.anthropic.com</td>
+            <td>No — small starting credit required</td>
+            <td>Haiku → Sonnet → Opus</td>
+            <td><strong>~$2 on Sonnet</strong> — our overall recommendation: reliable, realistic, and the best value per dollar</td>
+          </tr>
+          <tr>
+            <td><a href="https://aistudio.google.com/app/apikey" class="tableHyperlink" target="_blank" rel="noopener">Google (Gemini)</a></td>
+            <td>aistudio.google.com</td>
+            <td>Technically yes, but frequently overloaded — not dependable for a full session</td>
+            <td>Flash-Lite → Flash → Pro</td>
+            <td>Lower per-token than Sonnet, but only dependable once billing is added</td>
+          </tr>
+          <tr>
+            <td><a href="https://platform.openai.com/api-keys" class="tableHyperlink" target="_blank" rel="noopener">OpenAI (ChatGPT)</a></td>
+            <td>platform.openai.com</td>
+            <td>No — separate from any ChatGPT subscription</td>
+            <td>Nano → Mini → Standard</td>
+            <td>Varies — Mini is a reasonable mid-tier starting point</td>
+          </tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FAQ ===================== -->
+  <div class="faqSection">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faqItem">
+      <button class="faqButton">How much will running a SIMUN session actually cost me?</button>
+      <div class="faqAnswer"><p>In our own testing, a full committee session — several delegates, multiple rounds of debate, the chair running the whole thing — cost about $2 on Claude Sonnet 5. That's the figure we'd budget around. You may also see mentions of free quotas (Gemini offers one), but we don't recommend relying on them for a real session — see the next question for why.</p></div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton">Is it really worth paying, instead of using a free option?</button>
+      <div class="faqAnswer"><p>We think so, yes. $2 for an entire committee session — with delegates who hold consistent positions and respond to what's actually been argued, and a chair who enforces procedure properly — is a small price for something you can replay as many times as you like. Free tiers exist, but they're shared across huge numbers of users and tend to return "overloaded" errors well before you've used your full quota, which is frustrating mid-debate. Spending a couple of dollars on a mid-tier model like Sonnet buys you a session that actually runs start to finish without interruption, which is usually worth far more than the money saved.</p></div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton">Is using an API key the same as chatting on the website?</button>
+      <div class="faqAnswer"><p>Not quite. The website or app (claude.ai, gemini.google.com, chatgpt.com) is usually a flat monthly subscription, or free with limits. An API key is for connecting your own programs or tools — like SIMUN — directly to the model, and is billed separately, by usage, even if you also pay for a subscription elsewhere.</p></div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton">Will I be charged automatically once I have a key?</button>
+      <div class="faqAnswer"><p>No. Creating a key costs nothing. You're only charged once SIMUN actually sends requests on your behalf — that is, once you start a session — and all three providers let you set spending limits or alerts so a bill can't grow unexpectedly beyond what a committee session should cost.</p></div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton">Is it safe to paste my API key into a tool or website?</button>
+      <div class="faqAnswer"><p>Only paste it into places you trust, such as official provider dashboards or well-known developer tools, and never share it publicly (for example, in a public code repository, a forum post, or a screenshot). Anyone who gets hold of your key can use it and you'll be billed for it. If you ever suspect a key has leaked, delete it immediately in the provider's console and create a new one.</p></div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton">I hit "quota exceeded" or "model overloaded" — now what?</button>
+      <div class="faqAnswer"><p>This is common on free tiers, especially Gemini's, since the free quota is shared across a huge number of users and gets overloaded well before you've technically used it all up. The fix is the same either way: add a payment method in the provider's billing settings and top up a small amount of credit. All three providers use a pay-as-you-go system, so a few dollars — enough for several full sessions on a model like Claude Sonnet — is usually enough to experiment with for a long while without hitting those errors again.</p></div>
+    </div>
+    <div class="faqItem">
+      <button class="faqButton">Do model names and prices change often?</button>
+      <div class="faqAnswer"><p>Yes, quite often — all three companies release new model versions and adjust pricing several times a year. The general pattern described on this page (a cheap/fast tier, a balanced tier, and a powerful/expensive tier) tends to hold steady even as exact names and numbers shift, but always check the official pricing pages linked above for current figures before budgeting for a project.</p></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p class="credit">© Copyright Kinara Goyal 2026 <img src="downward_arrow.png" class="scrollArrow" id="scrollArrow" alt="Scroll down"/></p>
+  </div>
+  <script><![CDATA[
+    const scrollArrow = document.getElementById('scrollArrow');
+    function updateScrollArrow() {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY;
+      if (scrollable - scrolled <= 2) {
+        scrollArrow.style.visibility = 'hidden';
+      } else {
+        scrollArrow.style.visibility = 'visible';
+      }
+    }
+    window.addEventListener('scroll', updateScrollArrow);
+    window.addEventListener('resize', updateScrollArrow);
+    window.addEventListener('load', updateScrollArrow);
+
+    // FAQ accordion
+    document.querySelectorAll('.faqButton').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const answer = btn.nextElementSibling;
+        const isOpen = btn.classList.contains('active');
+        document.querySelectorAll('.faqButton').forEach(function (b) {
+          b.classList.remove('active');
+          b.nextElementSibling.style.maxHeight = null;
+        });
+        if (!isOpen) {
+          btn.classList.add('active');
+          answer.style.maxHeight = answer.scrollHeight + 'px';
+        }
+      });
+    });
+  ]]></script>
+
+</body></html>
