@@ -2035,23 +2035,33 @@ function buildTurnRequest(correction) {
     && /\?\s*$/.test(String(prevTurn.text || "").trim())
     && prevTurn.speaker !== (lastTurn ? lastTurn.speaker : null)
     && !/you have the floor|the floor is yours|recognis?es the delegate/i.test(String(prevTurn.text || "")));
-  if (lastTurn && (lastTurn.role === "delegate" || lastTurn.role === "user")
+  /* Only apply speech timing for phases that actually have a time limit.
+     Moderated caucuses use the speaking time from their opening motion;
+     position papers, unmoderated caucuses, motions, and similar freeform
+     phases have no time limit and must never be timed. */
+  const lastPhase = lastTurn ? (lastTurn.phase || "") : "";
+  const timingApplies = lastPhase === PHASES.GSL || lastPhase === PHASES.MOD
+    || (lastPhase === PHASES.POI) || (lastPhase === PHASES.YIELD);
+  if (timingApplies
+      && lastTurn && (lastTurn.role === "delegate" || lastTurn.role === "user")
       && lastTurn.text && lastTurn.text.length > 120
       && !looksLikeMotion(lastTurn.text)
       && !looksLikePoiAnswer) {
-    const tm = lastTurn.timing || speechTiming(lastTurn.text);
-    const who = lastTurn.role === "user" ? state.userCountry : lastTurn.speaker;
-    const selfYielded = /\byield/i.test(lastTurn.text);
-    req += `\n\nSPEECH TIMING (already calculated - use these exact numbers, do not recompute): `
-         + `${who} spoke ${tm.words} words = ${tm.usedSeconds}s of the ${tm.limit}s limit. `;
-    if (tm.overran) {
-      req += `They OVERRAN by ${tm.usedSeconds - tm.limit}s; the Chair must cut them off and note it.`;
-    } else if (selfYielded) {
-      req += `The speaker already stated their own yield in that speech. The Chair's NEXT turn MUST still open by stating "${tm.usedSeconds} seconds used, ${tm.remaining} seconds remaining" before acting on the yield that was already given — do NOT ask how they yield again, they already said.`;
-    } else {
-      req += `${tm.remaining}s REMAIN. The Chair's next turn MUST state "${tm.usedSeconds} seconds used, ${tm.remaining} seconds remaining" and ASK HOW THEY YIELD.`;
-      if (lastTurn.role === "user" && tm.remaining > 0) {
-        req += ` Since this was the human, set requiresUserResponse=true, showTextbox=false, and offer yield buttons (e.g. "Yield to the Chair", "Yield to Points of Information", "Yield to [delegate]"), color "default".`;
+    const tm = lastTurn.timing || speechTiming(lastTurn.text, currentSpeakingLimit(lastPhase));
+    if (tm.limit !== null) {
+      const who = lastTurn.role === "user" ? state.userCountry : lastTurn.speaker;
+      const selfYielded = /\byield/i.test(lastTurn.text);
+      req += `\n\nSPEECH TIMING (already calculated - use these exact numbers, do not recompute): `
+           + `${who} spoke ${tm.words} words = ${tm.usedSeconds}s of the ${tm.limit}s limit. `;
+      if (tm.overran) {
+        req += `They OVERRAN by ${tm.usedSeconds - tm.limit}s; the Chair must cut them off and note it.`;
+      } else if (selfYielded) {
+        req += `The speaker already stated their own yield in that speech. The Chair's NEXT turn MUST still open by stating "${tm.usedSeconds} seconds used, ${tm.remaining} seconds remaining" before acting on the yield that was already given — do NOT ask how they yield again, they already said.`;
+      } else {
+        req += `${tm.remaining}s REMAIN. The Chair's next turn MUST state "${tm.usedSeconds} seconds used, ${tm.remaining} seconds remaining" and ASK HOW THEY YIELD.`;
+        if (lastTurn.role === "user" && tm.remaining > 0) {
+          req += ` Since this was the human, set requiresUserResponse=true, showTextbox=false, and offer yield buttons (e.g. "Yield to the Chair", "Yield to Points of Information", "Yield to [delegate]"), color "default".`;
+        }
       }
     }
   }
@@ -2334,8 +2344,25 @@ function summarizeEntry(entry) {
 
 /* How long is a speech allowed to run right now?
    Reads the most recent motion that set a speaking time; otherwise the GSL
-   default of 90 seconds. */
-function currentSpeakingLimit() {
+   default of 90 seconds.
+   Returns null for phases where no time limit applies (position papers,
+   unmoderated caucus, motions, drafting, etc.) so callers can skip
+   timing entirely for those phases. */
+function currentSpeakingLimit(phaseOverride) {
+  const phase = phaseOverride
+    || (state && state.transcript && state.transcript.length
+        ? state.transcript[state.transcript.length - 1].phase : "");
+
+  /* These phases have no per-speech time limit at all. */
+  const noLimit = [
+    PHASES.POSITION, PHASES.UNMOD, PHASES.DRAFTING, PHASES.OPEN_FLOOR,
+    PHASES.ROLL_CALL, PHASES.PROC_VOTE, PHASES.SUBS_VOTE, PHASES.AMENDMENTS,
+    PHASES.DR_INTRO, PHASES.OPENING, PHASES.CLOSING, PHASES.CRISIS,
+  ];
+  if (noLimit.includes(phase)) return null;
+
+  /* For moderated caucuses the speaking time comes from the motion that
+     opened it. Search backwards for the most recent explicit speaking time. */
   const turns = (state.transcript || []).slice().reverse();
   for (const t of turns) {
     const m = String(t.text || "").match(/speaking time\s*(?:of|to|is)?\s*(\d{1,3})\s*second/i);
@@ -2343,14 +2370,22 @@ function currentSpeakingLimit() {
     const m2 = String(t.text || "").match(/(\d{1,3})\s*seconds?\s*(?:per speaker|speaking time)/i);
     if (m2) return parseInt(m2[1], 10);
   }
+  /* GSL default of 90 seconds — only reached for GSL/MOD phases with no
+     explicit motion. */
   return 90;
 }
 
-/* Turn a block of speech into the numbers the Chair needs to announce. */
+/* Turn a block of speech into the numbers the Chair needs to announce.
+   When limitSeconds is null (no limit applies for this phase), timing
+   fields are returned with limit=null and overran=false so callers can
+   display a word count only. */
 function speechTiming(text, limitSeconds) {
-  const limit = limitSeconds || currentSpeakingLimit();
+  const limit = (limitSeconds !== undefined ? limitSeconds : currentSpeakingLimit());
   const words = countWords(text);
   const usedSeconds = Math.round((words / WORDS_PER_MINUTE) * 60);
+  if (limit === null) {
+    return { words, usedSeconds, remaining: null, limit: null, overran: false };
+  }
   const remaining = Math.max(0, limit - usedSeconds);
   return { words, usedSeconds, remaining, limit, overran: usedSeconds > limit };
 }
@@ -2366,6 +2401,13 @@ function updateWordCountHint() {
   const text = $("user-text").value;
   if (!text.trim()) { hint.textContent = ""; return; }
   const tm = speechTiming(text);
+  if (tm.limit === null) {
+    /* No time limit for this phase (position papers, unmod, etc.) —
+       show word count only, no time pressure. */
+    hint.textContent = `${tm.words} words`;
+    hint.style.color = "#5a6b7a";
+    return;
+  }
   hint.textContent = `${tm.words} words \u2248 ${tm.usedSeconds}s of your ${tm.limit}s`
     + (tm.overran ? ` \u2014 over by ${tm.usedSeconds - tm.limit}s` : ` (${tm.remaining}s left)`);
   hint.style.color = tm.overran ? "#b71c1c" : "#5a6b7a";
@@ -3492,9 +3534,11 @@ function toEntry(turn) {
   }
 
   /* Speech timing is computed, never trusted to the model. Stored on the turn
-     so the Chair can be handed exact numbers on the next request. */
+     so the Chair can be handed exact numbers on the next request. Only stored
+     when a time limit actually applies for this phase. */
   if (role === "delegate" && text.length > 120 && !looksLikeMotion(text)) {
-    entry.timing = speechTiming(text);
+    const limit = currentSpeakingLimit(entry.phase);
+    if (limit !== null) entry.timing = speechTiming(text, limit);
   }
   return entry;
 }
@@ -3705,8 +3749,12 @@ function submitUserResponse(fixedChoice) {
     text
   };
   /* Time the human's speech in code too, so the Chair gets real numbers for
-     them exactly as it does for the AI delegates. */
-  if (text.length > 120) entry.timing = speechTiming(text);
+     them exactly as it does for the AI delegates. Only store timing when a
+     limit actually applies for the current phase. */
+  if (text.length > 120) {
+    const limit = currentSpeakingLimit(entry.phase);
+    if (limit !== null) entry.timing = speechTiming(text, limit);
+  }
   entry.summary = summarizeEntry(entry);
   state.transcript.push(entry);
   renderTurn(entry);
@@ -4198,4 +4246,4 @@ if (Backends[currentBackendId()].getKey()) {
 }
 </script>
 </body>
-</html><!DOCTYPE html>
+</html>
