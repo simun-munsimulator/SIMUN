@@ -704,6 +704,14 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
     <button id="start-btn">Begin</button>
     <button id="change-key-btn" class="secondary" style="margin-left:0.5rem">Change API key</button>
     <a class="homeLink" href="index.html">Return to home</a>
+    <!-- All-time estimated AI spend across every session (see section 4b).
+         Filled in by updateCostDisplay(); the link clears the running total. -->
+    <!-- COST DISABLED
+    <p class="hint" id="setup-cost-total" style="margin-top:1rem;">
+      <span id="setup-cost-text"></span>
+      <a href="#" id="reset-cost-link" style="margin-left:0.4rem;">reset</a>
+    </p>
+    -->
   </div>
 </div>
 
@@ -716,7 +724,7 @@ table.scores tr.user-row { background: var(--user); font-weight: bold; }
     <span class="meta" id="header-country"></span>
     <!-- Estimated AI spend, filled in by updateCostDisplay(). The tooltip
          (title attribute) holds the detailed breakdown. -->
-    <span class="cost" id="cost-display"></span>
+    <!-- COST DISABLED <span class="cost" id="cost-display"></span> -->
     <span><button id="new-session-btn">New session</button></span>
   </div>
 
@@ -1263,11 +1271,11 @@ async function chatCompletionsJSON({ backendId, label, url, apiKey, model, syste
   // completion_tokens already includes hidden reasoning tokens.
   const u = data?.usage || {};
   const cached = u.prompt_tokens_details?.cached_tokens || 0;
-  recordUsage(backendId, model, {
-    inputTokens: Math.max(0, (u.prompt_tokens || 0) - cached),
-    cacheReadTokens: cached,
-    outputTokens: u.completion_tokens || 0,
-  });
+//   recordUsage(backendId, model, {
+//     inputTokens: Math.max(0, (u.prompt_tokens || 0) - cached),
+//     cacheReadTokens: cached,
+//     outputTokens: u.completion_tokens || 0,
+//   });
 
   const text = data?.choices?.[0]?.message?.content;
   if (!text) throw new Error(`${label} returned no text. Click Next to try again.`);
@@ -1315,11 +1323,11 @@ const Backends = {
       // thinking tokens are reported separately but billed as output.
       const u = data?.usageMetadata || {};
       const cached = u.cachedContentTokenCount || 0;
-      recordUsage(this.id, this.getModel(), {
-        inputTokens: Math.max(0, (u.promptTokenCount || 0) - cached),
-        cacheReadTokens: cached,
-        outputTokens: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0),
-      });
+//       recordUsage(this.id, this.getModel(), {
+//         inputTokens: Math.max(0, (u.promptTokenCount || 0) - cached),
+//         cacheReadTokens: cached,
+//         outputTokens: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0),
+//       });
 
       const text = data?.candidates?.[0]?.text || data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error("Gemini returned no text (the reply may have been blocked). Click Next to try again.");
@@ -1372,12 +1380,12 @@ const Backends = {
       // reads and cache writes, which are reported as separate counts.
       // output_tokens already includes any thinking tokens.
       const u = data?.usage || {};
-      recordUsage(this.id, this.getModel(), {
-        inputTokens: u.input_tokens || 0,
-        cacheReadTokens: u.cache_read_input_tokens || 0,
-        cacheWriteTokens: u.cache_creation_input_tokens || 0,
-        outputTokens: u.output_tokens || 0,
-      });
+//       recordUsage(this.id, this.getModel(), {
+//         inputTokens: u.input_tokens || 0,
+//         cacheReadTokens: u.cache_read_input_tokens || 0,
+//         cacheWriteTokens: u.cache_creation_input_tokens || 0,
+//         outputTokens: u.output_tokens || 0,
+//       });
 
       // A safety decline arrives as HTTP 200 with stop_reason "refusal".
       if (data.stop_reason === "refusal") {
@@ -1444,164 +1452,164 @@ for (const [id, backend] of Object.entries(Backends)) backend.id = id;
    details), and the all-time total is shown under the Begin button too.
    ================================================================== */
 
-/* COST TRACKING DISABLED
-   Prices in US dollars per ONE MILLION tokens, copied from each
-   provider's pricing page (checked 2026-10-03).
-const MODEL_PRICES = {
-  // "gemini-3.6-flash":  { input: 0.75, output: 3.75,  cacheRead: 0.075 },
-  // "gemini-2.5-flash":  { input: 0.30, output: 2.50,  cacheRead: 0.03 },
-  // "gemini-2.5-pro":    { input: 1.25, output: 10.00, cacheRead: 0.125 },
-  // "claude-opus-5":     { input: 5.00, output: 25.00, cacheRead: 0.50, cacheWrite: 6.25 },
-  // "claude-opus-4-8":   { input: 5.00, output: 25.00, cacheRead: 0.50, cacheWrite: 6.25 },
-  // "claude-sonnet-5":   { input: 2.00, output: 10.00, cacheRead: 0.20, cacheWrite: 2.50 },
-  // "claude-haiku-4-5":  { input: 1.00, output: 5.00,  cacheRead: 0.10, cacheWrite: 1.25 },
-  // "gpt-5":             { input: 1.25, output: 10.00, cacheRead: 0.125 },
-  // "gpt-5-mini":        { input: 0.25, output: 2.00,  cacheRead: 0.025 },
-  // "gpt-4.1":           { input: 2.00, output: 8.00,  cacheRead: 0.50 },
-  // "gpt-4o":            { input: 2.50, output: 10.00, cacheRead: 1.25 },
-};
-*/
+// /* COST TRACKING DISABLED
+//    Prices in US dollars per ONE MILLION tokens, copied from each
+//    provider's pricing page (checked 2026-10-03).
+// const MODEL_PRICES = {
+//   // "gemini-3.6-flash":  { input: 0.75, output: 3.75,  cacheRead: 0.075 },
+//   // "gemini-2.5-flash":  { input: 0.30, output: 2.50,  cacheRead: 0.03 },
+//   // "gemini-2.5-pro":    { input: 1.25, output: 10.00, cacheRead: 0.125 },
+//   // "claude-opus-5":     { input: 5.00, output: 25.00, cacheRead: 0.50, cacheWrite: 6.25 },
+//   // "claude-opus-4-8":   { input: 5.00, output: 25.00, cacheRead: 0.50, cacheWrite: 6.25 },
+//   // "claude-sonnet-5":   { input: 2.00, output: 10.00, cacheRead: 0.20, cacheWrite: 2.50 },
+//   // "claude-haiku-4-5":  { input: 1.00, output: 5.00,  cacheRead: 0.10, cacheWrite: 1.25 },
+//   // "gpt-5":             { input: 1.25, output: 10.00, cacheRead: 0.125 },
+//   // "gpt-5-mini":        { input: 0.25, output: 2.00,  cacheRead: 0.025 },
+//   // "gpt-4.1":           { input: 2.00, output: 8.00,  cacheRead: 0.50 },
+//   // "gpt-4o":            { input: 2.50, output: 10.00, cacheRead: 1.25 },
+// };
+// */
 
-// const USAGE_TOTAL_STORAGE_KEY = "mun_usage_total";
+// // const USAGE_TOTAL_STORAGE_KEY = "mun_usage_total";
 
-/* Find the price entry for a model name, or null if we don't know it.
-   Providers sometimes report a dated version of a model, e.g.
-   "gpt-5-mini-2025-08-07" for "gpt-5-mini", so a name that is a listed
-   model followed by "-<digits>..." also matches. (Requiring a digit
-   stops "gpt-5-mini" from wrongly matching the "gpt-5" entry.) */
-function priceFor(model) {
-  const name = String(model || "").replace(/^models\//, "");  // Gemini sometimes adds "models/"
-  if (MODEL_PRICES[name]) return MODEL_PRICES[name];
-  for (const [known, price] of Object.entries(MODEL_PRICES)) {
-    if (name.startsWith(known + "-") && /^\d/.test(name.slice(known.length + 1))) return price;
-  }
-  return null;
-}
+// /* Find the price entry for a model name, or null if we don't know it.
+//    Providers sometimes report a dated version of a model, e.g.
+//    "gpt-5-mini-2025-08-07" for "gpt-5-mini", so a name that is a listed
+//    model followed by "-<digits>..." also matches. (Requiring a digit
+//    stops "gpt-5-mini" from wrongly matching the "gpt-5" entry.) */
+// function priceFor(model) {
+//   const name = String(model || "").replace(/^models\//, "");  // Gemini sometimes adds "models/"
+//   if (MODEL_PRICES[name]) return MODEL_PRICES[name];
+//   for (const [known, price] of Object.entries(MODEL_PRICES)) {
+//     if (name.startsWith(known + "-") && /^\d/.test(name.slice(known.length + 1))) return price;
+//   }
+//   return null;
+// }
 
-/* An empty set of counters. Used for both the session and all-time totals. */
-function emptyUsage() {
-  return { calls: 0, inputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0,
-           outputTokens: 0, costUSD: 0, unpricedCalls: 0 };
-}
+// /* An empty set of counters. Used for both the session and all-time totals. */
+// function emptyUsage() {
+//   return { calls: 0, inputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0,
+//            outputTokens: 0, costUSD: 0, unpricedCalls: 0 };
+// }
 
-/* Add one call's token counts and cost into a set of counters. */
-function addUsage(totals, tokens, cost) {
-  totals.calls += 1;
-  totals.inputTokens      += tokens.inputTokens;
-  totals.cacheReadTokens  += tokens.cacheReadTokens;
-  totals.cacheWriteTokens += tokens.cacheWriteTokens;
-  totals.outputTokens     += tokens.outputTokens;
-  if (cost === null) totals.unpricedCalls += 1;
-  else totals.costUSD += cost;
-}
+// /* Add one call's token counts and cost into a set of counters. */
+// function addUsage(totals, tokens, cost) {
+//   totals.calls += 1;
+//   totals.inputTokens      += tokens.inputTokens;
+//   totals.cacheReadTokens  += tokens.cacheReadTokens;
+//   totals.cacheWriteTokens += tokens.cacheWriteTokens;
+//   totals.outputTokens     += tokens.outputTokens;
+//   if (cost === null) totals.unpricedCalls += 1;
+//   else totals.costUSD += cost;
+// }
 
-/* The all-time totals from local storage:
-   { since, all: <counters>, byBackend: { gemini: <counters>, ... } } */
-function loadUsageTotals() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(USAGE_TOTAL_STORAGE_KEY));
-    if (saved && saved.all) return saved;
-  } catch (e) { /* missing or corrupt: start again */ }
-  return { since: new Date().toISOString(), all: emptyUsage(), byBackend: {} };
-}
+// /* The all-time totals from local storage:
+//    { since, all: <counters>, byBackend: { gemini: <counters>, ... } } */
+// function loadUsageTotals() {
+//   try {
+//     const saved = JSON.parse(localStorage.getItem(USAGE_TOTAL_STORAGE_KEY));
+//     if (saved && saved.all) return saved;
+//   } catch (e) { /* missing or corrupt: start again */ }
+//   return { since: new Date().toISOString(), all: emptyUsage(), byBackend: {} };
+// }
 
-function saveUsageTotals(totals) {
-  try { localStorage.setItem(USAGE_TOTAL_STORAGE_KEY, JSON.stringify(totals)); }
-  catch (e) { /* local storage full or disabled */ }
-}
+// function saveUsageTotals(totals) {
+//   try { localStorage.setItem(USAGE_TOTAL_STORAGE_KEY, JSON.stringify(totals)); }
+//   catch (e) { /* local storage full or disabled */ }
+// }
 
-/* Called by every backend after every successful API call. `usage` holds
-   the token counts already translated by the backend into this shape
-   (missing counts are treated as 0):
-     { inputTokens, cacheReadTokens, cacheWriteTokens, outputTokens }
-   where inputTokens means NON-cached prompt tokens only. */
-function recordUsage(backendId, model, usage) {
-  const tokens = {
-    inputTokens:      usage.inputTokens      || 0,
-    cacheReadTokens:  usage.cacheReadTokens  || 0,
-    cacheWriteTokens: usage.cacheWriteTokens || 0,
-    outputTokens:     usage.outputTokens     || 0,
-  };
+// /* Called by every backend after every successful API call. `usage` holds
+//    the token counts already translated by the backend into this shape
+//    (missing counts are treated as 0):
+//      { inputTokens, cacheReadTokens, cacheWriteTokens, outputTokens }
+//    where inputTokens means NON-cached prompt tokens only. */
+// function recordUsage(backendId, model, usage) {
+//   const tokens = {
+//     inputTokens:      usage.inputTokens      || 0,
+//     cacheReadTokens:  usage.cacheReadTokens  || 0,
+//     cacheWriteTokens: usage.cacheWriteTokens || 0,
+//     outputTokens:     usage.outputTokens     || 0,
+//   };
 
-  // Work out the cost, or null if this model isn't in MODEL_PRICES.
-  // Prices are per million tokens, hence the division.
-  const p = priceFor(model);
-  const cost = p === null ? null : (
-      tokens.inputTokens      * p.input
-    + tokens.cacheReadTokens  * (p.cacheRead  ?? p.input)
-    + tokens.cacheWriteTokens * (p.cacheWrite ?? p.input)
-    + tokens.outputTokens     * p.output
-  ) / 1e6;
+//   // Work out the cost, or null if this model isn't in MODEL_PRICES.
+//   // Prices are per million tokens, hence the division.
+//   const p = priceFor(model);
+//   const cost = p === null ? null : (
+//       tokens.inputTokens      * p.input
+//     + tokens.cacheReadTokens  * (p.cacheRead  ?? p.input)
+//     + tokens.cacheWriteTokens * (p.cacheWrite ?? p.input)
+//     + tokens.outputTokens     * p.output
+//   ) / 1e6;
 
-  // This session (saved to local storage with the rest of the session by
-  // the next saveSession()). There is no session yet only in odd cases.
-  if (state) {
-    if (!state.usage) state.usage = emptyUsage();  // sessions saved before cost tracking existed
-    addUsage(state.usage, tokens, cost);
-  }
+//   // This session (saved to local storage with the rest of the session by
+//   // the next saveSession()). There is no session yet only in odd cases.
+//   if (state) {
+//     if (!state.usage) state.usage = emptyUsage();  // sessions saved before cost tracking existed
+//     addUsage(state.usage, tokens, cost);
+//   }
 
-  // All-time totals, overall and per provider, saved straight away.
-  const totals = loadUsageTotals();
-  addUsage(totals.all, tokens, cost);
-  if (!totals.byBackend[backendId]) totals.byBackend[backendId] = emptyUsage();
-  addUsage(totals.byBackend[backendId], tokens, cost);
-  saveUsageTotals(totals);
+//   // All-time totals, overall and per provider, saved straight away.
+//   const totals = loadUsageTotals();
+//   addUsage(totals.all, tokens, cost);
+//   if (!totals.byBackend[backendId]) totals.byBackend[backendId] = emptyUsage();
+//   addUsage(totals.byBackend[backendId], tokens, cost);
+//   saveUsageTotals(totals);
 
-  updateCostDisplay();
-}
+//   updateCostDisplay();
+// }
 
-/* "$0.0042", "$0.042", "$1.87": more decimals for small amounts, so the
-   first few cheap calls don't all just show "$0.00". A trailing "+" means
-   some calls used a model with no known price, so the real cost is higher. */
-function formatCost(totals) {
-  const c = totals.costUSD;
-  const digits = c === 0 || c >= 10 ? 2 : c < 0.01 ? 4 : 3;
-  return "$" + c.toFixed(digits) + (totals.unpricedCalls ? "+" : "");
-}
+// /* "$0.0042", "$0.042", "$1.87": more decimals for small amounts, so the
+//    first few cheap calls don't all just show "$0.00". A trailing "+" means
+//    some calls used a model with no known price, so the real cost is higher. */
+// function formatCost(totals) {
+//   const c = totals.costUSD;
+//   const digits = c === 0 || c >= 10 ? 2 : c < 0.01 ? 4 : 3;
+//   return "$" + c.toFixed(digits) + (totals.unpricedCalls ? "+" : "");
+// }
 
-/* One tooltip line of token counts, e.g. "12 calls, 48,000 in (2,000 cached), 9,500 out". */
-function describeUsage(t) {
-  const n = x => x.toLocaleString();
-  const cached = t.cacheReadTokens + t.cacheWriteTokens;
-  return `${n(t.calls)} call${t.calls === 1 ? "" : "s"}, `
-    + `${n(t.inputTokens + cached)} tokens in${cached ? ` (${n(cached)} cached)` : ""}, `
-    + `${n(t.outputTokens)} out`;
-}
+// /* One tooltip line of token counts, e.g. "12 calls, 48,000 in (2,000 cached), 9,500 out". */
+// function describeUsage(t) {
+//   const n = x => x.toLocaleString();
+//   const cached = t.cacheReadTokens + t.cacheWriteTokens;
+//   return `${n(t.calls)} call${t.calls === 1 ? "" : "s"}, `
+//     + `${n(t.inputTokens + cached)} tokens in${cached ? ` (${n(cached)} cached)` : ""}, `
+//     + `${n(t.outputTokens)} out`;
+// }
 
-/* Refresh the two places costs are shown: the header of the simulation
-   screen (session + all-time, with a detailed tooltip) and the line under
-   the Begin button on the setup screen (all-time only). Safe to call at
-   any time, whichever screen is showing. */
-function updateCostDisplay() {
-  const totals = loadUsageTotals();
-  const session = (state && state.usage) || emptyUsage();
+// /* Refresh the two places costs are shown: the header of the simulation
+//    screen (session + all-time, with a detailed tooltip) and the line under
+//    the Begin button on the setup screen (all-time only). Safe to call at
+//    any time, whichever screen is showing. */
+// function updateCostDisplay() {
+//   const totals = loadUsageTotals();
+//   const session = (state && state.usage) || emptyUsage();
 
-  $("cost-display").textContent = `Session ${formatCost(session)} · Total ${formatCost(totals.all)}`;
+//   $("cost-display").textContent = `Session ${formatCost(session)} · Total ${formatCost(totals.all)}`;
 
-  const lines = [
-    "Estimated AI cost (US$), from token counts and list prices.",
-    "",
-    `This session: ${formatCost(session)}`,
-    "  " + describeUsage(session),
-    "",
-    `All sessions since ${new Date(totals.since).toLocaleDateString()}: ${formatCost(totals.all)}`,
-  ];
-  for (const [id, t] of Object.entries(totals.byBackend)) {
-    const label = Backends[id] ? Backends[id].label : id;
-    lines.push(`  ${label}: ${formatCost(t)} (${describeUsage(t)})`);
-  }
-  lines.push("");
-  if (session.unpricedCalls || totals.all.unpricedCalls) {
-    lines.push("\"+\" = some calls used a model with no known price, so they are not included.");
-  }
-  lines.push("Free-tier Gemini keys are not actually charged.");
-  $("cost-display").title = lines.join("\n");
+//   const lines = [
+//     "Estimated AI cost (US$), from token counts and list prices.",
+//     "",
+//     `This session: ${formatCost(session)}`,
+//     "  " + describeUsage(session),
+//     "",
+//     `All sessions since ${new Date(totals.since).toLocaleDateString()}: ${formatCost(totals.all)}`,
+//   ];
+//   for (const [id, t] of Object.entries(totals.byBackend)) {
+//     const label = Backends[id] ? Backends[id].label : id;
+//     lines.push(`  ${label}: ${formatCost(t)} (${describeUsage(t)})`);
+//   }
+//   lines.push("");
+//   if (session.unpricedCalls || totals.all.unpricedCalls) {
+//     lines.push("\"+\" = some calls used a model with no known price, so they are not included.");
+//   }
+//   lines.push("Free-tier Gemini keys are not actually charged.");
+//   $("cost-display").title = lines.join("\n");
 
-  $("setup-cost-text").textContent = totals.all.calls
-    ? `Estimated AI spend in this browser so far: ${formatCost(totals.all)} (${describeUsage(totals.all)}).`
-    : "Estimated AI spend in this browser so far: $0.00.";
-  $("reset-cost-link").style.display = totals.all.calls ? "" : "none";
-}
+//   $("setup-cost-text").textContent = totals.all.calls
+//     ? `Estimated AI spend in this browser so far: ${formatCost(totals.all)} (${describeUsage(totals.all)}).`
+//     : "Estimated AI spend in this browser so far: $0.00.";
+//   $("reset-cost-link").style.display = totals.all.calls ? "" : "none";
+// }
 
 /* ==================================================================
    5. STRUCTURED JSON RESPONSE SCHEMAS
@@ -1790,7 +1798,7 @@ function newState(committee, agenda, userCountry, difficulty, enableCrisis, show
     resolutionPhasePopupShown: false,
     sessionOver: false,
     scores: null,
-    usage: emptyUsage(),  // tokens and estimated cost for this session (section 4b)
+//     usage: emptyUsage(),  // tokens and estimated cost for this session (section 4b)
     startedAt: new Date().toISOString(),
   };
 }
@@ -3427,7 +3435,7 @@ function renderHeader() {
   const label = document.createElement("span");
   label.textContent = `You: Delegate of ${state.userCountry}`;
   headerCountry.appendChild(label);
-  updateCostDisplay();
+//   updateCostDisplay();
 }
 
 /* ==================================================================
@@ -4043,7 +4051,7 @@ function populateSetupSelects() {
   populateCountrySelect();
   updateAgendaPlaceholder();
   updateCrisisVisibility();
-  updateCostDisplay();  // refresh the all-time spend line under the Begin button
+//   updateCostDisplay();  // refresh the all-time spend line under the Begin button
 
   cSel.addEventListener("change", () => {
     populateCountrySelect();
@@ -4185,12 +4193,12 @@ $("speech-suggest-link").addEventListener("click", async (e) => {
 
 /* Clear the all-time cost total on the setup screen. The current
    session's own count (if any) is kept with the session. */
-$("reset-cost-link").addEventListener("click", (e) => {
-  e.preventDefault();
-  if (!confirm("Reset the running total of estimated AI spend to zero?")) return;
-  localStorage.removeItem(USAGE_TOTAL_STORAGE_KEY);
-  updateCostDisplay();
-});
+// $("reset-cost-link").addEventListener("click", (e) => {
+//   e.preventDefault();
+//   if (!confirm("Reset the running total of estimated AI spend to zero?")) return;
+//   localStorage.removeItem(USAGE_TOTAL_STORAGE_KEY);
+// //   updateCostDisplay();
+// });
 
 $("new-session-btn").addEventListener("click", () => {
   if (!confirm("Discard this session and start a new one?")) return;
